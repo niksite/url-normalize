@@ -21,7 +21,8 @@ Inspired by Sam Ruby's urlnorm.py:
 This fork author: Nikolay Panov (<pythoneer@niksite.ru>)
 
 History:
- * 10 Feb 2010: support for shebang (#!) urls
+ * 29 Dec 2015: PEP8, setup.py
+ * 10 Mar 2010: support for shebang (#!) urls
  * 28 Feb 2010: using 'http' schema by default when appropriate
  * 28 Feb 2010: added handling of IDN domains
  * 28 Feb 2010: code pep8-zation
@@ -29,7 +30,7 @@ History:
 """
 
 __license__ = "Python"
-__version__ = 1.1
+__version__ = 1.2
 
 import re
 import unicodedata

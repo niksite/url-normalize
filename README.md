@@ -15,8 +15,24 @@ URI Normalization function:
 
 Inspired by Sam Ruby's urlnorm.py: http://intertwingly.net/blog/2004/08/04/Urlnorm
 
+Example:
+```
+$ pip install git+git@github.com:niksite/url-normalize.git
+Installing collected packages: url-normalize
+  Running setup.py install for url-normalize
+Successfully installed url-normalize-1.2
+$ python
+Python 2.7.11 (default, Dec  8 2015, 23:51:37)
+[GCC 4.9.2] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+> from url_normalize import url_normalize
+> print url_normalize('www.foo.com:80/foo')
+> http://www.foo.com/foo
+```
+
 History:
-   * 10 Feb 2010: support for shebang (#!) urls
+   * 29 Dec 2015: PEP8, setup.py
+   * 10 Mar 2010: support for shebang (#!) urls
    * 28 Feb 2010: using 'http' schema by default when appropriate
    * 28 Feb 2010: added handling of IDN domains
    * 28 Feb 2010: code pep8-zation
