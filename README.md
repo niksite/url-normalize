@@ -17,7 +17,7 @@ Inspired by Sam Ruby's urlnorm.py: http://intertwingly.net/blog/2004/08/04/Urlno
 
 Example:
 ```
-$ pip install git+git@github.com:niksite/url-normalize.git
+$ pip install git+git://github.com/niksite/url-normalize.git
 Installing collected packages: url-normalize
   Running setup.py install for url-normalize
 Successfully installed url-normalize-1.2
