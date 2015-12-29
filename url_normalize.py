@@ -16,7 +16,8 @@ URI Normalization function:
  * For schemes that define a port, use an empty port if the default is desired
  * All portions of the URI must be utf-8 encoded NFC from Unicode strings
 
-Inspired by Sam Ruby's urlnorm.py: http://intertwingly.net/blog/2004/08/04/Urlnorm
+Inspired by Sam Ruby's urlnorm.py:
+    http://intertwingly.net/blog/2004/08/04/Urlnorm
 This fork author: Nikolay Panov (<pythoneer@niksite.ru>)
 
 History:
@@ -42,7 +43,7 @@ def url_normalize(url, charset='utf-8'):
     function can fix some of the problems in a similar way browsers
     handle data entered by the user:
 
-    >>> url_fix(u'http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
+    >>> url_normalize(u'http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
     'http://de.wikipedia.org/wiki/Elf%20%28Begriffskl%C3%A4rung%29'
 
     :param charset: The target charset for the URL if the url was
@@ -75,6 +76,9 @@ def url_normalize(url, charset='utf-8'):
     # shebang urls support
     url = url.replace('#!', '?_escaped_fragment_=')
 
+    # remove feedburner's crap
+    url = re.sub('\?utm_source=feedburner.+$', '', url)
+
     # splitting url to useful parts
     scheme, auth, path, query, fragment = urlparse.urlsplit(url.strip())
     (userinfo, host, port) = re.search('([^@]*@)?([^:]*):?(.*)', auth).groups()
@@ -96,7 +100,9 @@ def url_normalize(url, charset='utf-8'):
     fragment = quote(_clean(fragment), "~")
 
     # note care must be taken to only encode & and = characters as values
-    query = "&".join(["=".join([quote(_clean(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)]) for q in query.split("&")])
+    query = "&".join(
+        ["=".join([quote(_clean(t), "~:/?#[]@!$'()*+,;=")
+         for t in q.split("=", 1)]) for q in query.split("&")])
 
     # Prevent dot-segments appearing in non-relative URI paths.
     if scheme in ["", "http", "https", "ftp", "file"]:
@@ -191,7 +197,8 @@ if __name__ == "__main__":
         class test(unittest.TestCase):
 
             def runTest(self):
-                assert (url_normalize(value) == value) == expected, (expected, value, url_normalize(value))
+                assert (url_normalize(value) == value) == expected, (
+                    expected, value, url_normalize(value))
         return test()
 
     for (expected, value) in tests1:
@@ -216,13 +223,13 @@ if __name__ == "__main__":
         '/foo/bar/../../baz':
             '/baz',
         '/foo/bar/../../../baz':
-            '/baz', #was: '/../baz',
+            '/baz',  # was: '/../baz',
         '/foo/bar/../../../../baz':
             '/baz',
         '/./foo':
             '/foo',
         '/../foo':
-            '/foo', #was: '/../foo',
+            '/foo',  # was: '/../foo',
         '/foo.':
             '/foo.',
         '/.foo':
@@ -232,7 +239,7 @@ if __name__ == "__main__":
         '/..foo':
             '/..foo',
         '/./../foo':
-            '/foo', #was: '/../foo',
+            '/foo',  # was: '/../foo',
         '/./foo/.':
             '/foo/',
         '/foo/./bar':
@@ -256,17 +263,17 @@ if __name__ == "__main__":
         'http://www.foo.com/%7Ebar':
             'http://www.foo.com/~bar',
         'ftp://user:pass@ftp.foo.net/foo/bar':
-             'ftp://user:pass@ftp.foo.net/foo/bar',
+            'ftp://user:pass@ftp.foo.net/foo/bar',
         'http://USER:pass@www.Example.COM/foo/bar':
-             'http://USER:pass@www.example.com/foo/bar',
+            'http://USER:pass@www.example.com/foo/bar',
         'http://www.example.com./':
             'http://www.example.com/',
         '-':
             '-',
         'пример.испытание/Служебная:Search/Test':
-            'http://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test',
-        'http://lifehacker.com/#!5753509/hello-world-this-is-the-new-lifehacker':
-            'http://lifehacker.com/?_escaped_fragment_=5753509/hello-world-this-is-the-new-lifehacker',
+            'http://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test',  # NOQA
+        'http://lifehacker.com/#!5753509/hello-world-this-is-the-new-lifehacker':  # NOQA
+            'http://lifehacker.com/?_escaped_fragment_=5753509/hello-world-this-is-the-new-lifehacker',  # NOQA
     }
 
     def testcase2(original, normalized):
@@ -274,7 +281,8 @@ if __name__ == "__main__":
         class test(unittest.TestCase):
 
             def runTest(self):
-                assert url_normalize(original) == normalized, (original, normalized, url_normalize(original))
+                assert url_normalize(original) == normalized, (
+                    original, normalized, url_normalize(original))
         return test()
 
     for (original, normalized) in tests2.items():
