@@ -34,8 +34,9 @@ __version__ = 1.2
 
 import re
 import unicodedata
-import urlparse
-from urllib import quote, unquote
+import encodings.idna
+from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import quote, unquote
 
 
 def url_normalize(url, charset='utf-8'):
@@ -52,7 +53,7 @@ def url_normalize(url, charset='utf-8'):
     """
 
     def _clean(string):
-        string = unicode(unquote(string), 'utf-8', 'replace')
+        string = unquote(string)
         return unicodedata.normalize('NFC', string).encode('utf-8')
 
     default_port = {
@@ -67,8 +68,6 @@ def url_normalize(url, charset='utf-8'):
         'snews': 563,
         'snntp': 563,
     }
-    if isinstance(url, unicode):
-        url = url.encode(charset, 'ignore')
 
     # if there is no scheme use http as default scheme
     if url[0] not in ['/', '-'] and ':' not in url[:7]:
@@ -81,7 +80,7 @@ def url_normalize(url, charset='utf-8'):
     url = re.sub('\?utm_source=feedburner.+$', '', url)
 
     # splitting url to useful parts
-    scheme, auth, path, query, fragment = urlparse.urlsplit(url.strip())
+    scheme, auth, path, query, fragment = urlsplit(url.strip())
     (userinfo, host, port) = re.search('([^@]*@)?([^:]*):?(.*)', auth).groups()
 
     # Always provide the URI scheme in lowercase characters.
@@ -92,7 +91,7 @@ def url_normalize(url, charset='utf-8'):
     if host and host[-1] == '.':
         host = host[:-1]
     # take care about IDN domains
-    host = host.decode(charset).encode('idna')  # IDN -> ACE
+    host = host.encode("idna").decode("utf-8")
 
     # Only perform percent-encoding where it is essential.
     # Always use uppercase A-through-F characters when percent-encoding.
@@ -147,7 +146,7 @@ def url_normalize(url, charset='utf-8'):
         auth += ":" + port
     if url.endswith("#") and query == "" and fragment == "":
         path += "#"
-    return urlparse.urlunsplit((scheme, auth, path, query, fragment))
+    return urlunsplit((scheme, auth, path, query, fragment))
 
 if __name__ == "__main__":
     import unittest
