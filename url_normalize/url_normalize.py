@@ -21,6 +21,7 @@ Inspired by Sam Ruby's urlnorm.py:
 This fork author: Nikolay Panov (<pythoneer@niksite.ru>)
 
 History:
+ * 05 Jan 2016: Python 3 compatibility, please use version 1.2 on python 2
  * 29 Dec 2015: PEP8, setup.py
  * 10 Mar 2010: support for shebang (#!) urls
  * 28 Feb 2010: using 'http' schema by default when appropriate
@@ -30,11 +31,10 @@ History:
 """
 
 __license__ = "Python"
-__version__ = 1.2
+__version__ = 1.3
 
 import re
 import unicodedata
-import encodings.idna
 from urllib.parse import urlsplit, urlunsplit
 from urllib.parse import quote, unquote
 

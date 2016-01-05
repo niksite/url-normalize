@@ -18,6 +18,8 @@ Inspired by Sam Ruby's urlnorm.py: http://intertwingly.net/blog/2004/08/04/Urlno
 Example:
 ```
 $ pip install git+git://github.com/niksite/url-normalize.git
+Collecting git+git://github.com/niksite/url-normalize.git
+  Cloning git://github.com/niksite/url-normalize.git to /tmp/pip-trXUik-build
 Installing collected packages: url-normalize
   Running setup.py install for url-normalize
 Successfully installed url-normalize-1.2
@@ -31,6 +33,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 ```
 
 History:
+   * 05 Jan 2016: Python 3 compatibility
    * 29 Dec 2015: PEP8, setup.py
    * 10 Mar 2010: support for shebang (#!) urls
    * 28 Feb 2010: using 'http' schema by default when appropriate
