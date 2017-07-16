@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="url-normalize",
-    version="1.3.1",
+    version="1.3.3",
     author="Nikolay Panov",
     author_email="github@niksite.ru",
     description="URL normalization for Python",
@@ -23,4 +23,5 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3"
     ],
+    install_requires=['future'],
 )
