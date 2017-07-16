@@ -1,6 +1,9 @@
 url-normalize
 =============
 
+[![Build Status](https://travis-ci.org/niksite/url-normalize.svg?branch=master)](https://travis-ci.org/niksite/url-normalize)
+[![Coverage Status](https://coveralls.io/repos/github/niksite/url-normalize/badge.svg?branch=master)](https://coveralls.io/github/niksite/url-normalize?branch=master)
+
 URI Normalization function:
    * Take care of IDN domains.
    * Always provide the URI scheme in lowercase characters.
