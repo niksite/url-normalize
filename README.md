@@ -20,22 +20,21 @@ Inspired by Sam Ruby's urlnorm.py: http://intertwingly.net/blog/2004/08/04/Urlno
 
 Example:
 ```
-$ pip install git+git://github.com/niksite/url-normalize.git
-Collecting git+git://github.com/niksite/url-normalize.git
-  Cloning git://github.com/niksite/url-normalize.git to /tmp/pip-trXUik-build
-Installing collected packages: url-normalize
-  Running setup.py install for url-normalize
-Successfully installed url-normalize-1.2
+$ pip install url-normalize
+Collecting url-normalize
+...
+Successfully installed future-0.16.0 url-normalize-1.3.3
 $ python
-Python 2.7.11 (default, Dec  8 2015, 23:51:37)
-[GCC 4.9.2] on linux2
+Python 3.6.1 (default, Jul  8 2017, 05:00:20)
+[GCC 4.9.2] on linux
 Type "help", "copyright", "credits" or "license" for more information.
 > from url_normalize import url_normalize
-> print url_normalize('www.foo.com:80/foo')
+> print(url_normalize('www.foo.com:80/foo'))
 > http://www.foo.com/foo
 ```
 
 History:
+   * 07 Jul 2017: Python 2/3 compatibility.
    * 05 Jan 2016: Python 3 compatibility
    * 29 Dec 2015: PEP8, setup.py
    * 10 Mar 2010: support for shebang (#!) urls
