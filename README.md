@@ -40,3 +40,5 @@ History:
    * 28 Feb 2010: added handling of IDN domains
    * 28 Feb 2010: code pep8-zation
    * 27 Feb 2010: forked from Sam Ruby's urlnorm.py
+
+License: "Python" (PSF) License
