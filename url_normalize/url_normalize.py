@@ -56,11 +56,13 @@ DEFAULT_PORT = {
     'ftp': 21,
     'telnet': 23,
     'http': 80,
+    'ws': 80,
     'gopher': 70,
     'news': 119,
     'nntp': 119,
     'prospero': 191,
     'https': 443,
+    'wss': 443,
     'snews': 563,
     'snntp': 563,
 }
