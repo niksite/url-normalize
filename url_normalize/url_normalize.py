@@ -114,9 +114,9 @@ def url_normalize(url, charset='utf-8'):
 
     # note care must be taken to only encode & and = characters as values
     query = "&".join(
-        ["=".join(
+        sorted(["=".join(
             [quote(_clean(t), "~:/?#[]@!$'()*+,;=")
-             for t in q.split("=", 1)]) for q in query.split("&")])
+             for t in q.split("=", 1)]) for q in query.split("&")]))
 
     # Prevent dot-segments appearing in non-relative URI paths.
     if scheme in ["", "http", "https", "ftp", "file"]:
