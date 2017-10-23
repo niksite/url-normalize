@@ -161,4 +161,14 @@ def url_normalize(url, charset='utf-8'):
     if url.endswith("#") and query == "" and fragment == "":
         path += "#"
 
-    return urlunsplit((scheme, auth, path, query, fragment))
+    # Check if url was clear of ending slash
+    endingSlashNotPresent = not url.endswith('/')
+
+    # Unsplit
+    url = urlunsplit((scheme, auth, path, query, fragment))
+
+    # Remove ending slash if url was clear of it before urlunsplit
+    if url.endswith('/') and endingSlashNotPresent:
+        url = url[:-1]
+
+    return url
