@@ -85,12 +85,6 @@ def url_normalize(url, charset='utf-8'):
     if url[0] not in ['/', '-'] and ':' not in url[:7]:
         url = 'http://' + url
 
-    # shebang urls support
-    url = url.replace('#!', '?_escaped_fragment_=')
-
-    # remove feedburner's crap
-    url = re.sub(r'\?utm_source=feedburner.+$', '', url)
-
     # splitting url to useful parts
     scheme, auth, path, query, fragment = urlsplit(url.strip())
     (userinfo, host, port) = re.search('([^@]*@)?([^:]*):?(.*)', auth).groups()
