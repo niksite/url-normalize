@@ -114,6 +114,8 @@ EXPECTED_CHANGES = [
     (False, "http://127.0.0.1:80/"),
     (True, "http://www.w3.org/2000/01/rdf-schema#"),
     (False, "http://example.com:081/"),
+    (True, "http://example.com/?a&b"),
+    (False, "http://example.com/?b&a"),
 ]
 
 
