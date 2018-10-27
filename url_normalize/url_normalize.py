@@ -20,6 +20,7 @@ Inspired by Sam Ruby's urlnorm.py:
 This fork author: Nikolay Panov (<pythoneer@npanov.com>)
 
 History:
+ * 28 Oct 2018: Support empty string and double slash urls (//domain.tld/foo.html)
  * 07 Jul 2017: Same code support both Python 3 and Python 2.
  * 05 Jan 2016: Python 3 compatibility, please use version 1.2 on python 2
  * 29 Dec 2015: PEP8, setup.py
@@ -36,7 +37,7 @@ import unicodedata
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 __license__ = "Python"
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 
 def _clean(string, charset='utf-8'):
@@ -83,9 +84,18 @@ def url_normalize(url, charset='utf-8'):
         charset : string : The target charset for the URL if the url was
                            given as unicode string.
     """
+
+    # invalid empty / null url
+    if url is None or len(url) == 0:
+        return url
+
     # if there is no scheme use http as default scheme
     if url[0] not in ['/', '-'] and ':' not in url[:7]:
         url = 'http://' + url
+
+    # protocol indeferent url (http|https), prepend https
+    if len(url) > 2 and url[0] == '/' and url[1] == '/' and ':' not in url[:7]:
+        url = 'https:' + url
 
     # shebang urls support
     url = url.replace('#!', '?_escaped_fragment_=')

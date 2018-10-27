@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 from url_normalize import url_normalize
 
 EXPECTED_RESULTS = {
+    '':
+        '', # empty string 
     '/foo/bar/.':
         '/foo/bar/',
     '/foo/bar/./':
@@ -49,6 +51,8 @@ EXPECTED_RESULTS = {
         '/foo/',
     '/foo///bar//':
         '/foo/bar/',
+    '//www.foo.com/': 
+        'https://www.foo.com/',
     'http://www.foo.com:80/foo':
         'http://www.foo.com/foo',
     'http://www.foo.com:8000/foo':
