@@ -91,7 +91,7 @@ def url_normalize(url, charset='utf-8'):
 
     # if there is no scheme use http as default scheme
     if url[0] not in ['/', '-'] and ':' not in url[:7]:
-        url = 'http://' + url
+        url = 'https://' + url
 
     # protocol indeferent url (http|https), prepend https
     if len(url) > 2 and url[0] == '/' and url[1] == '/' and ':' not in url[:7]:
