@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "url-normalize"
+version = "1.4.0"
+description = "URL normalization for Python"
+authors = ["Nikolay Panov <github@npanov.com>"]
+license = "PSF"
+readme = "README.md"
+repository = "https://github.com/niksite/url-normalize"
+homepage = "https://github.com/niksite/url-normalize"
+keywords = ['url', 'normalization', 'normalize']
+
+[tool.poetry.dependencies]
+python = "~2.7 || ^3.6"
+six = "^1.11"
+
+[tool.poetry.dev-dependencies]
+pytest = "^3.0"
+pytest-cov = "^2.6"
+tox = "^3.5"
+pytest-flakes = "^4.0"
+pytest-socket = "^0.3.1"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
