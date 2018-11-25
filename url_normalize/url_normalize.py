@@ -1,139 +1,153 @@
 # -*- coding: utf-8 -*-
-"""URI normalizator.
-
-URI Normalization function:
- * Take care of IDN domains.
- * Always provide the URI scheme in lowercase characters.
- * Always provide the host, if any, in lowercase characters.
- * Only perform percent-encoding where it is essential.
- * Always use uppercase A-through-F characters when percent-encoding.
- * Prevent dot-segments appearing in non-relative URI paths.
- * For schemes that define a default authority, use an empty authority if the
-   default is desired.
- * For schemes that define an empty path to be equivalent to a path of "/",
-   use "/".
- * For schemes that define a port, use an empty port if the default is desired
- * All portions of the URI must be utf-8 encoded NFC from Unicode strings
-
-Inspired by Sam Ruby's urlnorm.py:
-    http://intertwingly.net/blog/2004/08/04/Urlnorm
-This fork author: Nikolay Panov (<pythoneer@npanov.com>)
-
-History:
- * 28 Oct 2018: Support empty string and double slash urls (//domain.tld/foo.html)
- * 07 Jul 2017: Same code support both Python 3 and Python 2.
- * 05 Jan 2016: Python 3 compatibility, please use version 1.2 on python 2
- * 29 Dec 2015: PEP8, setup.py
- * 10 Mar 2010: support for shebang (#!) urls
- * 28 Feb 2010: using 'http' schema by default when appropriate
- * 28 Feb 2010: added handling of IDN domains
- * 28 Feb 2010: code pep8-zation
- * 27 Feb 2010: forked from Sam Ruby's urlnorm.py
-"""
-from __future__ import unicode_literals
-
+"""URL normalize main module."""
 import re
-import unicodedata
-from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
-__license__ = "Python"
-__version__ = "1.3.4"
-
-
-def _clean(string, charset='utf-8'):
-    """Unquote and normalize unicode string.
-
-    Params:
-        charset : string : optional : output encoding
-
-    Returns:
-        string : an unquoted and normalized string
-
-    """
-    string = unquote(string)
-    return unicodedata.normalize('NFC', string).encode(charset)
+from .tools import deconstruct_url, force_unicode, quote, reconstruct_url, unquote
 
 DEFAULT_PORT = {
-    'ftp': 21,
-    'telnet': 23,
-    'http': 80,
-    'ws': 80,
-    'gopher': 70,
-    'news': 119,
-    'nntp': 119,
-    'prospero': 191,
-    'https': 443,
-    'wss': 443,
-    'snews': 563,
-    'snntp': 563,
+    "ftp": "21",
+    "gopher": "70",
+    "http": "80",
+    "https": "443",
+    "news": "119",
+    "nntp": "119",
+    "snews": "563",
+    "snntp": "563",
+    "telnet": "23",
+    "ws": "80",
+    "wss": "443",
 }
+DEFAULT_SCHEME = "https"
 
 
-def url_normalize(url, charset='utf-8'):
-    """URI normalization routine.
-
-    Sometimes you get an URL by a user that just isn't a real
-    URL because it contains unsafe characters like ' ' and so on.  This
-    function can fix some of the problems in a similar way browsers
-    handle data entered by the user:
-
-    >>> url_normalize(u'http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
-    'http://de.wikipedia.org/wiki/Elf%20%28Begriffskl%C3%A4rung%29'
+def provide_url_scheme(url):
+    """Make sure we have valid url scheme.
 
     Params:
-        charset : string : The target charset for the URL if the url was
-                           given as unicode string.
+        url : string : the URL
+
+    Returns:
+        string : updated url with validated/attached scheme
+
     """
-
-    # invalid empty / null url
-    if url is None or len(url) == 0:
+    has_scheme = ":" in url[:7]
+    is_default_scheme = url.startswith("//")
+    is_file_path = url == "-" or (url.startswith("/") and not is_default_scheme)
+    if not url or has_scheme or is_file_path:
         return url
+    if is_default_scheme:
+        return DEFAULT_SCHEME + ":" + url
+    return DEFAULT_SCHEME + "://" + url
 
-    # if there is no scheme use http as default scheme
-    if url[0] not in ['/', '-'] and ':' not in url[:7]:
-        url = 'https://' + url
 
-    # protocol indeferent url (http|https), prepend https
-    if len(url) > 2 and url[0] == '/' and url[1] == '/' and ':' not in url[:7]:
-        url = 'https:' + url
+def generic_url_cleanup(url):
+    """Cleanup the URL from unnecessary data and convert to final form.
 
-    # shebang urls support
-    url = url.replace('#!', '?_escaped_fragment_=')
+    Converts shebang urls to final form, removed unnecessary data from the url.
 
-    # remove feedburner's crap
-    url = re.sub(r'\?utm_source=feedburner.+$', '', url)
+    Params:
+        url : string : the URL
 
-    # splitting url to useful parts
-    scheme, auth, path, query, fragment = urlsplit(url.strip())
-    (userinfo, host, port) = re.search('([^@]*@)?([^:]*):?(.*)', auth).groups()
+    Returns:
+        string : update url
 
-    # Always provide the URI scheme in lowercase characters.
-    scheme = scheme.lower()
+    """
+    url = url.replace("#!", "?_escaped_fragment_=")
+    url = re.sub(r"utm_source=[^&]+&?", "", url)
+    url = url.rstrip("&? ")
+    return url
 
-    # Always provide the host, if any, in lowercase characters.
+
+def normalize_scheme(scheme):
+    """Normalize scheme part of the url.
+
+    Params:
+        scheme : string : url scheme, e.g., 'https'
+
+    Returns:
+        string : normalized scheme data.
+
+    """
+    return scheme.lower()
+
+
+def normalize_userinfo(userinfo):
+    """Normalize userinfo part of the url.
+
+    Params:
+        userinfo : string : url userinfo, e.g., 'user@'
+
+    Returns:
+        string : normalized userinfo data.
+
+    """
+    if userinfo in ["@", ":@"]:
+        return ""
+    return userinfo
+
+
+def normalize_host(host, charset="utf-8"):
+    """Normalize host part of the url.
+
+    Lowercase and strip of final dot.
+    Also, take care about IDN domains.
+
+    Params:
+        host : string : url host, e.g., 'site.com'
+
+    Returns:
+        string : normalized host data.
+
+    """
+    host = force_unicode(host, charset)
     host = host.lower()
-    if host and host[-1] == '.':
-        host = host[:-1]
-
-    # take care about IDN domains
+    host = host.strip(".")
     host = host.encode("idna").decode(charset)
+    return host
 
+
+def normalize_port(port, scheme):
+    """Normalize port part of the url.
+
+    Remove mention of default port number
+
+    Params:
+        port : string : url port, e.g., '8080'
+        scheme : string : url scheme, e.g., 'http'
+
+    Returns:
+        string : normalized port data.
+
+    """
+    if not port.isdigit():
+        return port
+    port = str(int(port))
+    if DEFAULT_PORT[scheme] == port:
+        return ""
+    return port
+
+
+def normalize_path(path, scheme):
+    """Normalize path part of the url.
+
+    Remove mention of default path number
+
+    Params:
+        path : string : url path, e.g., '/section/page.html'
+        scheme : string : url scheme, e.g., 'http'
+
+    Returns:
+        string : normalized path data.
+
+    """
     # Only perform percent-encoding where it is essential.
     # Always use uppercase A-through-F characters when percent-encoding.
     # All portions of the URI must be utf-8 encoded NFC from Unicode strings
-    path = quote(_clean(path), "~:/?#[]@!$&'()*+,;=")
-    fragment = quote(_clean(fragment), "~")
-
-    # note care must be taken to only encode & and = characters as values
-    query = "&".join(
-        sorted(["=".join(
-            [quote(_clean(t), "~:/?#[]@!$'()*+,;=")
-             for t in q.split("=", 1)]) for q in query.split("&")]))
-
+    path = quote(unquote(path), "~:/?#[]@!$&'()*+,;=")
     # Prevent dot-segments appearing in non-relative URI paths.
     if scheme in ["", "http", "https", "ftp", "file"]:
         output, part = [], None
-        for part in path.split('/'):
+        for part in path.split("/"):
             if part == "":
                 if not output:
                     output.append(part)
@@ -146,31 +160,80 @@ def url_normalize(url, charset='utf-8'):
                 output.append(part)
         if part in ["", ".", ".."]:
             output.append("")
-        path = '/'.join(output)
-
-    # For schemes that define a default authority, use an empty authority if
-    # the default is desired.
-    if userinfo in ["@", ":@"]:
-        userinfo = ""
-
+        path = "/".join(output)
     # For schemes that define an empty path to be equivalent to a path of "/",
     # use "/".
-    if path == "" and scheme in ["http", "https", "ftp", "file"]:
+    if not path and scheme in ["http", "https", "ftp", "file"]:
         path = "/"
+    return path
 
-    # For schemes that define a port, use an empty port if the default is
-    # desired
-    if port and scheme in DEFAULT_PORT.keys():
-        if port.isdigit():
-            port = str(int(port))
-            if int(port) == DEFAULT_PORT[scheme]:
-                port = ''
 
-    # Put it all back together again
-    auth = (userinfo or "") + host
-    if port:
-        auth += ":" + port
-    if url.endswith("#") and query == "" and fragment == "":
-        path += "#"
+def normalize_fragment(fragment):
+    """Normalize fragment part of the url.
 
-    return urlunsplit((scheme, auth, path, query, fragment))
+    Params:
+        fragment : string : url fragment, e.g., 'fragment'
+
+    Returns:
+        string : normalized fragment data.
+
+    """
+    return quote(unquote(fragment), "~")
+
+
+def normalize_query(query):
+    """Normalize query part of the url.
+
+    Params:
+        query : string : url query, e.g., 'param1=val1&param2=val2'
+
+    Returns:
+        string : normalized query data.
+
+    """
+    query = "&".join(
+        sorted(
+            [
+                "=".join(
+                    [quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)]
+                )
+                for q in query.split("&")
+            ]
+        )
+    )
+    return query
+
+
+def url_normalize(url, charset="utf-8"):
+    """URI normalization routine.
+
+    Sometimes you get an URL by a user that just isn't a real
+    URL because it contains unsafe characters like ' ' and so on.
+    This function can fix some of the problems in a similar way
+    browsers handle data entered by the user:
+
+    >>> url_normalize('http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
+    'http://de.wikipedia.org/wiki/Elf%20%28Begriffskl%C3%A4rung%29'
+
+    Params:
+        charset : string : optional
+            The target charset for the URL if the url was given as unicode string.
+    """
+    if not url:
+        return url
+    url = provide_url_scheme(url)
+    url = generic_url_cleanup(url)
+    url_elements = deconstruct_url(url)
+    url_elements = url_elements._replace(
+        scheme=normalize_scheme(url_elements.scheme),
+        userinfo=normalize_userinfo(url_elements.userinfo),
+        host=normalize_host(url_elements.host, charset),
+        query=normalize_query(url_elements.query),
+        fragment=normalize_fragment(url_elements.fragment),
+    )
+    url_elements = url_elements._replace(
+        port=normalize_port(url_elements.port, url_elements.scheme),
+        path=normalize_path(url_elements.path, url_elements.scheme),
+    )
+    url = reconstruct_url(url_elements)
+    return url
