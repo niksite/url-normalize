@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "url-normalize"
-version = "1.4.0"
+version = "1.4.1"
 description = "URL normalization for Python"
 authors = ["Nikolay Panov <github@npanov.com>"]
 license = "PSF"

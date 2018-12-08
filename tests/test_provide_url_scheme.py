@@ -18,3 +18,13 @@ def test_provide_url_scheme_result_is_expected():
         result = provide_url_scheme(url)
 
         assert result == expected, url
+
+
+def test_provide_url_scheme_accept_default_scheme_param():
+    """Assert we could provide default_scheme param other than https."""
+    url = "//site/path"
+    expected = "http://site/path"
+
+    actual = provide_url_scheme(url, default_scheme="http")
+
+    assert actual == expected

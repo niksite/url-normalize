@@ -92,3 +92,13 @@ def test_url_normalize_results():
     """Assert url_normalize return expected results."""
     for value, expected in EXPECTED_RESULTS.items():
         assert expected == url_normalize(value), value
+
+
+def test_url_normalize_with_http_scheme():
+    """Assert we could use http scheme as default."""
+    url = "//www.foo.com/"
+    expected = "http://www.foo.com/"
+
+    actual = url_normalize(url, default_scheme='http')
+
+    assert actual == expected

@@ -20,17 +20,6 @@ Inspired by Sam Ruby's urlnorm.py:
     http://intertwingly.net/blog/2004/08/04/Urlnorm
 This fork author: Nikolay Panov (<pythonista@npanov.com>)
 
-History:
-* 1.4.0: A bit of code refactoring and cleanup
-* 1.3.3: Support empty string and double slash urls (//domain.tld)
-* 1.3.2: Same code support both Python 3 and Python 2.
-* 1.3.1: Python 3 compatibility
-* 1.2.1: PEP8, setup.py
-* 1.1.2: support for shebang (#!) urls
-* 1.1.1: using 'http' schema by default when appropriate
-* 1.1.0: added handling of IDN domains
-* 1.0.0: code pep8-zation
-* 0.1.0: forked from Sam Ruby's urlnorm.py
 """
 
 from __future__ import absolute_import
@@ -38,6 +27,6 @@ from __future__ import absolute_import
 from .url_normalize import url_normalize
 
 __license__ = "Python"
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 __all__ = ["url_normalize"]

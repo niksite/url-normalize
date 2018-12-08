@@ -17,27 +17,29 @@ DEFAULT_PORT = {
     "ws": "80",
     "wss": "443",
 }
+DEFAULT_CHARSET = "utf-8"
 DEFAULT_SCHEME = "https"
 
 
-def provide_url_scheme(url):
+def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):
     """Make sure we have valid url scheme.
 
     Params:
         url : string : the URL
+        default_scheme : string : default scheme to use, e.g. 'https'
 
     Returns:
         string : updated url with validated/attached scheme
 
     """
     has_scheme = ":" in url[:7]
-    is_default_scheme = url.startswith("//")
-    is_file_path = url == "-" or (url.startswith("/") and not is_default_scheme)
+    is_universal_scheme = url.startswith("//")
+    is_file_path = url == "-" or (url.startswith("/") and not is_universal_scheme)
     if not url or has_scheme or is_file_path:
         return url
-    if is_default_scheme:
-        return DEFAULT_SCHEME + ":" + url
-    return DEFAULT_SCHEME + "://" + url
+    if is_universal_scheme:
+        return default_scheme + ":" + url
+    return default_scheme + "://" + url
 
 
 def generic_url_cleanup(url):
@@ -86,7 +88,7 @@ def normalize_userinfo(userinfo):
     return userinfo
 
 
-def normalize_host(host, charset="utf-8"):
+def normalize_host(host, charset=DEFAULT_CHARSET):
     """Normalize host part of the url.
 
     Lowercase and strip of final dot.
@@ -204,7 +206,7 @@ def normalize_query(query):
     return query
 
 
-def url_normalize(url, charset="utf-8"):
+def url_normalize(url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME):
     """URI normalization routine.
 
     Sometimes you get an URL by a user that just isn't a real
@@ -218,10 +220,14 @@ def url_normalize(url, charset="utf-8"):
     Params:
         charset : string : optional
             The target charset for the URL if the url was given as unicode string.
+
+    Returns:
+        string : a normalized url
+
     """
     if not url:
         return url
-    url = provide_url_scheme(url)
+    url = provide_url_scheme(url, default_scheme)
     url = generic_url_cleanup(url)
     url_elements = deconstruct_url(url)
     url_elements = url_elements._replace(
