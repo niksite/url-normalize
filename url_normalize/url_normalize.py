@@ -183,7 +183,7 @@ def normalize_fragment(fragment):
     return quote(unquote(fragment), "~")
 
 
-def normalize_query(query, sort_query_params):
+def normalize_query(query, sort_query_params=True):
     """Normalize query part of the url.
 
     Params:
