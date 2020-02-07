@@ -183,7 +183,7 @@ def normalize_fragment(fragment):
     return quote(unquote(fragment), "~")
 
 
-def normalize_query(query):
+def normalize_query(query, sort_query_params):
     """Normalize query part of the url.
 
     Params:
@@ -193,20 +193,16 @@ def normalize_query(query):
         string : normalized query data.
 
     """
-    query = "&".join(
-        sorted(
-            [
-                "=".join(
-                    [quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)]
-                )
-                for q in query.split("&")
-            ]
-        )
-    )
+    param_arr = ["=".join(
+        [quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)]) for q in query.split("&")
+    ]
+    if sort_query_params:
+        param_arr = sorted(param_arr)
+    query = "&".join(param_arr)
     return query
 
 
-def url_normalize(url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME):
+def url_normalize(url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True):
     """URI normalization routine.
 
     Sometimes you get an URL by a user that just isn't a real
@@ -234,7 +230,7 @@ def url_normalize(url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME):
         scheme=normalize_scheme(url_elements.scheme),
         userinfo=normalize_userinfo(url_elements.userinfo),
         host=normalize_host(url_elements.host, charset),
-        query=normalize_query(url_elements.query),
+        query=normalize_query(url_elements.query, sort_query_params),
         fragment=normalize_fragment(url_elements.fragment),
     )
     url_elements = url_elements._replace(
