@@ -1,14 +1,17 @@
 [tool.poetry]
-name = "url-normalize"
-version = "1.4.1"
-description = "URL normalization for Python"
 authors = ["Nikolay Panov <github@npanov.com>"]
-license = "PSF"
-readme = "README.md"
-repository = "https://github.com/niksite/url-normalize"
+description = "URL normalization for Python"
 homepage = "https://github.com/niksite/url-normalize"
 keywords = ['url', 'normalization', 'normalize']
-urls = { Changelog = "https://github.com/niksite/url-normalize#url-normalize" }
+license = "PSF-2.0"
+name = "url-normalize"
+readme = "README.md"
+repository = "https://github.com/niksite/url-normalize"
+version = "1.4.2"
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/niksite/url-normalize/issues"
+"Changelog" = "https://github.com/niksite/url-normalize#url-normalize"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
@@ -17,10 +20,10 @@ six = "^1.11"
 [tool.poetry.dev-dependencies]
 pytest = "^3.0"
 pytest-cov = "^2.6"
-tox = "^3.5"
 pytest-flakes = "^4.0"
 pytest-socket = "^0.3.1"
+tox = "^3.5"
 
 [build-system]
-requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+requires = ["poetry>=0.12"]

@@ -37,6 +37,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 History:
 
+* 1.4.2: Added an optional param sort_query_params (True by default)
 * 1.4.1: Added an optional param default_scheme to the url_normalize
 * 1.4.0: A bit of code refactoring and cleanup
 * 1.3.3: Support empty string and double slash urls (//domain.tld)
