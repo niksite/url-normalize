@@ -8,6 +8,7 @@ readme = "README.md"
 repository = "https://github.com/niksite/url-normalize"
 homepage = "https://github.com/niksite/url-normalize"
 keywords = ['url', 'normalization', 'normalize']
+urls = { Changelog = "https://github.com/niksite/url-normalize#url-normalize" }
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
