@@ -3,11 +3,11 @@ authors = ["Nikolay Panov <github@npanov.com>"]
 description = "URL normalization for Python"
 homepage = "https://github.com/niksite/url-normalize"
 keywords = ['url', 'normalization', 'normalize']
-license = "PSF-2.0"
+license = "MIT"
 name = "url-normalize"
 readme = "README.md"
 repository = "https://github.com/niksite/url-normalize"
-version = "1.4.2"
+version = "1.4.3"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/niksite/url-normalize/issues"
@@ -18,11 +18,15 @@ python = "~2.7 || ^3.6"
 six = "^1.11"
 
 [tool.poetry.dev-dependencies]
-pytest = "^3.0"
-pytest-cov = "^2.6"
-pytest-flakes = "^4.0"
-pytest-socket = "^0.3.1"
-tox = "^3.5"
+bandit = [ {version = "*", python = "^3.6"} ]
+flake8 = [ {version = "*", python = "^3.6"} ]
+pydocstyle = [ {version = "*", python = "^3.6"} ]
+pylint = [ {version = "*", python = "^3.6"} ]
+pytest = [ {version = "*", python = "^3.6"} ]
+pytest-cov = [ {version = "*", python = "^3.6"} ]
+pytest-flakes = [ {version = "*", python = "^3.6"} ]
+pytest-socket = [ {version = "*", python = "^3.6"} ]
+tox = [ {version = "*", python = "^3.6"} ]
 
 [build-system]
 build-backend = "poetry.masonry.api"
