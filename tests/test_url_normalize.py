@@ -4,8 +4,8 @@ from url_normalize import url_normalize
 
 
 EXPECTED_RESULTS = {
-    "/../foo": "/foo",  # was: '/../foo',
-    "/./../foo": "/foo",  # was: '/../foo',
+    "/../foo": "/foo",
+    "/./../foo": "/foo",
     "/./foo": "/foo",
     "/./foo/.": "/foo/",
     "//www.foo.com/": "https://www.foo.com/",
@@ -16,7 +16,7 @@ EXPECTED_RESULTS = {
     "/foo/bar/..": "/foo/",
     "/foo/bar/../..": "/",
     "/foo/bar/../../../../baz": "/baz",
-    "/foo/bar/../../../baz": "/baz",  # was: '/../baz',
+    "/foo/bar/../../../baz": "/baz",
     "/foo/bar/../../": "/",
     "/foo/bar/../../baz": "/baz",
     "/foo/bar/../": "/foo/",
@@ -37,7 +37,7 @@ EXPECTED_RESULTS = {
     "http://example.com/%7Ejane": "http://example.com/~jane",
     "http://example.com/a/../a/b": "http://example.com/a/b",
     "http://example.com/a/./b": "http://example.com/a/b",
-    "http://lifehacker.com/#!5753509/hello-world-this-is-the-new-lifehacker": "http://lifehacker.com/?_escaped_fragment_=5753509/hello-world-this-is-the-new-lifehacker",
+    "http://example.com/#!5753509/hello-world": "http://example.com/?_escaped_fragment_=5753509/hello-world",
     "http://USER:pass@www.Example.COM/foo/bar": "http://USER:pass@www.example.com/foo/bar",
     "http://www.example.com./": "http://www.example.com/",
     "http://www.foo.com:80/foo": "http://www.foo.com/foo",
@@ -65,6 +65,7 @@ NO_CHANGES_EXPECTED = (
     "http://example.com/",
     "http://example.com/~jane",
     "http://example.com/a/b",
+    "http://example.com/FOO",
     "http://user:password@example.com/",
     "http://www.foo.com:8000/foo",
     # from rfc2396bis
@@ -99,6 +100,16 @@ def test_url_normalize_with_http_scheme():
     url = "//www.foo.com/"
     expected = "http://www.foo.com/"
 
-    actual = url_normalize(url, default_scheme='http')
+    actual = url_normalize(url, default_scheme="http")
+
+    assert actual == expected
+
+
+def test_url_normalize_with_no_params_sorting():
+    """Assert we could use http scheme as default."""
+    url = "http://www.foo.com/?b=1&a=2"
+    expected = "http://www.foo.com/?b=1&a=2"
+
+    actual = url_normalize(url, sort_query_params=False)
 
     assert actual == expected

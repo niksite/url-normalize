@@ -193,8 +193,9 @@ def normalize_query(query, sort_query_params=True):
         string : normalized query data.
 
     """
-    param_arr = ["=".join(
-        [quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)]) for q in query.split("&")
+    param_arr = [
+        "=".join([quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)])
+        for q in query.split("&")
     ]
     if sort_query_params:
         param_arr = sorted(param_arr)
@@ -202,7 +203,9 @@ def normalize_query(query, sort_query_params=True):
     return query
 
 
-def url_normalize(url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True):
+def url_normalize(
+    url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True
+):
     """URI normalization routine.
 
     Sometimes you get an URL by a user that just isn't a real

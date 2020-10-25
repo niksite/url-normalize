@@ -27,6 +27,6 @@ from __future__ import absolute_import
 from .url_normalize import url_normalize
 
 __license__ = "Python"
-__version__ = "1.4.1"
+__version__ = "1.4.3"
 
 __all__ = ["url_normalize"]
