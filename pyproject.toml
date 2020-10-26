@@ -15,18 +15,19 @@ version = "1.4.3"
 
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
-six = "^1.11"
+six = "*"
 
 [tool.poetry.dev-dependencies]
-bandit = [ {version = "*", python = "^3.6"} ]
-flake8 = [ {version = "*", python = "^3.6"} ]
-pydocstyle = [ {version = "*", python = "^3.6"} ]
-pylint = [ {version = "*", python = "^3.6"} ]
-pytest = [ {version = "*", python = "^3.6"} ]
-pytest-cov = [ {version = "*", python = "^3.6"} ]
-pytest-flakes = [ {version = "*", python = "^3.6"} ]
-pytest-socket = [ {version = "*", python = "^3.6"} ]
-tox = [ {version = "*", python = "^3.6"} ]
+bandit = [{version="*", python="^3.6"}]
+flake8 = [{version="*", python="^3.6"}]
+pluggy = [{version="0.13.1", python="~2.7"}]
+pydocstyle = [{version="*", python="^3.6"}]
+pylint = [{version="*", python="^3.6"}]
+pytest = [{version="3.10.1", python="~2.7"},{version="*", python="^3.6"}]
+pytest-cov = [{version="2.9.0", python="~2.7"},{version="*", python="^3.6"}]
+pytest-flakes = [{version="4.0.1", python="~2.7"},{version="*", python="^3.6"}]
+pytest-socket = [{version="0.3.3", python="~2.7"}, {version="*", python="^3.6"}]
+tox = [{version="*", python="^3.6"}]
 
 [build-system]
 build-backend = "poetry.masonry.api"
