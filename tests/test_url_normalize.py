@@ -80,7 +80,7 @@ NO_CHANGES_EXPECTED = (
 )
 
 
-def test_url_normalize_changes():
+def test_url_normalize_changes():  # type: () -> None
     """Assert url_normalize do not change URI if not required.
 
     http://www.intertwingly.net/wiki/pie/PaceCanonicalIds
@@ -89,13 +89,13 @@ def test_url_normalize_changes():
         assert url_normalize(value) == value
 
 
-def test_url_normalize_results():
+def test_url_normalize_results():  # type: () -> None
     """Assert url_normalize return expected results."""
     for value, expected in EXPECTED_RESULTS.items():
         assert expected == url_normalize(value), value
 
 
-def test_url_normalize_with_http_scheme():
+def test_url_normalize_with_http_scheme():  # type: () -> None
     """Assert we could use http scheme as default."""
     url = "//www.foo.com/"
     expected = "http://www.foo.com/"
@@ -105,7 +105,7 @@ def test_url_normalize_with_http_scheme():
     assert actual == expected
 
 
-def test_url_normalize_with_no_params_sorting():
+def test_url_normalize_with_no_params_sorting():  # type: () -> None
     """Assert we could use http scheme as default."""
     url = "http://www.foo.com/?b=1&a=2"
     expected = "http://www.foo.com/?b=1&a=2"

@@ -4,7 +4,7 @@ from url_normalize.url_normalize import normalize_scheme
 EXPECTED_DATA = {"http": "http", "HTTP": "http"}
 
 
-def test_normalize_scheme_result_is_expected():
+def test_normalize_scheme_result_is_expected():  # type: () -> None
     """Assert we got expected results from the normalize_scheme function."""
     for url, expected in EXPECTED_DATA.items():
 

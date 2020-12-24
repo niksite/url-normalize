@@ -2,6 +2,7 @@
 import re
 import unicodedata
 from collections import namedtuple
+from typing import Match, Union, cast
 
 import six
 from six.moves.urllib.parse import quote as quote_orig
@@ -13,8 +14,8 @@ URL = namedtuple(
 )
 
 
-def deconstruct_url(url):
-    """Tranform the url into URL structure.
+def deconstruct_url(url):  # type: (str) -> URL
+    """Transform the url into URL structure.
 
     Params:
         url : string : the URL
@@ -24,7 +25,8 @@ def deconstruct_url(url):
 
     """
     scheme, auth, path, query, fragment = urlsplit(url.strip())
-    (userinfo, host, port) = re.search("([^@]*@)?([^:]*):?(.*)", auth).groups()
+    # cast: the regex matches anything
+    (userinfo, host, port) = cast(Match[str], re.search("([^@]*@)?([^:]*):?(.*)", auth)).groups()
     return URL(
         fragment=fragment,
         host=host,
@@ -36,7 +38,7 @@ def deconstruct_url(url):
     )
 
 
-def reconstruct_url(url):
+def reconstruct_url(url):  # type: (URL) -> str
     """Reconstruct string url from URL.
 
     Params:
@@ -49,10 +51,11 @@ def reconstruct_url(url):
     auth = (url.userinfo or "") + url.host
     if url.port:
         auth += ":" + url.port
-    return urlunsplit((url.scheme, auth, url.path, url.query, url.fragment))
+    # cast: needed when checking as python 2.7, redundant with 3.6+
+    return cast(str, urlunsplit((url.scheme, auth, url.path, url.query, url.fragment)))
 
 
-def force_unicode(string, charset="utf-8"):
+def force_unicode(string, charset="utf-8"):  # type: (Union[bytes, str], str) -> str
     """Convert string to unicode if it is not yet unicode.
 
     Params:
@@ -68,7 +71,7 @@ def force_unicode(string, charset="utf-8"):
     return string.decode(charset, "replace")  # Py2 only
 
 
-def unquote(string, charset="utf-8"):
+def unquote(string, charset="utf-8"):  # type: (str, str) -> bytes
     """Unquote and normalize unicode string.
 
     Params:
@@ -81,11 +84,11 @@ def unquote(string, charset="utf-8"):
     """
     string = unquote_orig(string)
     string = force_unicode(string, charset)
-    string = unicodedata.normalize("NFC", string).encode(charset)
-    return string
+    bstring = unicodedata.normalize("NFC", string).encode(charset)
+    return bstring
 
 
-def quote(string, safe="/"):
+def quote(string, safe="/"):  # type: (Union[bytes, str], Union[bytes, str]) -> str
     """Quote string.
 
     Params:

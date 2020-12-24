@@ -11,7 +11,7 @@ EXPECTED_DATA = {
 }
 
 
-def test_generic_url_cleanup_result_is_expected():
+def test_generic_url_cleanup_result_is_expected():  # type: () -> None
     """Assert we got expected results from the generic_url_cleanup function."""
     for url, expected in EXPECTED_DATA.items():
 

@@ -11,7 +11,7 @@ EXPECTED_DATA = {
 }
 
 
-def test_provide_url_scheme_result_is_expected():
+def test_provide_url_scheme_result_is_expected():  # type: () -> None
     """Assert we got expected results from the provide_url_scheme function."""
     for url, expected in EXPECTED_DATA.items():
 
@@ -20,7 +20,7 @@ def test_provide_url_scheme_result_is_expected():
         assert result == expected, url
 
 
-def test_provide_url_scheme_accept_default_scheme_param():
+def test_provide_url_scheme_accept_default_scheme_param():  # type: () -> None
     """Assert we could provide default_scheme param other than https."""
     url = "//site/path"
     expected = "http://site/path"
