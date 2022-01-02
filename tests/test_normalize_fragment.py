@@ -11,7 +11,7 @@ EXPECTED_DATA = {
 }
 
 
-def test_normalize_fragment_result_is_expected():
+def test_normalize_fragment_result_is_expected():  # type: () -> None
     """Assert we got expected results from the normalize_fragment function."""
     for url, expected in EXPECTED_DATA.items():
 

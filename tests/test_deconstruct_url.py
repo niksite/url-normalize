@@ -23,7 +23,7 @@ EXPECTED_DATA = {
 }
 
 
-def test_deconstruct_url_result_is_expected():
+def test_deconstruct_url_result_is_expected():  # type: () -> None
     """Assert we got expected results from the deconstruct_url function."""
     for url, expected in EXPECTED_DATA.items():
 

@@ -16,10 +16,12 @@ version = "1.4.3"
 [tool.poetry.dependencies]
 python = "~2.7 || ^3.6"
 six = "*"
+typing = [{version="~3.6", python="~2.7"}]
 
 [tool.poetry.dev-dependencies]
 bandit = [{version="*", python="^3.6"}]
 flake8 = [{version="*", python="^3.6"}]
+mypy = [{version="~0.790", python="^3.6"}]
 pluggy = [{version="0.13.1", python="~2.7"}]
 pydocstyle = [{version="*", python="^3.6"}]
 pylint = [{version="*", python="^3.6"}]

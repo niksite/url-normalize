@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """URL normalize main module."""
 import re
+from typing import List
+
+import six
 
 from .tools import deconstruct_url, force_unicode, quote, reconstruct_url, unquote
 
@@ -21,7 +24,7 @@ DEFAULT_CHARSET = "utf-8"
 DEFAULT_SCHEME = "https"
 
 
-def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):
+def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):  # type: (str, str) -> str
     """Make sure we have valid url scheme.
 
     Params:
@@ -42,7 +45,7 @@ def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):
     return default_scheme + "://" + url
 
 
-def generic_url_cleanup(url):
+def generic_url_cleanup(url):  # type: (str) -> str
     """Cleanup the URL from unnecessary data and convert to final form.
 
     Converts shebang urls to final form, removed unnecessary data from the url.
@@ -60,7 +63,7 @@ def generic_url_cleanup(url):
     return url
 
 
-def normalize_scheme(scheme):
+def normalize_scheme(scheme):  # type: (str) -> str
     """Normalize scheme part of the url.
 
     Params:
@@ -73,7 +76,7 @@ def normalize_scheme(scheme):
     return scheme.lower()
 
 
-def normalize_userinfo(userinfo):
+def normalize_userinfo(userinfo):  # type: (str) -> str
     """Normalize userinfo part of the url.
 
     Params:
@@ -88,7 +91,7 @@ def normalize_userinfo(userinfo):
     return userinfo
 
 
-def normalize_host(host, charset=DEFAULT_CHARSET):
+def normalize_host(host, charset=DEFAULT_CHARSET):  # type: (str, str) -> six.text_type
     """Normalize host part of the url.
 
     Lowercase and strip of final dot.
@@ -104,11 +107,11 @@ def normalize_host(host, charset=DEFAULT_CHARSET):
     host = force_unicode(host, charset)
     host = host.lower()
     host = host.strip(".")
-    host = host.encode("idna").decode(charset)
-    return host
+    uhost = host.encode("idna").decode(charset)
+    return uhost
 
 
-def normalize_port(port, scheme):
+def normalize_port(port, scheme):  # type: (str, str) -> str
     """Normalize port part of the url.
 
     Remove mention of default port number
@@ -129,7 +132,7 @@ def normalize_port(port, scheme):
     return port
 
 
-def normalize_path(path, scheme):
+def normalize_path(path, scheme):  # type: (str, str) -> str
     """Normalize path part of the url.
 
     Remove mention of default path number
@@ -148,7 +151,8 @@ def normalize_path(path, scheme):
     path = quote(unquote(path), "~:/?#[]@!$&'()*+,;=")
     # Prevent dot-segments appearing in non-relative URI paths.
     if scheme in ["", "http", "https", "ftp", "file"]:
-        output, part = [], None
+        output = []  # type: List[str]
+        part = None
         for part in path.split("/"):
             if part == "":
                 if not output:
@@ -170,7 +174,7 @@ def normalize_path(path, scheme):
     return path
 
 
-def normalize_fragment(fragment):
+def normalize_fragment(fragment):  # type: (str) -> str
     """Normalize fragment part of the url.
 
     Params:
@@ -183,7 +187,7 @@ def normalize_fragment(fragment):
     return quote(unquote(fragment), "~")
 
 
-def normalize_query(query, sort_query_params=True):
+def normalize_query(query, sort_query_params=True):  # type: (str, bool) -> str
     """Normalize query part of the url.
 
     Params:
@@ -205,7 +209,7 @@ def normalize_query(query, sort_query_params=True):
 
 def url_normalize(
     url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True
-):
+):  # type: (str, str, str, bool) -> str
     """URI normalization routine.
 
     Sometimes you get an URL by a user that just isn't a real
