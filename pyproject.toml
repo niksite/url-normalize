@@ -14,8 +14,9 @@ version = "1.4.3"
 "Changelog" = "https://github.com/niksite/url-normalize#url-normalize"
 
 [tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
+python = "^3.6"
 six = "*"
+idna = "^3.3"
 
 [tool.poetry.dev-dependencies]
 bandit = [{version="*", python="^3.6"}]
