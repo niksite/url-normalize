@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """URL normalize main module."""
 import re
-
+import idna
 from .tools import deconstruct_url, force_unicode, quote, reconstruct_url, unquote
 
 DEFAULT_PORT = {
@@ -104,7 +104,7 @@ def normalize_host(host, charset=DEFAULT_CHARSET):
     host = force_unicode(host, charset)
     host = host.lower()
     host = host.strip(".")
-    host = host.encode("idna").decode(charset)
+    host = idna.encode(host, uts46=True, transitional=True).decode(charset)
     return host
 
 
@@ -204,7 +204,7 @@ def normalize_query(query, sort_query_params=True):
 
 
 def url_normalize(
-    url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True
+        url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True
 ):
     """URI normalization routine.
 
