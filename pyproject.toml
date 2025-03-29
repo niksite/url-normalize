@@ -66,3 +66,14 @@ show_error_codes = true
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--cov-fail-under=100",
+  "--cov-report=term-missing:skip-covered",
+  "--cov=url_normalize",
+  "--disable-socket",
+  "--ruff",
+  "-v",
+]
+python_files = ["tests.py", "test_*.py", "*_tests.py"]

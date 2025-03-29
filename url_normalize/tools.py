@@ -38,9 +38,7 @@ def deconstruct_url(url: str) -> URL:
     """
     scheme, auth, path, query, fragment = urlsplit(url.strip())
     match = re.search(r"([^@]*@)?([^:]*):?(.*)", auth)
-    if not match:
-        raise ValueError(f"Invalid URL format: {url}")
-    (userinfo, host, port) = match.groups()
+    (userinfo, host, port) = match.groups()  # type: ignore  # noqa: PGH003
     return URL(
         fragment=fragment,
         host=host,
