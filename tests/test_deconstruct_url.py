@@ -1,7 +1,12 @@
 """Deconstruct url tests."""
-from url_normalize.tools import deconstruct_url, URL
 
-EXPECTED_DATA = {
+from __future__ import annotations
+
+from typing import Final
+
+from url_normalize.tools import URL, deconstruct_url
+
+EXPECTED_DATA: Final[dict[str, URL]] = {
     "http://site.com": URL(
         fragment="",
         host="site.com",
@@ -23,10 +28,8 @@ EXPECTED_DATA = {
 }
 
 
-def test_deconstruct_url_result_is_expected():
+def test_deconstruct_url_result_is_expected() -> None:
     """Assert we got expected results from the deconstruct_url function."""
     for url, expected in EXPECTED_DATA.items():
-
         result = deconstruct_url(url)
-
         assert result == expected, url

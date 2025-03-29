@@ -1,20 +1,33 @@
-"""Url normalize tools (py27/py37 compatible)."""
+"""URL normalization tools."""
+
+from __future__ import annotations
+
 import re
 import unicodedata
-from collections import namedtuple
-
-import six
-from six.moves.urllib.parse import quote as quote_orig
-from six.moves.urllib.parse import unquote as unquote_orig
-from six.moves.urllib.parse import urlsplit, urlunsplit
-
-URL = namedtuple(
-    "URL", ["scheme", "userinfo", "host", "port", "path", "query", "fragment"]
-)
+from typing import NamedTuple
+from urllib.parse import quote as quote_orig
+from urllib.parse import unquote as unquote_orig
+from urllib.parse import urlsplit, urlunsplit
 
 
-def deconstruct_url(url):
-    """Tranform the url into URL structure.
+class URL(NamedTuple):
+    """URL components tuple.
+
+    A named tuple containing the parsed components of a URL:
+    scheme, userinfo, host, port, path, query, and fragment.
+    """
+
+    scheme: str
+    userinfo: str
+    host: str
+    port: str
+    path: str
+    query: str
+    fragment: str
+
+
+def deconstruct_url(url: str) -> URL:
+    """Transform the url into URL structure.
 
     Params:
         url : string : the URL
@@ -24,19 +37,22 @@ def deconstruct_url(url):
 
     """
     scheme, auth, path, query, fragment = urlsplit(url.strip())
-    (userinfo, host, port) = re.search("([^@]*@)?([^:]*):?(.*)", auth).groups()
+    match = re.search(r"([^@]*@)?([^:]*):?(.*)", auth)
+    if not match:
+        raise ValueError(f"Invalid URL format: {url}")
+    (userinfo, host, port) = match.groups()
     return URL(
         fragment=fragment,
         host=host,
         path=path,
-        port=port,
+        port=port or "",
         query=query,
         scheme=scheme,
         userinfo=userinfo or "",
     )
 
 
-def reconstruct_url(url):
+def reconstruct_url(url: URL) -> str:
     """Reconstruct string url from URL.
 
     Params:
@@ -52,23 +68,23 @@ def reconstruct_url(url):
     return urlunsplit((url.scheme, auth, url.path, url.query, url.fragment))
 
 
-def force_unicode(string, charset="utf-8"):
-    """Convert string to unicode if it is not yet unicode.
+def force_unicode(string: str | bytes, charset: str = "utf-8") -> str:
+    """Ensure string is properly encoded (Python 3 only).
 
     Params:
-        string : string/unicode : an input string
-        charset : string : optional : output encoding
+        string : str : an input string
+        charset : str : optional : output encoding
 
     Returns:
-        unicode
+        str
 
     """
-    if isinstance(string, six.text_type):  # Always True on Py3
-        return string
-    return string.decode(charset, "replace")  # Py2 only
+    if isinstance(string, bytes):
+        return string.decode(charset, "replace")
+    return string
 
 
-def unquote(string, charset="utf-8"):
+def unquote(string: str, charset: str = "utf-8") -> str:
     """Unquote and normalize unicode string.
 
     Params:
@@ -81,11 +97,11 @@ def unquote(string, charset="utf-8"):
     """
     string = unquote_orig(string)
     string = force_unicode(string, charset)
-    string = unicodedata.normalize("NFC", string).encode(charset)
-    return string
+    encoded_str = unicodedata.normalize("NFC", string).encode(charset)
+    return encoded_str.decode(charset)
 
 
-def quote(string, safe="/"):
+def quote(string: str, safe: str = "/") -> str:
     """Quote string.
 
     Params:

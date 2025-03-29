@@ -1,9 +1,9 @@
-.coverage
-.*cache
-.tox
-.vscode
-dist
-*.lock
 __pycache__
-*.pyc
+.*
+!.github
+!.pre-commit-config.yaml
 *.egg-info
+*.lock
+*.pyc
+dist
+memory-bank

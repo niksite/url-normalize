@@ -1,34 +1,68 @@
-[tool.poetry]
-authors = ["Nikolay Panov <github@npanov.com>"]
-description = "URL normalization for Python"
-homepage = "https://github.com/niksite/url-normalize"
-keywords = ['url', 'normalization', 'normalize']
-license = "MIT"
+[project]
 name = "url-normalize"
-readme = "README.md"
-repository = "https://github.com/niksite/url-normalize"
 version = "1.4.3"
+description = "URL normalization for Python"
+authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.8"
+keywords = ["url", "normalization", "normalize"]
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/niksite/url-normalize/issues"
-"Changelog" = "https://github.com/niksite/url-normalize#url-normalize"
+[project.urls]
+Homepage = "https://github.com/niksite/url-normalize"
+Repository = "https://github.com/niksite/url-normalize"
+Issues = "https://github.com/niksite/url-normalize/issues"
+Changelog = "https://github.com/niksite/url-normalize#url-normalize"
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.6"
-six = "*"
+[project.optional-dependencies]
+dev = [
+  "mypy",
+  "pre-commit",
+  "pytest-cov",
+  "pytest-ruff",
+  "pytest-socket",
+  "pytest",
+  "ruff>=0.1.0",
+  "tox",
+]
 
-[tool.poetry.dev-dependencies]
-bandit = [{version="*", python="^3.6"}]
-flake8 = [{version="*", python="^3.6"}]
-pluggy = [{version="0.13.1", python="~2.7"}]
-pydocstyle = [{version="*", python="^3.6"}]
-pylint = [{version="*", python="^3.6"}]
-pytest = [{version="3.10.1", python="~2.7"},{version="*", python="^3.6"}]
-pytest-cov = [{version="2.9.0", python="~2.7"},{version="*", python="^3.6"}]
-pytest-flakes = [{version="4.0.1", python="~2.7"},{version="*", python="^3.6"}]
-pytest-socket = [{version="0.3.3", python="~2.7"}, {version="*", python="^3.6"}]
-tox = [{version="*", python="^3.6"}]
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["ALL"]
+fixable = ["ALL"]
+ignore = [
+  "COM812", # Missing trailing comma
+  "D203",   # One blank line before class
+  "D211",   # no-blank-line-before-class - we prefer D203 instead
+  "D213",   # multi-line-summary-second-line - we prefer D212 instead
+  "E501",   # Line too long
+  "ANN001", # Missing type annotation for function argument
+  "ANN201", # Missing return type annotation for public function
+  "EM102",  # Exception must not use an f-string literal
+  "FBT002", # Boolean default positional argument in function definition
+  "PYI024", # Use typing.NamedTuple instead of collections.namedtuple
+  "RET504", # Unnecessary assignment before return statement
+  "S101",   # Use of assert detected
+  "TRY003", # Avoid specifying long messages outside the exception class
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["INP001"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+exclude = ["tests"]
+python_version = "3.8"
+show_error_codes = true
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"

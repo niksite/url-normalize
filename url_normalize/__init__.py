@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-URI normalizator.
+"""URI normalizator (Python 3).
 
 URI Normalization function:
  * Take care of IDN domains.
@@ -19,10 +17,7 @@ URI Normalization function:
 Inspired by Sam Ruby's urlnorm.py:
     http://intertwingly.net/blog/2004/08/04/Urlnorm
 This fork author: Nikolay Panov (<pythonista@npanov.com>)
-
 """
-
-from __future__ import absolute_import
 
 from .url_normalize import url_normalize
 

@@ -1,7 +1,12 @@
 """Reconstruct url tests."""
-from url_normalize.tools import reconstruct_url, URL
 
-EXPECTED_DATA = (
+from __future__ import annotations
+
+from typing import Final
+
+from url_normalize.tools import URL, reconstruct_url
+
+EXPECTED_DATA: Final[tuple[tuple[URL, str], ...]] = (
     (
         URL(
             fragment="",
@@ -29,10 +34,8 @@ EXPECTED_DATA = (
 )
 
 
-def test_deconstruct_url_result_is_expected():
+def test_deconstruct_url_result_is_expected() -> None:
     """Assert we got expected results from the deconstruct_url function."""
     for url, expected in EXPECTED_DATA:
-
         result = reconstruct_url(url)
-
         assert result == expected, url

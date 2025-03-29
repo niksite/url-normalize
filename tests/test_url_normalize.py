@@ -1,9 +1,12 @@
-# -*- coding: utf-8 -*-
 """Integrations tests."""
+
+from __future__ import annotations
+
+from typing import Final
+
 from url_normalize import url_normalize
 
-
-EXPECTED_RESULTS = {
+EXPECTED_RESULTS: Final[dict[str, str]] = {
     "/../foo": "/foo",
     "/./../foo": "/foo",
     "/./foo": "/foo",
@@ -37,18 +40,25 @@ EXPECTED_RESULTS = {
     "http://example.com/%7Ejane": "http://example.com/~jane",
     "http://example.com/a/../a/b": "http://example.com/a/b",
     "http://example.com/a/./b": "http://example.com/a/b",
-    "http://example.com/#!5753509/hello-world": "http://example.com/?_escaped_fragment_=5753509/hello-world",
-    "http://USER:pass@www.Example.COM/foo/bar": "http://USER:pass@www.example.com/foo/bar",
+    "http://example.com/#!5753509/hello-world": (
+        "http://example.com/?_escaped_fragment_=5753509/hello-world"
+    ),
+    "http://USER:pass@www.Example.COM/foo/bar": (
+        "http://USER:pass@www.example.com/foo/bar"
+    ),
     "http://www.example.com./": "http://www.example.com/",
     "http://www.foo.com:80/foo": "http://www.foo.com/foo",
     "http://www.foo.com.:81/foo": "http://www.foo.com:81/foo",
     "http://www.foo.com./foo/bar.html": "http://www.foo.com/foo/bar.html",
     "http://www.foo.com/%7Ebar": "http://www.foo.com/~bar",
     "http://www.foo.com/%7ebar": "http://www.foo.com/~bar",
-    "пример.испытание/Служебная:Search/Test": "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test",
+    "пример.испытание/Служебная:Search/Test": (
+        "https://xn--e1afmkfd.xn--80akhbyknj4f"
+        "/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test"
+    ),
 }
 
-NO_CHANGES_EXPECTED = (
+NO_CHANGES_EXPECTED: Final[tuple[str, ...]] = (
     "-",
     "",
     "/..foo",
@@ -80,7 +90,7 @@ NO_CHANGES_EXPECTED = (
 )
 
 
-def test_url_normalize_changes():
+def test_url_normalize_changes() -> None:
     """Assert url_normalize do not change URI if not required.
 
     http://www.intertwingly.net/wiki/pie/PaceCanonicalIds
@@ -89,13 +99,13 @@ def test_url_normalize_changes():
         assert url_normalize(value) == value
 
 
-def test_url_normalize_results():
+def test_url_normalize_results() -> None:
     """Assert url_normalize return expected results."""
     for value, expected in EXPECTED_RESULTS.items():
         assert expected == url_normalize(value), value
 
 
-def test_url_normalize_with_http_scheme():
+def test_url_normalize_with_http_scheme() -> None:
     """Assert we could use http scheme as default."""
     url = "//www.foo.com/"
     expected = "http://www.foo.com/"
@@ -105,7 +115,7 @@ def test_url_normalize_with_http_scheme():
     assert actual == expected
 
 
-def test_url_normalize_with_no_params_sorting():
+def test_url_normalize_with_no_params_sorting() -> None:
     """Assert we could use http scheme as default."""
     url = "http://www.foo.com/?b=1&a=2"
     expected = "http://www.foo.com/?b=1&a=2"

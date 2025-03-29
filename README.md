@@ -1,9 +1,6 @@
 url-normalize
 =============
 
-[![Build Status](https://travis-ci.org/niksite/url-normalize.svg?branch=master)](https://travis-ci.org/niksite/url-normalize)
-[![Coverage Status](https://coveralls.io/repos/github/niksite/url-normalize/badge.svg?branch=master)](https://coveralls.io/github/niksite/url-normalize?branch=master)
-
 URI Normalization function:
 
 * Take care of IDN domains.
@@ -12,12 +9,15 @@ URI Normalization function:
 * Only perform percent-encoding where it is essential.
 * Always use uppercase A-through-F characters when percent-encoding.
 * Prevent dot-segments appearing in non-relative URI paths.
-* For schemes that define a default authority, use an empty authority if the default is desired.
-* For schemes that define an empty path to be equivalent to a path of "/", use "/".
+* For schemes that define a default authority, use an empty authority if the
+  default is desired.
+* For schemes that define an empty path to be equivalent to a path of "/",
+  use "/".
 * For schemes that define a port, use an empty port if the default is desired
 * All portions of the URI must be utf-8 encoded NFC from Unicode strings
 
-Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm)
+Inspired by Sam Ruby's [urlnorm.py]
+(<http://intertwingly.net/blog/2004/08/04/Urlnorm>)
 
 Example:
 
@@ -39,7 +39,7 @@ History:
 
 * 1.4.3: Added LICENSE file
 * 1.4.2: Added an optional param sort_query_params (True by default)
-* 1.4.1: Added an optional param default_scheme to the url_normalize ('https' by default)
+* 1.4.1: Added param default_scheme to url_normalize ('https' by default)
 * 1.4.0: A bit of code refactoring and cleanup
 * 1.3.3: Support empty string and double slash urls (//domain.tld)
 * 1.3.2: Same code support both Python 3 and Python 2.

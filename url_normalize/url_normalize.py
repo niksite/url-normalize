@@ -1,8 +1,16 @@
-# -*- coding: utf-8 -*-
 """URL normalize main module."""
+
+from __future__ import annotations
+
 import re
 
-from .tools import deconstruct_url, force_unicode, quote, reconstruct_url, unquote
+from .tools import (
+    deconstruct_url,
+    force_unicode,
+    quote,
+    reconstruct_url,
+    unquote,
+)
 
 DEFAULT_PORT = {
     "ftp": "21",
@@ -21,7 +29,7 @@ DEFAULT_CHARSET = "utf-8"
 DEFAULT_SCHEME = "https"
 
 
-def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):
+def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
     """Make sure we have valid url scheme.
 
     Params:
@@ -42,7 +50,7 @@ def provide_url_scheme(url, default_scheme=DEFAULT_SCHEME):
     return default_scheme + "://" + url
 
 
-def generic_url_cleanup(url):
+def generic_url_cleanup(url: str) -> str:
     """Cleanup the URL from unnecessary data and convert to final form.
 
     Converts shebang urls to final form, removed unnecessary data from the url.
@@ -60,7 +68,7 @@ def generic_url_cleanup(url):
     return url
 
 
-def normalize_scheme(scheme):
+def normalize_scheme(scheme: str) -> str:
     """Normalize scheme part of the url.
 
     Params:
@@ -73,7 +81,7 @@ def normalize_scheme(scheme):
     return scheme.lower()
 
 
-def normalize_userinfo(userinfo):
+def normalize_userinfo(userinfo: str) -> str:
     """Normalize userinfo part of the url.
 
     Params:
@@ -88,7 +96,7 @@ def normalize_userinfo(userinfo):
     return userinfo
 
 
-def normalize_host(host, charset=DEFAULT_CHARSET):
+def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
     """Normalize host part of the url.
 
     Lowercase and strip of final dot.
@@ -96,6 +104,7 @@ def normalize_host(host, charset=DEFAULT_CHARSET):
 
     Params:
         host : string : url host, e.g., 'site.com'
+        charset : string : encoding charset
 
     Returns:
         string : normalized host data.
@@ -108,7 +117,7 @@ def normalize_host(host, charset=DEFAULT_CHARSET):
     return host
 
 
-def normalize_port(port, scheme):
+def normalize_port(port: str, scheme: str) -> str:
     """Normalize port part of the url.
 
     Remove mention of default port number
@@ -124,12 +133,12 @@ def normalize_port(port, scheme):
     if not port.isdigit():
         return port
     port = str(int(port))
-    if DEFAULT_PORT[scheme] == port:
+    if DEFAULT_PORT.get(scheme) == port:
         return ""
     return port
 
 
-def normalize_path(path, scheme):
+def normalize_path(path: str, scheme: str) -> str:
     """Normalize path part of the url.
 
     Remove mention of default path number
@@ -148,7 +157,7 @@ def normalize_path(path, scheme):
     path = quote(unquote(path), "~:/?#[]@!$&'()*+,;=")
     # Prevent dot-segments appearing in non-relative URI paths.
     if scheme in ["", "http", "https", "ftp", "file"]:
-        output, part = [], None
+        output: list[str] = []
         for part in path.split("/"):
             if part == "":
                 if not output:
@@ -160,7 +169,9 @@ def normalize_path(path, scheme):
                     output.pop()
             else:
                 output.append(part)
-        if part in ["", ".", ".."]:
+        # The part variable is used in the final check
+        last_part = part
+        if last_part in ["", ".", ".."]:
             output.append("")
         path = "/".join(output)
     # For schemes that define an empty path to be equivalent to a path of "/",
@@ -170,7 +181,7 @@ def normalize_path(path, scheme):
     return path
 
 
-def normalize_fragment(fragment):
+def normalize_fragment(fragment: str) -> str:
     """Normalize fragment part of the url.
 
     Params:
@@ -183,19 +194,23 @@ def normalize_fragment(fragment):
     return quote(unquote(fragment), "~")
 
 
-def normalize_query(query, sort_query_params=True):
+def normalize_query(query: str, *, sort_query_params: bool = True) -> str:
     """Normalize query part of the url.
 
     Params:
         query : string : url query, e.g., 'param1=val1&param2=val2'
+        sort_query_params : bool : whether to sort query parameters
 
     Returns:
         string : normalized query data.
 
     """
     param_arr = [
-        "=".join([quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)])
+        "=".join(
+            [quote(unquote(t), "~:/?#[]@!$'()*+,;=") for t in q.split("=", 1)],
+        )
         for q in query.split("&")
+        if q
     ]
     if sort_query_params:
         param_arr = sorted(param_arr)
@@ -204,8 +219,12 @@ def normalize_query(query, sort_query_params=True):
 
 
 def url_normalize(
-    url, charset=DEFAULT_CHARSET, default_scheme=DEFAULT_SCHEME, sort_query_params=True
-):
+    url: str | None,
+    charset: str = DEFAULT_CHARSET,
+    default_scheme: str = DEFAULT_SCHEME,
+    *,
+    sort_query_params: bool = True,
+) -> str | None:
     """URI normalization routine.
 
     Sometimes you get an URL by a user that just isn't a real
@@ -217,11 +236,14 @@ def url_normalize(
     'http://de.wikipedia.org/wiki/Elf%20%28Begriffskl%C3%A4rung%29'
 
     Params:
-        charset : string : optional
-            The target charset for the URL if the url was given as unicode string.
+        url : str | None : URL to normalize
+        charset : str : optional
+            The target charset for the URL if the url was given as unicode string
+        default_scheme : str : default scheme to use if none present
+        sort_query_params : bool : whether to sort query parameters
 
     Returns:
-        string : a normalized url
+        str | None : a normalized url
 
     """
     if not url:
@@ -233,7 +255,7 @@ def url_normalize(
         scheme=normalize_scheme(url_elements.scheme),
         userinfo=normalize_userinfo(url_elements.userinfo),
         host=normalize_host(url_elements.host, charset),
-        query=normalize_query(url_elements.query, sort_query_params),
+        query=normalize_query(url_elements.query, sort_query_params=sort_query_params),
         fragment=normalize_fragment(url_elements.fragment),
     )
     url_elements = url_elements._replace(

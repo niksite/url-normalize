@@ -1,11 +1,21 @@
-tox:
-	@tox
+install:
+	@uv pip install -e ".[dev]"
 
-test:
-	@py.test
+tox:
+	@uvx --with tox-uv tox
+
+update: install
+	@uv run -- pre-commit autoupdate
+
+lint: install
+	@uv run -- pre-commit run -a
+
+test: install
+	@uv run -- pytest
 
 build:
-	@poetry build
+	@uv build
 
 publish: build
-	@poetry publish
+	@uv publish
+
