@@ -1,0 +1,30 @@
+# This workflow publishes the package to PyPI when a release tag is pushed
+
+name: Publish Python Package
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # Trigger on version tags like v1.0.0
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    - name: Build package
+      run: ~/.cargo/bin/uv build --out dist/
+
+    - name: Publish package
+      env:
+        UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: ~/.cargo/bin/uv publish --user __token__ dist/*
