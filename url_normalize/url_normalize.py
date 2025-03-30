@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+import idna
+
 from .tools import (
     deconstruct_url,
     force_unicode,
@@ -99,7 +101,7 @@ def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
     """Normalize host part of the url.
 
     Lowercase and strip of final dot.
-    Also, take care about IDN domains.
+    Also, handle IDN domains using IDNA2008 with UTS46 transitional processing.
 
     Params:
         host : string : url host, e.g., 'site.com'
@@ -112,7 +114,20 @@ def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
     host = force_unicode(host, charset)
     host = host.lower()
     host = host.strip(".")
-    return host.encode("idna").decode(charset)
+
+    # Split domain into parts to handle each label separately
+    parts = host.split(".")
+    try:
+        # Process each label separately to handle mixed unicode/ascii domains
+        parts = [
+            idna.encode(p, uts46=True, transitional=True).decode(charset)
+            for p in parts
+            if p
+        ]
+        return ".".join(parts)
+    except idna.IDNAError:
+        # Fallback to direct encoding if IDNA2008 processing fails
+        return host.encode("idna").decode(charset)
 
 
 def normalize_port(port: str, scheme: str) -> str:

@@ -7,6 +7,7 @@ license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["url", "normalization", "normalize"]
+dependencies = ["idna>=3.3"]
 
 [project.urls]
 Homepage = "https://github.com/niksite/url-normalize"
@@ -40,7 +41,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["INP001", "ANN201", "S101"]
+"tests/**" = ["INP001", "ANN201", "S101", "CPY001"]
 
 [tool.ruff.format]
 quote-style = "double"

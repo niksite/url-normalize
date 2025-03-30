@@ -11,15 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dedicated CHANGELOG.md file
 - Semantic versioning compliance
+- IDNA 2008 support via `idna` package
+- Comprehensive test suite for IDNA edge cases
+- Proper error handling for IDNA encoding failures
 
 ### Changed
 
 - **BREAKING:** Switch default scheme from 'http' to 'https'
+- **BREAKING:** Migrated IDNA handling to use IDNA 2008 with UTS46 processing
+- **BREAKING:** Updated minimum Python version to 3.8 (removed Python 2.7 support)
 - Migrated from Travis CI to GitHub Actions for testing across multiple Python versions
 - Upgraded project structure to modern Python packaging standards using pyproject.toml
 - Moved pytest configuration from tox.ini to pyproject.toml
 - Added pre-commit hooks for code quality and linting
 - Increased test coverage requirement to 100%
+- Changed host normalization to handle each domain label separately
 
 ## [1.4.3] - 2024-02-15
 
