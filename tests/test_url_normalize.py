@@ -87,6 +87,8 @@ NO_CHANGES_EXPECTED: Final[tuple[str, ...]] = (
     "tel:+1-816-555-1212",
     "telnet://192.0.2.16:80/",
     "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+    # Issue #36: Fragment with '=' should not be encoded
+    "https://docs.google.com/spreadsheets/d/abcd/edit#gid=1234",
 )
 
 
