@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING:** Switch default scheme from 'http' to 'https'
 - **BREAKING:** Migrated IDNA handling to use IDNA 2008 with UTS46 processing
 - **BREAKING:** Updated minimum Python version to 3.8 (removed Python 2.7 support)
+- **BREAKING:** Removed sort_query_params option as it was incorrect - query parameter order is semantically meaningful and cannot be changed
 - Migrated from Travis CI to GitHub Actions for testing across multiple Python versions
 - Upgraded project structure to modern Python packaging standards using pyproject.toml
 - Moved pytest configuration from tox.ini to pyproject.toml

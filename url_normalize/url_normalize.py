@@ -24,8 +24,6 @@ def url_normalize(
     url: str | None,
     charset: str = DEFAULT_CHARSET,
     default_scheme: str = DEFAULT_SCHEME,
-    *,
-    sort_query_params: bool = True,
 ) -> str | None:
     """URI normalization routine.
 
@@ -42,7 +40,6 @@ def url_normalize(
         charset : str : optional
             The target charset for the URL if the url was given as unicode string
         default_scheme : str : default scheme to use if none present
-        sort_query_params : bool : whether to sort query parameters
 
     Returns:
         str | None : a normalized url
@@ -57,7 +54,7 @@ def url_normalize(
         scheme=normalize_scheme(url_elements.scheme),
         userinfo=normalize_userinfo(url_elements.userinfo),
         host=normalize_host(url_elements.host, charset),
-        query=normalize_query(url_elements.query, sort_query_params=sort_query_params),
+        query=normalize_query(url_elements.query),
         fragment=normalize_fragment(url_elements.fragment),
     )
     url_elements = url_elements._replace(

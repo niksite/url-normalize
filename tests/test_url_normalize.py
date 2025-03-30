@@ -32,7 +32,7 @@ EXPECTED_RESULTS: Final[dict[str, str]] = {
     "http://example.com:081/": "http://example.com:81/",
     "http://example.com:80/": "http://example.com/",
     "http://example.com": "http://example.com/",
-    "http://example.com/?b&a": "http://example.com/?a&b",
+    "http://example.com/?b&a": "http://example.com/?b&a",
     "http://example.com/?q=%5c": "http://example.com/?q=%5C",
     "http://example.com/?q=%C7": "http://example.com/?q=%EF%BF%BD",
     "http://example.com/?q=C%CC%A7": "http://example.com/?q=%C3%87",
@@ -111,15 +111,5 @@ def test_url_normalize_with_http_scheme() -> None:
     expected = "http://www.foo.com/"
 
     actual = url_normalize(url, default_scheme="http")
-
-    assert actual == expected
-
-
-def test_url_normalize_with_no_params_sorting() -> None:
-    """Assert we could use http scheme as default."""
-    url = "http://www.foo.com/?b=1&a=2"
-    expected = "http://www.foo.com/?b=1&a=2"
-
-    actual = url_normalize(url, sort_query_params=False)
 
     assert actual == expected
