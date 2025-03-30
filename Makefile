@@ -14,6 +14,7 @@ test: install
 	@uv run -- pytest
 
 build:
+	@rm -rf dist
 	@uv build
 
 publish: build

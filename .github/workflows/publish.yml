@@ -1,6 +1,6 @@
 # This workflow publishes the package to PyPI when a release tag is pushed
 
-name: Publish Python Package
+name: PyPI
 
 on:
   push:
@@ -22,9 +22,9 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Build package
-      run: ~/.cargo/bin/uv build --out dist/
+      run: uv build --out dist/
 
     - name: Publish package
       env:
-        UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: ~/.cargo/bin/uv publish --user __token__ dist/*
+        UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      run: uv publish --user __token__ dist/*

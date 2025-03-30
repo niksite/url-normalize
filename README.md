@@ -1,5 +1,8 @@
 # url-normalize
 
+[![CI](https://github.com/niksite/url-normalize/actions/workflows/ci.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/ci.yml)
+[![PyPI](https://github.com/niksite/url-normalize/actions/workflows/publish.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/publish.yml)
+
 URI Normalization function:
 
 * Take care of IDN domains.
