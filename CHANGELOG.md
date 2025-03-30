@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-03-30
+
+### Added
+
+- New command-line interface (`url-normalize`) with support for:
+  - Version information (`--version`, `-v`)
+  - Charset selection (`--charset`, `-c`)
+  - Default scheme override (`--default-scheme`, `-s`)
+  - Query parameter filtering (`--filter-params`, `-f`)
+  - Custom allowlist for query parameters (`--param-allowlist`, `-p`)
+
+### Fixed
+
+- Do not encode equals sign in fragment (Fixes #36)
+
+### Internal
+
+- Add GitHub Action to publish package to PyPI using uv
+
 ## [2.0.1] - 2025-03-29
 
 ### Fixed

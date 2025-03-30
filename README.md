@@ -38,8 +38,6 @@ pip install url-normalize
 
 ## Usage
 
-Basic usage:
-
 ```python
 from url_normalize import url_normalize
 
@@ -55,19 +53,46 @@ print(url_normalize("www.foo.com/foo", default_scheme="http"))
 print(url_normalize("www.google.com/search?q=test&utm_source=test", filter_params=True))
 # Output: https://www.google.com/search?q=test
 
-# With custom parameter allowlist
+# With custom parameter allowlist as a dict
 print(url_normalize(
     "example.com?page=1&id=123&ref=test",
     filter_params=True,
     param_allowlist={"example.com": ["page", "id"]}
 ))
 # Output: https://example.com?page=1&id=123
+
+# With custom parameter allowlist as a list
 print(url_normalize(
     "example.com?page=1&id=123&ref=test",
     filter_params=True,
     param_allowlist=["page", "id"]
 ))
 # Output: https://example.com?page=1&id=123
+```
+
+### Command-line usage
+
+You can also use `url-normalize` from the command line:
+
+```bash
+$ url-normalize "www.foo.com:80/foo"
+# Output: https://www.foo.com/foo
+
+# With custom default scheme
+$ url-normalize -s http "www.foo.com/foo"
+# Output: http://www.foo.com/foo
+
+# With query parameter filtering
+$ url-normalize -f "www.google.com/search?q=test&utm_source=test"
+# Output: https://www.google.com/search?q=test
+
+# With custom allowlist
+$ url-normalize -f -p page,id "example.com?page=1&id=123&ref=test"
+# Output: https://example.com/?page=1&id=123
+
+# Via uv tool/uvx
+$ uvx url-normalize www.foo.com:80/foo
+# Output: https://www.foo.com:80/foo
 ```
 
 ## Documentation
