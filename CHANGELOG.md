@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increased test coverage requirement to 100%
 - Changed host normalization to handle each domain label separately
 
+### Internal
+
+- Refactored code organization for improved maintainability:
+  - Split url_normalize.py into separate function modules
+  - Moved each normalization function to its own file
+  - Reorganized constants to their relevant modules
+  - Maintained backward compatibility and test coverage
+
 ## [1.4.3] - 2024-02-15
 
 ### Added
