@@ -15,4 +15,11 @@ def normalize_fragment(fragment: str) -> str:
         string : normalized fragment data.
 
     """
-    return quote(unquote(fragment), "~")
+    # According to RFC 3986, the following characters are allowed in a fragment:
+    # fragment    = *( pchar / "/" / "?" )
+    # pchar       = unreserved / pct-encoded / sub-delims / ":" / "@"
+    # unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
+    # sub-delims  = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
+    # We specifically allow "~" and "=" as safe characters here.
+    # Other sub-delimiters could potentially be added if needed.
+    return quote(unquote(fragment), safe="~=")
