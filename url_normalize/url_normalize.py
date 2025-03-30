@@ -64,8 +64,7 @@ def generic_url_cleanup(url: str) -> str:
     """
     url = url.replace("#!", "?_escaped_fragment_=")
     url = re.sub(r"utm_source=[^&]+&?", "", url)
-    url = url.rstrip("&? ")
-    return url
+    return url.rstrip("&? ")
 
 
 def normalize_scheme(scheme: str) -> str:
@@ -113,8 +112,7 @@ def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
     host = force_unicode(host, charset)
     host = host.lower()
     host = host.strip(".")
-    host = host.encode("idna").decode(charset)
-    return host
+    return host.encode("idna").decode(charset)
 
 
 def normalize_port(port: str, scheme: str) -> str:
@@ -214,8 +212,7 @@ def normalize_query(query: str, *, sort_query_params: bool = True) -> str:
     ]
     if sort_query_params:
         param_arr = sorted(param_arr)
-    query = "&".join(param_arr)
-    return query
+    return "&".join(param_arr)
 
 
 def url_normalize(
@@ -262,5 +259,4 @@ def url_normalize(
         port=normalize_port(url_elements.port, url_elements.scheme),
         path=normalize_path(url_elements.path, url_elements.scheme),
     )
-    url = reconstruct_url(url_elements)
-    return url
+    return reconstruct_url(url_elements)

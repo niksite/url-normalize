@@ -1,6 +1,6 @@
 [project]
 name = "url-normalize"
-version = "1.4.3"
+version = "2.0.0"
 description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
 license = { text = "MIT" }
@@ -12,7 +12,7 @@ keywords = ["url", "normalization", "normalize"]
 Homepage = "https://github.com/niksite/url-normalize"
 Repository = "https://github.com/niksite/url-normalize"
 Issues = "https://github.com/niksite/url-normalize/issues"
-Changelog = "https://github.com/niksite/url-normalize#url-normalize"
+Changelog = "https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -34,23 +34,13 @@ line-length = 88
 select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
-  "COM812", # Missing trailing comma
-  "D203",   # One blank line before class
-  "D211",   # no-blank-line-before-class - we prefer D203 instead
+  "COM812", # missing-trailing-comma
+  "D203",   # One blank line before class - we prefer D211 instead
   "D213",   # multi-line-summary-second-line - we prefer D212 instead
-  "E501",   # Line too long
-  "ANN001", # Missing type annotation for function argument
-  "ANN201", # Missing return type annotation for public function
-  "EM102",  # Exception must not use an f-string literal
-  "FBT002", # Boolean default positional argument in function definition
-  "PYI024", # Use typing.NamedTuple instead of collections.namedtuple
-  "RET504", # Unnecessary assignment before return statement
-  "S101",   # Use of assert detected
-  "TRY003", # Avoid specifying long messages outside the exception class
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["INP001"]
+"tests/**" = ["INP001", "ANN201", "S101"]
 
 [tool.ruff.format]
 quote-style = "double"

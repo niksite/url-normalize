@@ -13,6 +13,7 @@ repos:
     rev: v0.44.0
     hooks:
       - id: markdownlint
+        args: ["--fix", "--disable", "MD024"]
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

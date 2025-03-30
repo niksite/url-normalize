@@ -110,5 +110,4 @@ def quote(string: str, safe: str = "/") -> str:
         string : quoted string
 
     """
-    string = quote_orig(string, safe)
-    return string
+    return quote_orig(string, safe)
