@@ -3,7 +3,7 @@ name = "url-normalize"
 version = "2.0.0"
 description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["url", "normalization", "normalize"]
@@ -23,16 +23,22 @@ dev = [
   "pytest-ruff",
   "pytest-socket",
   "pytest",
-  "ruff>=0.1.0",
+  "ruff",
   "tox",
 ]
 
 [tool.ruff]
 target-version = "py38"
 line-length = 88
+unsafe-fixes = true
 
 [tool.ruff.lint]
 select = ["ALL"]
+extend-select = [
+  "D400", # First line should end with a period
+  "D401", # First line should be in imperative mood
+  "D413", # Missing blank line after the last section of a multiline docstring
+]
 fixable = ["ALL"]
 ignore = [
   "COM812", # missing-trailing-comma
@@ -40,15 +46,17 @@ ignore = [
   "D213",   # multi-line-summary-second-line - we prefer D212 instead
 ]
 
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["INP001", "ANN201", "S101", "CPY001"]
+"tests/**" = ["INP001", "ANN001", "ANN201", "S101", "CPY001"]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 
 [tool.mypy]
-strict = true
 ignore_missing_imports = true
 exclude = ["tests"]
 python_version = "3.8"

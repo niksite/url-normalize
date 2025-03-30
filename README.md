@@ -21,7 +21,7 @@ Inspired by Sam Ruby's [urlnorm.py](<http://intertwingly.net/blog/2004/08/04/Url
 
 * IDN (Internationalized Domain Name) support
 * Configurable default scheme (https by default)
-* Query parameter sorting (enabled by default)
+* Query parameter filtering with allowlists
 * Support for various URL formats including:
   * Empty string URLs
   * Double slash URLs (//domain.tld)
@@ -51,9 +51,23 @@ print(url_normalize("www.foo.com:80/foo"))
 print(url_normalize("www.foo.com/foo", default_scheme="http"))
 # Output: http://www.foo.com/foo
 
-# With query parameter sorting disabled
-print(url_normalize("example.com?b=2&a=1", sort_query_params=False))
-# Output: https://example.com?b=2&a=1
+# With query parameter filtering enabled
+print(url_normalize("www.google.com/search?q=test&utm_source=test", filter_params=True))
+# Output: https://www.google.com/search?q=test
+
+# With custom parameter allowlist
+print(url_normalize(
+    "example.com?page=1&id=123&ref=test",
+    filter_params=True,
+    param_allowlist={"example.com": ["page", "id"]}
+))
+# Output: https://example.com?page=1&id=123
+print(url_normalize(
+    "example.com?page=1&id=123&ref=test",
+    filter_params=True,
+    param_allowlist=["page", "id"]
+))
+# Output: https://example.com?page=1&id=123
 ```
 
 ## Documentation

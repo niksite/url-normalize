@@ -105,6 +105,16 @@ def test_url_normalize_results() -> None:
         assert expected == url_normalize(value), value
 
 
+def test_url_normalize_filtered() -> None:
+    """Assert url_normalize return expected results."""
+    url = "/?a&b"
+    expected = "/"
+
+    actual = url_normalize(url, filter_params=True)
+
+    assert actual == expected
+
+
 def test_url_normalize_with_http_scheme() -> None:
     """Assert we could use http scheme as default."""
     url = "//www.foo.com/"
