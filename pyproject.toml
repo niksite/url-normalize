@@ -1,9 +1,9 @@
 [project]
 name = "url-normalize"
-version = "2.0.0"
+version = "2.0.1"
 description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
-license = "MIT"
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
 keywords = ["url", "normalization", "normalize"]
