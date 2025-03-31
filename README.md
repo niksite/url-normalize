@@ -3,36 +3,56 @@
 [![CI](https://github.com/niksite/url-normalize/actions/workflows/ci.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/ci.yml)
 [![PyPI](https://github.com/niksite/url-normalize/actions/workflows/publish.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/publish.yml)
 
-URI Normalization function:
+A Python library for standardizing and normalizing URLs with support for internationalized domain names (IDN).
 
-* Take care of IDN domains.
-* Always provide the URI scheme in lowercase characters.
-* Always provide the host, if any, in lowercase characters.
-* Only perform percent-encoding where it is essential.
-* Always use uppercase A-through-F characters when percent-encoding.
-* Prevent dot-segments appearing in non-relative URI paths.
-* For schemes that define a default authority, use an empty authority if the
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Python API](#python-api)
+  - [Command Line](#command-line-usage)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Introduction
+
+url-normalize provides a robust URI normalization function that:
+
+- Takes care of IDN domains.
+- Always provides the URI scheme in lowercase characters.
+- Always provides the host, if any, in lowercase characters.
+- Only performs percent-encoding where it is essential.
+- Always uses uppercase A-through-F characters when percent-encoding.
+- Prevents dot-segments appearing in non-relative URI paths.
+- For schemes that define a default authority, uses an empty authority if the
   default is desired.
-* For schemes that define an empty path to be equivalent to a path of "/",
-  use "/".
-* For schemes that define a port, use an empty port if the default is desired
-* All portions of the URI must be utf-8 encoded NFC from Unicode strings
+- For schemes that define an empty path to be equivalent to a path of "/",
+  uses "/".
+- For schemes that define a port, uses an empty port if the default is desired
+- Ensures all portions of the URI are utf-8 encoded NFC from Unicode strings
 
-Inspired by Sam Ruby's [urlnorm.py](<http://intertwingly.net/blog/2004/08/04/Urlnorm>)
+Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm)
 
 ## Features
 
-* IDN (Internationalized Domain Name) support
-* Configurable default scheme (https by default)
-* Configurable default domain for absolute paths
-* Query parameter filtering with allowlists
-* Support for various URL formats including:
-  * Empty string URLs
-  * Double slash URLs (//domain.tld)
-  * Shebang (#!) URLs
-* Cross-version Python compatibility (3.8+)
-* 100% test coverage
-* Modern type hints and string handling
+- **IDN Support**: Full internationalized domain name handling
+- **Configurable Defaults**:
+  - Customizable default scheme (https by default)
+  - Configurable default domain for absolute paths
+- **Query Parameter Control**:
+  - Parameter filtering with allowlists
+  - Support for domain-specific parameter rules
+- **Versatile URL Handling**:
+  - Empty string URLs
+  - Double slash URLs (//domain.tld)
+  - Shebang (#!) URLs
+- **Developer Friendly**:
+  - Cross-version Python compatibility (3.8+)
+  - 100% test coverage
+  - Modern type hints and string handling
 
 ## Installation
 
@@ -41,6 +61,8 @@ pip install url-normalize
 ```
 
 ## Usage
+
+### Python API
 
 ```python
 from url_normalize import url_normalize
@@ -82,7 +104,7 @@ print(url_normalize("/images/logo.png", default_scheme="http", default_domain="e
 # Output: http://example.com/images/logo.png
 ```
 
-### Command-line usage
+### Command-line Usage
 
 You can also use `url-normalize` from the command line:
 
@@ -118,6 +140,10 @@ $ uvx url-normalize www.foo.com:80/foo
 ## Documentation
 
 For a complete history of changes, see [CHANGELOG.md](CHANGELOG.md).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
