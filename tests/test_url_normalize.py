@@ -42,7 +42,7 @@ from url_normalize import url_normalize
         "https://docs.google.com/spreadsheets/d/abcd/edit#gid=1234",
     ],
 )
-def test_url_normalize_changes(value: str) -> None:
+def test_url_normalize_no_changes_expected(value: str) -> None:
     """Assert url_normalize do not change URI if not required.
 
     http://www.intertwingly.net/wiki/pie/PaceCanonicalIds
@@ -104,9 +104,14 @@ def test_url_normalize_changes(value: str) -> None:
             "пример.испытание/Служебная:Search/Test",
             "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test",
         ),
+        # Issue #19: http:example.com
+        ("http:example.com", "http://example.com/"),
+        ("http:example.com/path", "http://example.com/path"),
+        ("ftp:test.com/files", "ftp://test.com/files"),
+        ("https:www.example.com", "https://www.example.com/"),
     ],
 )
-def test_url_normalize_results(value: str, expected: str) -> None:
+def test_url_normalize_expected_changes(value: str, expected: str) -> None:
     """Assert url_normalize return expected results."""
     assert url_normalize(value) == expected
 
