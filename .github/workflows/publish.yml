@@ -22,9 +22,9 @@ jobs:
       run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
     - name: Build package
-      run: uv build --out dist/
+      run: uv build
 
     - name: Publish package
       env:
         UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      run: uv publish --user __token__ dist/*
+      run: uv publish
