@@ -5,7 +5,7 @@ from __future__ import annotations
 from .param_allowlist import get_allowed_params
 from .tools import quote, unquote
 
-QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;="
+QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 
 
 def process_query_param(param: str) -> str:

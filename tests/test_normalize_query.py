@@ -14,7 +14,8 @@ from url_normalize.url_normalize import normalize_query
         ("Ç=Ç", "%C3%87=%C3%87"),
         ("%C3%87=%C3%87", "%C3%87=%C3%87"),
         ("q=C%CC%A7", "q=%C3%87"),
-        ("q=%23test", "q=%23test"),  # Should preserve encoded # as per Issue #31
+        ("q=%23test", "q=%23test"),  # Preserve encoded # in value, #31
+        ("where=code%3D123", "where=code%3D123"),  # Preserve encoded = in value, #25
     ],
 )
 def test_normalize_query_result_is_expected(query, expected):
