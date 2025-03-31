@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2025-03-30
+
+### Added
+
+- New `default_domain` parameter to support absolute paths with domain names (#22)
+
+### Fixed
+
+- Handle URLs with missing slashes correctly (#19)
+- Fix decoding of reserved characters in URL paths (#25)
+- Fix Twitter hashtag encoding in query parameters (#31)
+
+### Internal
+
+- Update CI configuration to use uv from PATH
+
 ## [2.1.0] - 2025-03-30
 
 ### Added
