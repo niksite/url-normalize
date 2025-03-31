@@ -231,3 +231,64 @@ def test_cli_charset() -> None:
     assert result_charset_short.returncode == 0
     assert result_charset_short.stdout.strip() == expected_idn
     assert not result_charset_short.stderr
+
+
+def test_cli_default_domain() -> None:
+    """Test adding default domain to absolute path via CLI."""
+    url = "/path/to/image.png"
+    expected = "https://example.com/path/to/image.png"
+
+    result = run_cli("--default-domain", "example.com", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_default_domain_short_arg() -> None:
+    """Test adding default domain using short argument."""
+    url = "/path/to/image.png"
+    expected = "https://example.com/path/to/image.png"
+
+    result = run_cli("-d", "example.com", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_default_domain_with_scheme() -> None:
+    """Test adding default domain with custom scheme."""
+    url = "/path/to/image.png"
+    expected = "http://example.com/path/to/image.png"
+
+    result = run_cli("-d", "example.com", "-s", "http", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_default_domain_no_effect_on_absolute_urls() -> None:
+    """Test default domain has no effect on absolute URLs."""
+    url = "http://original-domain.com/path"
+    expected = "http://original-domain.com/path"
+
+    result = run_cli("-d", "example.com", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_default_domain_no_effect_on_relative_paths() -> None:
+    """Test default domain has no effect on relative paths."""
+    url = "path/to/file.html"
+    # This becomes a regular URL with the default scheme
+    expected = "https://path/to/file.html"
+
+    result = run_cli("-d", "example.com", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr

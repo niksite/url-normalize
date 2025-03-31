@@ -24,6 +24,7 @@ Inspired by Sam Ruby's [urlnorm.py](<http://intertwingly.net/blog/2004/08/04/Url
 
 * IDN (Internationalized Domain Name) support
 * Configurable default scheme (https by default)
+* Configurable default domain for absolute paths
 * Query parameter filtering with allowlists
 * Support for various URL formats including:
   * Empty string URLs
@@ -71,6 +72,14 @@ print(url_normalize(
     param_allowlist=["page", "id"]
 ))
 # Output: https://example.com?page=1&id=123
+
+# With default domain for absolute paths
+print(url_normalize("/images/logo.png", default_domain="example.com"))
+# Output: https://example.com/images/logo.png
+
+# With default domain and custom scheme
+print(url_normalize("/images/logo.png", default_scheme="http", default_domain="example.com"))
+# Output: http://example.com/images/logo.png
 ```
 
 ### Command-line usage
@@ -92,6 +101,14 @@ $ url-normalize -f "www.google.com/search?q=test&utm_source=test"
 # With custom allowlist
 $ url-normalize -f -p page,id "example.com?page=1&id=123&ref=test"
 # Output: https://example.com/?page=1&id=123
+
+# With default domain for absolute paths
+$ url-normalize -d example.com "/images/logo.png"
+# Output: https://example.com/images/logo.png
+
+# With default domain and custom scheme
+$ url-normalize -d example.com -s http "/images/logo.png"
+# Output: http://example.com/images/logo.png
 
 # Via uv tool/uvx
 $ uvx url-normalize www.foo.com:80/foo

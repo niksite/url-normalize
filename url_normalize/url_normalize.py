@@ -16,15 +16,17 @@ from .normalize_port import normalize_port
 from .normalize_query import normalize_query
 from .normalize_scheme import DEFAULT_SCHEME, normalize_scheme
 from .normalize_userinfo import normalize_userinfo
+from .provide_url_domain import provide_url_domain
 from .provide_url_scheme import provide_url_scheme
 from .tools import deconstruct_url, reconstruct_url
 
 
-def url_normalize(
+def url_normalize(  # noqa: PLR0913
     url: str | None,
+    *,  # Force keyword-only arguments
     charset: str = DEFAULT_CHARSET,
     default_scheme: str = DEFAULT_SCHEME,
-    *,  # Force keyword-only arguments
+    default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | None = None,
 ) -> str | None:
@@ -43,6 +45,8 @@ def url_normalize(
         charset : str : optional
             The target charset for the URL if the url was given as unicode string
         default_scheme : str : default scheme to use if none present
+        default_domain : str | None : optional
+            Default domain to use for absolute paths (starting with '/')
         filter_params : bool : optional
             Whether to filter non-allowlisted parameters (False by default)
         param_allowlist : dict | list | None : optional
@@ -54,6 +58,7 @@ def url_normalize(
     """
     if not url:
         return url
+    url = provide_url_domain(url, default_domain)
     url = provide_url_scheme(url, default_scheme)
     url = generic_url_cleanup(url)
     url_elements = deconstruct_url(url)

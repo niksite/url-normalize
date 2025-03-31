@@ -37,6 +37,12 @@ def main() -> None:
         help="Filter common tracking parameters.",
     )
     parser.add_argument(
+        "-d",
+        "--default-domain",
+        type=str,
+        help="Default domain to use for absolute paths (starting with '/').",
+    )
+    parser.add_argument(
         "-p",
         "--param-allowlist",
         type=str,
@@ -52,6 +58,7 @@ def main() -> None:
             args.url,
             charset=args.charset,
             default_scheme=args.default_scheme,
+            default_domain=args.default_domain,
             filter_params=args.filter_params,
             param_allowlist=allowlist,
         )
