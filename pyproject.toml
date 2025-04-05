@@ -27,7 +27,6 @@ dev = [
   "pytest-socket",
   "pytest",
   "ruff",
-  "tox",
 ]
 
 [tool.ruff]

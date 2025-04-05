@@ -1,8 +1,7 @@
 install:
 	@uv pip install -e ".[dev]"
 
-tox:
-	@uvx --with tox-uv tox
+# tox target removed
 
 update: install
 	@uv run -- pre-commit autoupdate

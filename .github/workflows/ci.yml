@@ -1,42 +1,141 @@
-name: CI
+name: tests
 
 on:
   push:
-    branches: [ master ]
+    # Avoid using all the resources/limits available by checking only
+    # relevant branches and tags. Other branches can be checked via PRs.
+    # branches: [main]
+    tags: ['v[0-9]*', '[0-9]+.[0-9]+*']  # Match tags that resemble a version
   pull_request:
-    branches: [ master ]
+    paths: ['.github/workflows/ci.yml', 'pyproject.toml', 'uv.lock'] # Added pyproject.toml and uv.lock
+  workflow_dispatch:  # Allow manually triggering the workflow
+  schedule:
+    # Run roughly every 15 days at 00:00 UTC
+    # (useful to check if updates on dependencies break the package)
+    - cron: '0 0 1,16 * *'
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.ref_type }}-
+    ${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  VALIDATE_PYPROJECT_CACHE_REMOTE: tests/.cache
+
 
 jobs:
-  test:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      wheel-distribution: ${{ steps.wheel-distribution.outputs.path }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}  # deep clone for setuptools-scm
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv pip install .[dev] build # Install build tool
+      - name: Run static analysis and format checkers
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run mypy .
+      - name: Build package distribution files
+        run: uv run python -m build
+      - name: Record the path of wheel distribution
+        id: wheel-distribution
+        run: echo "path=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
+      - name: Store the distribution files for use in other stages
+        # `tests` and `publish` will use the same pre-built distributions,
+        # so we make sure to release the exact same package that was tested
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distribution-files
+          path: dist/
+          retention-days: 1
+      - name: Download files used for testing
+        run: python3.12 tools/cache_urls_for_tests.py
+      - name: Store downloaded files
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-download-files
+          path: ${{ env.VALIDATE_PYPROJECT_CACHE_REMOTE }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  test:
+    needs: prepare
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-
+        python:
+        - "3.8"   # oldest Python supported by validate-pyproject
+        - "3.x"   # newest Python that is stable
+        platform:
+        - ubuntu-latest
+        - macos-13
+        - windows-latest
+    runs-on: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox tox-gh-actions
-    - name: Test with tox
-      run: tox
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v5
+      - name: Retrieve pre-built distribution files
+        uses: actions/download-artifact@v4
+        with: {name: python-distribution-files, path: dist/}
+      - name: Retrieve test download files
+        uses: actions/download-artifact@v4
+        with:
+          name: test-download-files
+          path: ${{ env.VALIDATE_PYPROJECT_CACHE_REMOTE }}
+      - name: Install dependencies and package
+        run: |
+          uv pip install .[dev]
+          uv pip install ${{ needs.prepare.outputs.wheel-distribution }}
+      - name: Run tests
+        run: >-
+          uv run pytest
+          -n 5 -rFEx --durations 10 --color yes
+      - name: Generate coverage report
+        run: uv run coverage lcov -o coverage.lcov # Use uv run
+      - name: Upload partial coverage report
+        uses: coverallsapp/github-action@master
+        with:
+          path-to-lcov: coverage.lcov
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          flag-name: ${{ matrix.platform }} - py${{ matrix.python }}
+          parallel: true
 
-  lint:
+  finalize:
+    needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Install pre-commit
-      run: |
-        python -m pip install --upgrade pip
-        pip install pre-commit
-    - name: Run pre-commit
-      run: pre-commit run --all-files
+      - name: Finalize coverage report
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
+
+  publish:
+    needs: finalize
+    if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    # Add trusted publisher permission
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"} # Use a consistent Python version
+      - uses: astral-sh/setup-uv@v5
+      - name: Retrieve pre-built distribution files
+        uses: actions/download-artifact@v4
+        with: {name: python-distribution-files, path: dist/}
+      # No need to install twine anymore
+      - name: Publish Package to PyPI
+        # Use uv publish directly. It uses trusted publishing by default on GitHub Actions.
+        run: uv publish dist/*
