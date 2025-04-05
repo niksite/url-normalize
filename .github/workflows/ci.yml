@@ -40,7 +40,7 @@ jobs:
       - name: Run static analysis and format checkers
         run: pre-commit run --all-files
       - name: Build package distribution files
-        run: uv run python -m build
+        run: uv build
       - name: Record the path of wheel distribution
         id: wheel-distribution
         run: echo "path=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
