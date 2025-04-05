@@ -75,9 +75,7 @@ jobs:
           uv pip install .[dev] --system
           uv pip install ${{ needs.prepare.outputs.wheel-distribution }} --system
       - name: Run tests
-        run: >-
-          uv run pytest
-          -n 5 -rFEx --durations 10 --color yes
+        run: uv run pytest
       - name: Generate coverage report
         run: uv run coverage lcov -o coverage.lcov # Use uv run
       - name: Upload partial coverage report
