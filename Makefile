@@ -18,4 +18,3 @@ build:
 
 publish: build
 	@uv publish
-

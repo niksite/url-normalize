@@ -36,12 +36,9 @@ jobs:
         with: {python-version: "3.12"}
       - uses: astral-sh/setup-uv@v5
       - name: Install dependencies
-        run: uv pip install .[dev] build # Install build tool
+        run: uv pip install .[dev] --system
       - name: Run static analysis and format checkers
-        run: |
-          uv run ruff check .
-          uv run ruff format --check .
-          uv run mypy .
+        run: pre-commit run --all-files
       - name: Build package distribution files
         run: uv run python -m build
       - name: Record the path of wheel distribution
@@ -55,8 +52,6 @@ jobs:
           name: python-distribution-files
           path: dist/
           retention-days: 1
-      - name: Download files used for testing
-        run: python3.12 tools/cache_urls_for_tests.py
       - name: Store downloaded files
         uses: actions/upload-artifact@v4
         with:

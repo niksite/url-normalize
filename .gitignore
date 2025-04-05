@@ -5,5 +5,6 @@ __pycache__
 *.egg-info
 *.lock
 *.pyc
+build
 dist
 memory-bank
