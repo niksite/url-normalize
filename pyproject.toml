@@ -19,15 +19,7 @@ Changelog = "https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md"
 url-normalize = "url_normalize.cli:main"
 
 [project.optional-dependencies]
-dev = [
-  "mypy",
-  "pre-commit",
-  "pytest-cov",
-  "pytest-ruff",
-  "pytest-socket",
-  "pytest",
-  "ruff",
-]
+dev = ["mypy", "pre-commit", "pytest-cov", "pytest-socket", "pytest", "ruff"]
 
 [tool.ruff]
 target-version = "py38"
