@@ -1,19 +1,21 @@
 """Tests for normalize_userinfo function."""
 
+import pytest
+
 from url_normalize.url_normalize import normalize_userinfo
 
-EXPECTED_DATA = {
-    ":@": "",
-    "": "",
-    "@": "",
-    "user:password@": "user:password@",
-    "user@": "user@",
-}
 
-
-def test_normalize_userinfo_result_is_expected():
+@pytest.mark.parametrize(
+    ("userinfo", "expected"),
+    [
+        (":@", ""),
+        ("", ""),
+        ("@", ""),
+        ("user:password@", "user:password@"),
+        ("user@", "user@"),
+    ],
+)
+def test_normalize_userinfo_result_is_expected(userinfo: str, expected: str) -> None:
     """Assert we got expected results from the normalize_userinfo function."""
-    for url, expected in EXPECTED_DATA.items():
-        result = normalize_userinfo(url)
-
-        assert result == expected, url
+    result = normalize_userinfo(userinfo)
+    assert result == expected, userinfo
