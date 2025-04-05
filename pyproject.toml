@@ -66,7 +66,6 @@ addopts = [
   "--cov-report=term-missing:skip-covered",
   "--cov=url_normalize",
   "--disable-socket",
-  "--ruff",
   "-v",
 ]
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
