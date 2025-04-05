@@ -70,11 +70,6 @@ jobs:
       - name: Retrieve pre-built distribution files
         uses: actions/download-artifact@v4
         with: {name: python-distribution-files, path: dist/}
-      - name: Retrieve test download files
-        uses: actions/download-artifact@v4
-        with:
-          name: test-download-files
-          path: ${{ env.VALIDATE_PYPROJECT_CACHE_REMOTE }}
       - name: Install dependencies and package
         run: |
           uv pip install .[dev]
