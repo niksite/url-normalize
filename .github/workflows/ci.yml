@@ -20,10 +20,6 @@ concurrency:
     ${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
-env:
-  VALIDATE_PYPROJECT_CACHE_REMOTE: tests/.cache
-
-
 jobs:
   prepare:
     runs-on: ubuntu-latest
@@ -51,14 +47,6 @@ jobs:
         with:
           name: python-distribution-files
           path: dist/
-          retention-days: 1
-      - name: Store downloaded files
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-download-files
-          path: ${{ env.VALIDATE_PYPROJECT_CACHE_REMOTE }}
-          include-hidden-files: true
-          if-no-files-found: error
           retention-days: 1
 
   test:
