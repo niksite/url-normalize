@@ -72,8 +72,8 @@ jobs:
         with: {name: python-distribution-files, path: dist/}
       - name: Install dependencies and package
         run: |
-          uv pip install .[dev]
-          uv pip install ${{ needs.prepare.outputs.wheel-distribution }}
+          uv pip install .[dev] --system
+          uv pip install ${{ needs.prepare.outputs.wheel-distribution }} --system
       - name: Run tests
         run: >-
           uv run pytest
