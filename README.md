@@ -1,7 +1,14 @@
 # url-normalize
 
-[![CI](https://github.com/niksite/url-normalize/actions/workflows/ci.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/ci.yml)
-[![PyPI](https://github.com/niksite/url-normalize/actions/workflows/publish.yml/badge.svg)](https://github.com/niksite/url-normalize/actions/workflows/publish.yml)
+.. image:: <https://github.com/niksite/url-normalize/actions/workflows/ci.yml/badge.svg>
+    :alt: tests
+    :target: <https://github.com/niksite/url-normalize/actions/workflows/ci.yml>
+.. image:: <https://img.shields.io/coveralls/github/niksite/url-normalize/master.svg>
+    :alt: Coveralls
+    :target: <https://coveralls.io/r/niksite/url-normalize>
+.. image:: <https://img.shields.io/pypi/v/url-normalize.svg>
+    :alt: PyPI-Server
+    :target: <https://pypi.org/project/url-normalize/>
 
 A Python library for standardizing and normalizing URLs with support for internationalized domain names (IDN).
 
