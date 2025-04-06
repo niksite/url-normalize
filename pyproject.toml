@@ -6,7 +6,7 @@ authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
 license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.8"
-keywords = ["url", "normalization", "normalize"]
+keywords = ["url", "normalization", "normalize", "normalizer"]
 dependencies = ["idna>=3.3"]
 
 [project.urls]
