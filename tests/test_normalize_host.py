@@ -17,7 +17,7 @@ from url_normalize.url_normalize import normalize_host
         # Mixed case with Cyrillic
         ("ExAmPle.РФ", "example.xn--p1ai"),
         # IDNA2008 with UTS46
-        ("faß.de", "fass.de"),  # Normalize using transitional rules
+        ("faß.de", "xn--fa-hia.de"),
         # Edge cases
         ("ドメイン.テスト", "xn--eckwd4c7c.xn--zckzah"),  # Japanese
         ("domain.café", "domain.xn--caf-dma"),  # Latin with diacritic
