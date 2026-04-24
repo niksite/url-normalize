@@ -49,7 +49,7 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.8"   # oldest Python supported by validate-pyproject
+        - "3.10"  # oldest currently supported Python
         - "3.x"   # newest Python that is stable
         platform:
         - ubuntu-latest

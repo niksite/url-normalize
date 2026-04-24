@@ -37,8 +37,7 @@ def get_allowed_params(
 
     # Normalize host by removing www and port
     domain = host.lower()
-    if domain.startswith("www."):
-        domain = domain[4:]
+    domain = domain.removeprefix("www.")
     domain = domain.split(":")[0]
 
     # Use default allowlist if none provided

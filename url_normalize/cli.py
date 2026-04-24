@@ -5,6 +5,7 @@ import argparse
 import sys
 from importlib.metadata import version
 
+from .url_humanize import url_humanize
 from .url_normalize import url_normalize
 
 
@@ -48,13 +49,20 @@ def main() -> None:
         type=str,
         help="Comma-separated list of query parameters to allow (e.g., 'q,id').",
     )
+    parser.add_argument(
+        "-H",
+        "--humanize",
+        action="store_true",
+        help="Print a human-readable URL that normalizes to the same value.",
+    )
 
     args = parser.parse_args()
 
     allowlist = args.param_allowlist.split(",") if args.param_allowlist else None
+    transform_url = url_humanize if args.humanize else url_normalize
 
     try:
-        normalized_url = url_normalize(
+        output_url = transform_url(
             args.url,
             charset=args.charset,
             default_scheme=args.default_scheme,
@@ -66,7 +74,7 @@ def main() -> None:
         print(f"Error normalizing URL: {e}", file=sys.stderr)  # noqa: T201
         sys.exit(1)
     else:
-        print(normalized_url)  # noqa: T201
+        print(output_url)  # noqa: T201
 
 
 if __name__ == "__main__":

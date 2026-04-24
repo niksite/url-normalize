@@ -66,6 +66,56 @@ def test_cli_basic_normalization_short_args() -> None:
     assert not result.stderr
 
 
+def test_cli_humanize() -> None:
+    """Test human-readable URL output via CLI."""
+    url = (
+        "https://xn--e1afmkfd.xn--80akhbyknj4f/"
+        "%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
+    )
+    expected = "https://пример.испытание/Служебная"
+
+    result = run_cli("--humanize", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_humanize_short_arg() -> None:
+    """Test human-readable URL output via CLI using short argument."""
+    url = (
+        "https://xn--e1afmkfd.xn--80akhbyknj4f/"
+        "%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
+    )
+    expected = "https://пример.испытание/Служебная"
+
+    result = run_cli("-H", url)
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
+def test_cli_humanize_respects_normalization_options() -> None:
+    """Test humanized output keeps the existing CLI normalization options."""
+    url = "/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
+    expected = "https://пример.испытание/Служебная?keep=Ç"
+
+    result = run_cli(
+        "--humanize",
+        "--default-domain",
+        "xn--e1afmkfd.xn--80akhbyknj4f",
+        "--filter-params",
+        "--param-allowlist",
+        "keep",
+        f"{url}?utm_source=ignored&keep=%C3%87",
+    )
+
+    assert result.returncode == 0
+    assert result.stdout.strip() == expected
+    assert not result.stderr
+
+
 def test_cli_default_scheme() -> None:
     """Test default scheme addition via CLI."""
     url = "//example.com"

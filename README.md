@@ -51,7 +51,7 @@ Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urln
   - Double slash URLs (//domain.tld)
   - Shebang (#!) URLs
 - **Developer Friendly**:
-  - Cross-version Python compatibility (3.8+)
+  - Cross-version Python compatibility (3.10+)
   - 100% test coverage
   - Modern type hints and string handling
 
@@ -66,7 +66,7 @@ pip install url-normalize
 ### Python API
 
 ```python
-from url_normalize import url_normalize
+from url_normalize import url_humanize, url_normalize
 
 # Basic normalization (uses https by default)
 print(url_normalize("www.foo.com:80/foo"))
@@ -103,6 +103,14 @@ print(url_normalize("/images/logo.png", default_domain="example.com"))
 # With default domain and custom scheme
 print(url_normalize("/images/logo.png", default_scheme="http", default_domain="example.com"))
 # Output: http://example.com/images/logo.png
+
+# Human-readable display form that still normalizes back to the same URL
+print(url_humanize("https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"))
+# Output: https://пример.испытание/Служебная
+
+# Humanization accepts the same normalization options
+print(url_humanize("/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F", default_domain="xn--e1afmkfd.xn--80akhbyknj4f"))
+# Output: https://пример.испытание/Служебная
 ```
 
 ### Command-line Usage
@@ -132,6 +140,10 @@ $ url-normalize -d example.com "/images/logo.png"
 # With default domain and custom scheme
 $ url-normalize -d example.com -s http "/images/logo.png"
 # Output: http://example.com/images/logo.png
+
+# Human-readable display form
+$ url-normalize -H "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
+# Output: https://пример.испытание/Служебная
 
 # Via uv tool/uvx
 $ uvx url-normalize www.foo.com:80/foo

@@ -1,12 +1,21 @@
 [project]
 name = "url-normalize"
-version = "2.2.1"
+version = "3.0.0"
 description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 keywords = ["url", "normalization", "normalize", "normalizer"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
 dependencies = ["idna>=3.3"]
 
 [project.urls]
@@ -22,7 +31,7 @@ url-normalize = "url_normalize.cli:main"
 dev = ["mypy", "pre-commit", "pytest-cov", "pytest-socket", "pytest", "ruff"]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py310"
 line-length = 88
 unsafe-fixes = true
 
@@ -53,11 +62,11 @@ indent-style = "space"
 [tool.mypy]
 ignore_missing_imports = true
 exclude = ["tests"]
-python_version = "3.8"
+python_version = "3.10"
 show_error_codes = true
 
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
