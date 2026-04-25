@@ -11,6 +11,10 @@ from .url_normalize import url_normalize
 
 def main() -> None:
     """Parse arguments and run url_normalize."""
+    # Force UTF-8 output to prevent UnicodeEncodeError on Windows
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+
     parser = argparse.ArgumentParser(description="Normalize a URL.")
     parser.add_argument(
         "-v",

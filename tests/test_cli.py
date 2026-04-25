@@ -22,7 +22,7 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
     """
     command = [sys.executable, "-m", "url_normalize.cli", *list(args)]
     return subprocess.run(  # noqa: S603
-        command, capture_output=True, text=True, check=False
+        command, capture_output=True, text=True, encoding="utf-8", check=False
     )
 
 
