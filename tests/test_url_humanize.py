@@ -108,3 +108,15 @@ def test_url_humanize_documents_encoded_slash_normalization() -> None:
 
     assert humanized == "https://example.com/a/b"
     assert package.url_normalize(humanized) == package.url_normalize(value)
+
+
+def test_url_humanize_handles_idna_error() -> None:
+    """Assert IDNA decoding fallback gracefully handles bad IDNA labels."""
+    value = "https://xn--bad-label.com/"
+    assert package.url_humanize(value) == "https://xn--bad-label.com/"
+
+
+def test_url_humanize_skips_failed_round_trip() -> None:
+    """Assert parts that break round-trip normalizations are kept as is."""
+    value = "https://example.com/a%3Fb"
+    assert package.url_humanize(value) == value
