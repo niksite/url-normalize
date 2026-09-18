@@ -101,12 +101,12 @@ def test_url_humanize_keeps_malformed_percent_encoding_normalized() -> None:
     assert package.url_humanize(value) == normalized
 
 
-def test_url_humanize_documents_encoded_slash_normalization() -> None:
-    """Assert encoded slashes follow url_normalize path semantics."""
+def test_url_humanize_preserves_encoded_slash() -> None:
+    """Keep encoded slashes distinct from path segment boundaries."""
     value = "https://example.com/a%2Fb"
     humanized = package.url_humanize(value)
 
-    assert humanized == "https://example.com/a/b"
+    assert humanized == value
     assert package.url_normalize(humanized) == package.url_normalize(value)
 
 
@@ -119,4 +119,28 @@ def test_url_humanize_handles_idna_error() -> None:
 def test_url_humanize_skips_failed_round_trip() -> None:
     """Assert parts that break round-trip normalizations are kept as is."""
     value = "https://example.com/a%3Fb"
+    assert package.url_humanize(value) == value
+
+
+@pytest.mark.parametrize("userinfo", ["user%5B", "user%5D", "user:%5B", "user:%5D"])
+def test_url_humanize_rejects_candidates_that_raise(userinfo):
+    """Retain valid escaped credentials when decoding makes parsing fail."""
+    value = f"https://{userinfo}@example.com/"
+    assert package.url_humanize(value) == value
+    assert package.url_normalize(package.url_humanize(value)) == value
+
+
+@pytest.mark.parametrize(
+    "component",
+    ["/{value}", "/?{value}=x", "/?q={value}", "/#{value}", "//{value}@example.com/"],
+)
+@pytest.mark.parametrize(
+    "escaped", ["%00", "%09", "%0A", "%0D", "%1B", "%7F", "%C2%85"]
+)
+def test_url_humanize_keeps_control_characters_encoded(component, escaped):
+    """Keep C0, DEL, and C1 controls encoded in every humanized component."""
+    suffix = component.format(value=f"a{escaped}b")
+    value = (
+        f"https:{suffix}" if suffix.startswith("//") else f"https://example.com{suffix}"
+    )
     assert package.url_humanize(value) == value

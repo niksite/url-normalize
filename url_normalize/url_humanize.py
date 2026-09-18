@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 from urllib.parse import unquote
 
 import idna
@@ -27,14 +28,20 @@ def _humanize_host_label(label: str) -> str:
 
 def _replace_if_round_trips(url: URL, normalized: str, **changes: str) -> URL:
     candidate = url._replace(**changes)
-    if url_normalize(reconstruct_url(candidate)) == normalized:
-        return candidate
+    try:
+        if url_normalize(reconstruct_url(candidate)) == normalized:
+            return candidate
+    except ValueError:
+        # Invalid candidate syntax or Unicode must not reject the original URL.
+        return url
     return url
 
 
 def _safe_unquote(value: str) -> str:
     decoded = unquote(value)
-    if UNICODE_REPLACEMENT_CHARACTER in decoded:
+    if UNICODE_REPLACEMENT_CHARACTER in decoded or any(
+        unicodedata.category(character) == "Cc" for character in decoded
+    ):
         return value
     return decoded
 
@@ -52,8 +59,10 @@ def _replace_query_part_if_round_trips(
 ) -> tuple[URL, list[str]]:
     candidate_parts = [*parts]
     candidate_parts[index] = part
-    candidate = url._replace(query="&".join(candidate_parts))
-    if url_normalize(reconstruct_url(candidate)) == normalized:
+    candidate = _replace_if_round_trips(
+        url, normalized, query="&".join(candidate_parts)
+    )
+    if candidate is not url:
         return candidate, candidate_parts
     return url, parts
 
