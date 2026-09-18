@@ -30,3 +30,28 @@ def test_provide_url_scheme_accept_default_scheme_param() -> None:
     actual = provide_url_scheme(url, default_scheme="http")
 
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("git+ssh://example.com/repo", "git+ssh://example.com/repo"),
+        ("postgresql://example.com/db", "postgresql://example.com/db"),
+        ("custom-long.scheme:opaque", "custom-long.scheme:opaque"),
+        ("TEL:123", "TEL:123"),
+        ("custom:123", "custom:123"),
+        ("//x:443/", "https://x:443/"),
+        ("//[::1]:443/", "https://[::1]:443/"),
+        ("x.co:8080/path", "https://x.co:8080/path"),
+        ("example.com:8080/path", "https://example.com:8080/path"),
+        ("localhost:8080/path", "https://localhost:8080/path"),
+        ("127.0.0.1:8080/", "https://127.0.0.1:8080/"),
+        ("[::1]:8080/", "https://[::1]:8080/"),
+        ("site/path:part", "https://site/path:part"),
+        ("1abc:thing", "https://1abc:thing"),
+        ("http:example.com", "http://example.com"),
+    ],
+)
+def test_provide_url_scheme_distinguishes_schemes_and_authorities(url, expected):
+    """Recognize schemes of any length without confusing host ports or paths."""
+    assert provide_url_scheme(url) == expected
