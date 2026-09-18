@@ -96,3 +96,44 @@ def test_custom_list_allowlist():
 def test_parameter_filtering(url: str, expected: str):
     """Test URL parameter filtering functionality with various scenarios."""
     assert url_normalize(url, filter_params=True) == expected
+
+
+@pytest.mark.parametrize(
+    ("host", "canonical", "allowlist"),
+    [
+        ("www.google.com.", "www.google.com", None),
+        ("WWW.GOOGLE.COM.", "www.google.com", None),
+        ("www。google.com", "www.google.com", None),
+        ("google.com", "google.com", None),
+        ("пример.рф", "xn--e1afmkfd.xn--p1ai", {"xn--e1afmkfd.xn--p1ai": ["q"]}),
+        (
+            "xn--e1afmkfd.xn--p1ai.",
+            "xn--e1afmkfd.xn--p1ai",
+            {"xn--e1afmkfd.xn--p1ai": ["q"]},
+        ),
+        ("EXAMPLE.COM.", "example.com", ["q"]),
+    ],
+)
+def test_parameter_filtering_uses_normalized_host(host, canonical, allowlist):
+    """Use the output host's canonical spelling when choosing an allowlist."""
+    assert (
+        url_normalize(
+            f"https://{host}/?q=test&utm_source=x",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://{canonical}/?q=test"
+    )
+
+
+@pytest.mark.parametrize("port", ["", ":8080"])
+def test_parameter_filtering_preserves_bracketed_host(port):
+    """Keep IPv6 address colons intact when looking up a canonical host."""
+    assert (
+        url_normalize(
+            f"https://[2001:DB8::1]{port}/?q=test&utm_source=x",
+            filter_params=True,
+            param_allowlist={"[2001:db8::1]": ["q"]},
+        )
+        == f"https://[2001:db8::1]{port}/?q=test"
+    )

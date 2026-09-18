@@ -63,9 +63,11 @@ def url_normalize(  # noqa: PLR0913
     url = generic_url_cleanup(url)
     url_elements = deconstruct_url(url)
     url_elements = url_elements._replace(
+        host=normalize_host(url_elements.host, charset)
+    )
+    url_elements = url_elements._replace(
         scheme=normalize_scheme(url_elements.scheme),
         userinfo=normalize_userinfo(url_elements.userinfo),
-        host=normalize_host(url_elements.host, charset),
         query=normalize_query(
             url_elements.query,
             host=url_elements.host,
