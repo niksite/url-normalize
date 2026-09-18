@@ -3,12 +3,23 @@
 
 from __future__ import annotations
 
+from .normalize_host import normalize_host
+
 DEFAULT_ALLOWLIST = {
     "google.com": ["q", "ie"],
     "baidu.com": ["wd", "ie"],
     "bing.com": ["q"],
     "youtube.com": ["v", "search_query"],
 }
+
+
+def _normalize_domain(host: str) -> str:
+    """Canonicalize an allowlist domain without its port or www prefix."""
+    if host.startswith("[") and "]" in host:
+        host = host.partition("]")[0] + "]"
+    else:
+        host = host.partition(":")[0]
+    return normalize_host(host).removeprefix("www.")
 
 
 def get_allowed_params(
@@ -35,17 +46,20 @@ def get_allowed_params(
     if not host:
         return set()
 
-    # Normalize host by removing www and port
-    domain = host.lower()
-    domain = domain.removeprefix("www.")
-    if domain.startswith("[") and "]" in domain:
-        domain = domain.partition("]")[0] + "]"
-    else:
-        domain = domain.split(":")[0]
+    domain = _normalize_domain(host)
 
     # Use default allowlist if none provided
     if allowlist is None:
         allowlist = DEFAULT_ALLOWLIST
 
-    # Return allowed parameters for the domain, or an empty set if not found
-    return set(allowlist.get(domain, []))
+    # Preserve exact canonical-key precedence, including an empty allowlist.
+    if domain in allowlist:
+        return set(allowlist[domain])
+    for key, params in allowlist.items():
+        try:
+            key_domain = _normalize_domain(key)
+        except UnicodeError:
+            continue
+        if key_domain == domain:
+            return set(params)
+    return set()

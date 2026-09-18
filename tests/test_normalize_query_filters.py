@@ -137,3 +137,68 @@ def test_parameter_filtering_preserves_bracketed_host(port):
         )
         == f"https://[2001:db8::1]{port}/?q=test"
     )
+
+
+@pytest.mark.parametrize("host", ["пример.рф", "xn--e1afmkfd.xn--p1ai", "ПРИМЕР.РФ."])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "пример.рф",
+        "xn--e1afmkfd.xn--p1ai",
+        "ПРИМЕР.РФ.",
+        "www。пример.рф",
+        "пример.рф:8080",
+    ],
+)
+def test_custom_allowlist_normalizes_mapping_keys(host, key):
+    """Match equivalent domain spellings on both sides of an allowlist."""
+    allowlist = {key: ["q"]}
+    result = url_normalize(
+        f"https://{host}/?q=1&utm_source=x",
+        filter_params=True,
+        param_allowlist=allowlist,
+    )
+    assert result == "https://xn--e1afmkfd.xn--p1ai/?q=1"
+    assert allowlist == {key: ["q"]}
+
+
+@pytest.mark.parametrize("key", ["[2001:DB8::1]", "[2001:DB8::1]:8080"])
+def test_custom_allowlist_normalizes_bracketed_keys(key):
+    """Preserve IPv6 colons when normalizing dictionary keys."""
+    assert (
+        url_normalize(
+            "https://[2001:db8::1]/?q=1&drop=2",
+            filter_params=True,
+            param_allowlist={key: ["q"]},
+        )
+        == "https://[2001:db8::1]/?q=1"
+    )
+
+
+@pytest.mark.parametrize("allowed", [[], ["q"]])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_custom_allowlist_canonical_key_takes_precedence(allowed, reverse):
+    """Keep canonical rules authoritative instead of merging conflicting aliases."""
+    entries = [("пример.рф", ["other"]), ("xn--e1afmkfd.xn--p1ai", allowed)]
+    allowlist = dict(reversed(entries) if reverse else entries)
+    expected = "https://xn--e1afmkfd.xn--p1ai/" + ("?q=1" if allowed else "")
+    assert (
+        url_normalize(
+            "https://пример.рф/?q=1&other=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == expected
+    )
+
+
+def test_custom_allowlist_ignores_unrelated_invalid_domain():
+    """Keep a malformed unrelated key from breaking a valid domain lookup."""
+    assert (
+        url_normalize(
+            "https://пример.рф/?q=1",
+            filter_params=True,
+            param_allowlist={"a" * 64 + ".example": [], "пример.рф": ["q"]},
+        )
+        == "https://xn--e1afmkfd.xn--p1ai/?q=1"
+    )
