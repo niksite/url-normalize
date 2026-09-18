@@ -2,6 +2,7 @@
 
 import pytest
 
+from url_normalize import url_normalize
 from url_normalize.tools import URL, deconstruct_url
 
 
@@ -38,3 +39,26 @@ def test_deconstruct_url_result_is_expected(url: str, expected: URL) -> None:
     """Assert we got expected results from the deconstruct_url function."""
     result = deconstruct_url(url)
     assert result == expected, url
+
+
+@pytest.mark.parametrize(
+    ("authority", "userinfo", "host", "port", "normalized_authority"),
+    [
+        ("[2001:DB8::1]:080", "", "[2001:DB8::1]", "080", "[2001:db8::1]"),
+        ("[2001:DB8::1]:0081", "", "[2001:DB8::1]", "0081", "[2001:db8::1]:81"),
+        ("[::1]", "", "[::1]", "", "[::1]"),
+        ("[::1]:", "", "[::1]", "", "[::1]"),
+        ("user:pass@[::1]:080", "user:pass@", "[::1]", "080", "user:pass@[::1]"),
+        ("EXAMPLE.com:080", "", "EXAMPLE.com", "080", "example.com"),
+        ("127.0.0.1:0081", "", "127.0.0.1", "0081", "127.0.0.1:81"),
+    ],
+)
+def test_deconstruct_url_separates_bracketed_host_and_port(
+    authority, userinfo, host, port, normalized_authority
+):
+    """Parse the entire bracketed host before considering a port separator."""
+    url = f"http://{authority}/path?q=1#fragment"
+    assert deconstruct_url(url) == URL(
+        "http", userinfo, host, port, "/path", "q=1", "fragment"
+    )
+    assert url_normalize(url) == f"http://{normalized_authority}/path?q=1#fragment"

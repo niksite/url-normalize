@@ -9,6 +9,8 @@ from urllib.parse import quote as quote_orig
 from urllib.parse import unquote as unquote_orig
 from urllib.parse import urlsplit, urlunsplit
 
+RESERVED_CHARACTERS = ":/?#[]@!$&'()*+,;="
+
 
 class URL(NamedTuple):
     """URL components tuple.
@@ -36,9 +38,15 @@ def deconstruct_url(url: str) -> URL:
         URL
 
     """
-    scheme, auth, path, query, fragment = urlsplit(url.strip())
-    match = re.search(r"([^@]*@)?([^:]*):?(.*)", auth)
-    (userinfo, host, port) = match.groups()  # type: ignore  # noqa: PGH003
+    scheme, auth, path, query, fragment = urlsplit(url)
+    userinfo, separator, host_port = auth.rpartition("@")
+    userinfo += separator
+    if host_port.startswith("["):
+        host, _, port = host_port.partition("]")
+        host += "]"
+        port = port.removeprefix(":")
+    else:
+        host, _, port = host_port.partition(":")
     return URL(
         fragment=fragment,
         host=host,
@@ -93,10 +101,9 @@ def unquote(string: str, charset: str = "utf-8") -> str:
         string : an unquoted and normalized string
 
     """
-    string = unquote_orig(string)
+    string = unquote_orig(string, errors="surrogateescape")
     string = force_unicode(string, charset)
-    encoded_str = unicodedata.normalize("NFC", string).encode(charset)
-    return encoded_str.decode(charset)
+    return unicodedata.normalize("NFC", string)
 
 
 def quote(string: str, safe: str = "/") -> str:
@@ -110,4 +117,14 @@ def quote(string: str, safe: str = "/") -> str:
         string : quoted string
 
     """
-    return quote_orig(string, safe)
+    return quote_orig(string, safe, errors="surrogateescape")
+
+
+def normalize_component(string: str, safe: str, preserve: str) -> str:
+    """Normalize escapes and Unicode without decoding protected delimiters."""
+    protected = "|".join(f"%{ord(character):02X}" for character in preserve)
+    parts = re.split(f"({protected})", string, flags=re.IGNORECASE)
+    return "".join(
+        part.upper() if index % 2 else quote(unquote(part), safe)
+        for index, part in enumerate(parts)
+    )

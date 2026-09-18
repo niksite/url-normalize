@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve invalid UTF-8 percent-encoded octets instead of replacing them with U+FFFD; valid UTF-8 still normalizes to NFC.
+
 ## [3.0.0] - 2026-04-24
 
 ### Added

@@ -80,7 +80,7 @@ def test_url_normalize_no_changes_expected(value: str) -> None:
         ("http://example.com", "http://example.com/"),
         ("http://example.com/?b&a", "http://example.com/?b&a"),
         ("http://example.com/?q=%5c", "http://example.com/?q=%5C"),
-        ("http://example.com/?q=%C7", "http://example.com/?q=%EF%BF%BD"),
+        ("http://example.com/?q=%C7", "http://example.com/?q=%C7"),
         ("http://example.com/?q=C%CC%A7", "http://example.com/?q=%C3%87"),
         ("http://EXAMPLE.COM/", "http://example.com/"),
         ("http://example.com/%7Ejane", "http://example.com/~jane"),
@@ -161,3 +161,23 @@ def test_url_normalize_with_default_domain_and_scheme() -> None:
     actual = url_normalize(url, default_scheme="http", default_domain="example.com")
 
     assert actual == expected
+
+
+@pytest.mark.parametrize("component", ["/{value}", "/?q={value}", "/#{value}"])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("%ff", "%FF"),
+        ("%C7", "%C7"),
+        ("%E0%A4%A", "%E0%A4%25A"),
+        ("%FFe%CC%81", "%FF%C3%A9"),
+        ("e%CC%81", "%C3%A9"),
+        ("%EF%BF%BD", "%EF%BF%BD"),
+    ],
+)
+def test_url_normalize_preserves_invalid_utf8_octets(component, value, expected):
+    """Preserve invalid octets while normalizing valid Unicode to NFC."""
+    prefix = "https://example.com"
+    normalized = prefix + component.format(value=expected)
+    assert url_normalize(prefix + component.format(value=value)) == normalized
+    assert url_normalize(normalized) == normalized

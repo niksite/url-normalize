@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .param_allowlist import get_allowed_params
-from .tools import quote, unquote
+from .tools import normalize_component
 
 QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 
@@ -23,7 +23,7 @@ def process_query_param(param: str) -> str:
     """
     if not param:
         return ""
-    return quote(unquote(param), QUERY_PARAM_SAFE_CHARS)
+    return normalize_component(param, QUERY_PARAM_SAFE_CHARS, preserve="+")
 
 
 def normalize_query(
@@ -52,13 +52,13 @@ def normalize_query(
     for param in query.split("&"):
         if not param:
             continue
-        key, _, value = param.partition("=")
+        key, separator, value = param.partition("=")
         key = process_query_param(key)
         if filter_params:
             allowed_params = get_allowed_params(host, param_allowlist)
             if key not in allowed_params:
                 continue
         value = process_query_param(value)
-        processed.append(f"{key}={value}" if value else key)
+        processed.append(f"{key}{separator}{value}")
 
     return "&".join(processed)

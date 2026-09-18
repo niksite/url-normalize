@@ -1,5 +1,7 @@
 """Tests for normalize_query function."""
 
+from urllib.parse import parse_qsl
+
 import pytest
 
 from url_normalize.url_normalize import normalize_query
@@ -22,3 +24,34 @@ def test_normalize_query_result_is_expected(query, expected):
     """Assert we got expected results from the normalize_query function."""
     result = normalize_query(query)
     assert result == expected, query
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("q=C%2b%2B", "q=C%2B%2B"),
+        ("C%2b%2B=value", "C%2B%2B=value"),
+        ("q=C++", "q=C++"),
+        ("q=C%20%2B+", "q=C%20%2B+"),
+        ("q=%252B", "q=%252B"),
+    ],
+)
+def test_normalize_query_preserves_form_plus_meaning(query, expected):
+    """Distinguish encoded plus signs, literal plus signs, and spaces."""
+    actual = normalize_query(query)
+    assert actual == expected
+    assert parse_qsl(actual) == parse_qsl(query)
+
+
+@pytest.mark.parametrize("query", ["flag=&flag", "=", "=value", "flag=", "flag"])
+@pytest.mark.parametrize("filter_params", [False, True])
+def test_normalize_query_preserves_empty_value_separator(query, filter_params):
+    """Keep explicit empty values distinct from parameters without a value."""
+    actual = normalize_query(
+        query, filter_params=filter_params, param_allowlist=["flag", ""]
+    )
+    assert actual == query
+    if query == "flag=":
+        assert parse_qsl(actual, keep_blank_values=True, strict_parsing=True) == [
+            ("flag", "")
+        ]

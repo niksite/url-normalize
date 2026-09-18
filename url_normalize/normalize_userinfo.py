@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from .tools import RESERVED_CHARACTERS, normalize_component
+
 
 def normalize_userinfo(userinfo: str) -> str:
     """Normalize userinfo part of the url.
@@ -15,4 +17,10 @@ def normalize_userinfo(userinfo: str) -> str:
     """
     if userinfo in ["@", ":@"]:
         return ""
-    return userinfo
+    separator = "@" if userinfo.endswith("@") else ""
+    return (
+        normalize_component(
+            userinfo.removesuffix("@"), "!$&'()*+,;=:", RESERVED_CHARACTERS
+        )
+        + separator
+    )
