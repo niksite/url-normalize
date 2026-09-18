@@ -39,8 +39,10 @@ def _replace_if_round_trips(url: URL, normalized: str, **changes: str) -> URL:
 
 def _safe_unquote(value: str) -> str:
     decoded = unquote(value)
-    if UNICODE_REPLACEMENT_CHARACTER in decoded or any(
-        unicodedata.category(character) == "Cc" for character in decoded
+    if (
+        UNICODE_REPLACEMENT_CHARACTER in decoded
+        or "\\" in decoded
+        or any(unicodedata.category(character) == "Cc" for character in decoded)
     ):
         return value
     return decoded

@@ -144,3 +144,22 @@ def test_url_humanize_keeps_control_characters_encoded(component, escaped):
         f"https:{suffix}" if suffix.startswith("//") else f"https://example.com{suffix}"
     )
     assert package.url_humanize(value) == value
+
+
+@pytest.mark.parametrize("scheme", ["http", "https", "ftp"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "//evil.example%5C@trusted.example/",
+        "//name:evil.example%5C@trusted.example/",
+        "//trusted.example/a%5Cb",
+        "//trusted.example/?a%5Cb=x",
+        "//trusted.example/?q=a%5Cb",
+        "//trusted.example/#a%5Cb",
+    ],
+)
+def test_url_humanize_keeps_backslashes_encoded(scheme, suffix):
+    """Keep backslashes encoded because browsers can treat them as separators."""
+    value = f"{scheme}:{suffix}"
+    assert package.url_humanize(value) == value
+    assert package.url_normalize(package.url_humanize(value)) == value
