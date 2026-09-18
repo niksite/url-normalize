@@ -56,6 +56,8 @@ def url_normalize(  # noqa: PLR0913
         str | None : a normalized url
 
     """
+    if url is not None:
+        url = url.lstrip()
     if not url:
         return url
     url = provide_url_domain(url, default_domain)

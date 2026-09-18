@@ -55,3 +55,23 @@ def test_provide_url_scheme_accept_default_scheme_param() -> None:
 def test_provide_url_scheme_distinguishes_schemes_and_authorities(url, expected):
     """Recognize schemes of any length without confusing host ports or paths."""
     assert provide_url_scheme(url) == expected
+
+
+@pytest.mark.parametrize("prefix", [" ", "\t", "\r\n", "\u00a0", "  \t\n"])
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("http://example.com/path ", "http://example.com/path "),
+        ("https://example.com/?q=x ", "https://example.com/?q=x "),
+        ("//x:443/path ", "https://x:443/path "),
+        ("example.com/path ", "https://example.com/path "),
+        ("git+ssh://example.com/repo ", "git+ssh://example.com/repo "),
+        ("mailto:person@example.com", "mailto:person@example.com"),
+        ("/path ", "/path "),
+        ("-", "-"),
+        ("", ""),
+    ],
+)
+def test_provide_url_scheme_ignores_only_leading_whitespace(prefix, url, expected):
+    """Remove leading whitespace before classifying the URL."""
+    assert provide_url_scheme(prefix + url) == expected

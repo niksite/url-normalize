@@ -21,6 +21,7 @@ def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
         string : updated url with validated/attached scheme
 
     """
+    url = url.lstrip()
     is_universal_scheme = url.startswith("//")
     is_file_path = url == "-" or (url.startswith("/") and not is_universal_scheme)
     if not url or is_file_path:

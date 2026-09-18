@@ -181,3 +181,27 @@ def test_url_normalize_preserves_invalid_utf8_octets(component, value, expected)
     normalized = prefix + component.format(value=expected)
     assert url_normalize(prefix + component.format(value=value)) == normalized
     assert url_normalize(normalized) == normalized
+
+
+@pytest.mark.parametrize("prefix", [" ", "\t", "\r\n", "\u00a0"])
+@pytest.mark.parametrize("default_domain", [None, "default.example"])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("http://example.com/path ", "http://example.com/path%20"),
+        ("//x:443/path ", "https://x/path%20"),
+        ("example.com/?q=x ", "https://example.com/?q=x%20"),
+        ("/path ", "/path%20"),
+        ("", ""),
+        ("-", "-"),
+    ],
+)
+def test_url_normalize_strips_leading_whitespace_before_defaults(
+    prefix, default_domain, value, expected
+):
+    """Ignore leading whitespace before default-domain and scheme selection."""
+    if default_domain and value.startswith("/") and not value.startswith("//"):
+        expected = f"https://{default_domain}{expected}"
+    actual = url_normalize(prefix + value, default_domain=default_domain)
+    assert actual == expected
+    assert url_normalize(actual, default_domain=default_domain) == expected
