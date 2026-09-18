@@ -2,7 +2,7 @@
 
 import pytest
 
-from url_normalize.url_normalize import provide_url_scheme
+from url_normalize.url_normalize import provide_url_scheme, url_normalize
 
 
 @pytest.mark.parametrize(
@@ -75,3 +75,18 @@ def test_provide_url_scheme_distinguishes_schemes_and_authorities(url, expected)
 def test_provide_url_scheme_ignores_only_leading_whitespace(prefix, url, expected):
     """Remove leading whitespace before classifying the URL."""
     assert provide_url_scheme(prefix + url) == expected
+
+
+@pytest.mark.parametrize("host", ["example.com", "localhost", "127.0.0.1"])
+@pytest.mark.parametrize("whitespace", [" ", "\u00a0", " \t\r\n"])
+@pytest.mark.parametrize("suffix", ["", "/path ", "?q=x ", "#part "])
+def test_provide_url_scheme_accepts_whitespace_after_bare_port(
+    host, whitespace, suffix
+):
+    """Recognize a bare authority with padding after its numeric port."""
+    value = f"{host}:443{whitespace}{suffix}"
+    assert provide_url_scheme(value) == f"https://{value}"
+    path_suffix = suffix if suffix.startswith("/") else "/" + suffix
+    expected = f"https://{host}{path_suffix.replace(' ', '%20')}"
+    assert url_normalize(value) == expected
+    assert url_normalize(expected) == expected

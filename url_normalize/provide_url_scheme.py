@@ -33,7 +33,7 @@ def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
     scheme_part, rest = url.split(":", 1)
     # Dotted hosts and localhost followed by a numeric port are host inputs.
     if ("." in scheme_part or scheme_part.lower() == "localhost") and re.match(
-        r"[0-9]+(?:[/?#]|$)", rest
+        r"[0-9]+\s*(?:[/?#]|$)", rest
     ):
         return f"{default_scheme}://{url}"
     if scheme_part.lower() not in AUTHORITY_SCHEMES:

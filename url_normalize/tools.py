@@ -39,7 +39,7 @@ def deconstruct_url(url: str) -> URL:
 
     """
     scheme, auth, path, query, fragment = urlsplit(url)
-    userinfo, separator, host_port = auth.rpartition("@")
+    userinfo, separator, host_port = auth.rstrip().rpartition("@")
     userinfo += separator
     if host_port.startswith("["):
         host, _, port = host_port.partition("]")

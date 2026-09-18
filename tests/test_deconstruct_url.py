@@ -62,3 +62,26 @@ def test_deconstruct_url_separates_bracketed_host_and_port(
         "http", userinfo, host, port, "/path", "q=1", "fragment"
     )
     assert url_normalize(url) == f"http://{normalized_authority}/path?q=1#fragment"
+
+
+@pytest.mark.parametrize("whitespace", [" ", "\u00a0", " \t\r\n"])
+@pytest.mark.parametrize("suffix", ["", "/path ", "?q=x ", "#part "])
+@pytest.mark.parametrize(
+    ("authority", "normalized"),
+    [
+        ("EXAMPLE.com", "example.com"),
+        ("example.com:443", "example.com"),
+        ("user:pass@example.com:443", "user:pass@example.com"),
+        ("[FE80::1%25ethA]:443", "[fe80::1%25ethA]"),
+    ],
+)
+def test_deconstruct_url_trims_authority_whitespace_only(
+    authority, normalized, whitespace, suffix
+):
+    """Trim the authority without deleting whitespace from other components."""
+    value = f"https://{authority}{whitespace}{suffix}"
+    assert deconstruct_url(value) == deconstruct_url(f"https://{authority}{suffix}")
+    path_suffix = suffix if suffix.startswith("/") else "/" + suffix
+    assert (
+        url_normalize(value) == f"https://{normalized}{path_suffix.replace(' ', '%20')}"
+    )
