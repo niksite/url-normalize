@@ -24,6 +24,9 @@ def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
 
     """
     host = force_unicode(host, charset)
+    if host.startswith("[") and host.endswith("]"):
+        address, separator, zone = host.partition("%")
+        return address.lower() + separator + zone
     host = host.lower()
     host = host.strip(".")
 

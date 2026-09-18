@@ -46,3 +46,13 @@ def test_normalize_host_decodes_idna_output_as_ascii(host, expected, charset):
     """Decode ASCII IDNA output independently of the input byte encoding."""
     assert normalize_host(host, charset) == expected
     assert normalize_host(expected.encode(charset), charset) == expected
+
+
+@pytest.mark.parametrize("zone", ["%25ethA", "%ethA", "%25Interface.10", "%25ETH0"])
+@pytest.mark.parametrize("charset", ["utf-8", "utf-16"])
+def test_normalize_host_preserves_ipv6_zone_case(zone, charset):
+    """Lowercase the IPv6 address without changing its interface identifier."""
+    host = f"[FE80::ABCD{zone}]"
+    expected = f"[fe80::abcd{zone}]"
+    assert normalize_host(host, charset) == expected
+    assert normalize_host(host.encode(charset), charset) == expected
