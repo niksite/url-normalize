@@ -37,7 +37,7 @@ url-normalize provides a robust URI normalization function that handles IDN doma
 - **Versatile URL Handling**: Handles empty strings, double-slash URLs (//domain.tld), and shebang (#!) URLs.
 - **Developer Friendly**:
   - Python 3.10+ compatibility.
-  - 100% test coverage.
+  - Regression tests for normalization and humanization.
   - Modern type hints and string handling.
 
 Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm).
@@ -67,19 +67,23 @@ from url_normalize import url_normalize
 
 # Basic normalization (uses https by default)
 print(url_normalize("www.foo.com:80/foo"))
-# Output: https://www.foo.com/foo
+# Output: https://www.foo.com:80/foo
 
 # With custom default scheme
 print(url_normalize("www.foo.com/foo", default_scheme="http"))
 # Output: http://www.foo.com/foo
 ```
 
+The `charset` argument remains for compatibility. Unicode characters use UTF-8 percent encoding, regardless of this argument.
+
 #### Query Parameter Filtering
 
-You can strip out tracking parameters and only keep the ones you care about using allowlists.
+With `filter_params=True`, normalization retains only allowlisted query parameters. The built-in rules cover selected domains.
+
+Other domains have an empty default allowlist. Without a custom allowlist, filtering removes all query parameters from those domains.
 
 ```python
-# With query parameter filtering enabled (strips all params by default)
+# With the built-in Google allowlist
 print(url_normalize("www.google.com/search?q=test&utm_source=test", filter_params=True))
 # Output: https://www.google.com/search?q=test
 
@@ -89,7 +93,7 @@ print(url_normalize(
     filter_params=True,
     param_allowlist=["page", "id"]
 ))
-# Output: https://example.com?page=1&id=123
+# Output: https://example.com/?page=1&id=123
 
 # With domain-specific parameter allowlists
 print(url_normalize(
@@ -97,7 +101,7 @@ print(url_normalize(
     filter_params=True,
     param_allowlist={"example.com": ["page", "id"]}
 ))
-# Output: https://example.com?page=1&id=123
+# Output: https://example.com/?page=1&id=123
 ```
 
 #### Default Domain & Scheme
@@ -136,7 +140,7 @@ You can also use `url-normalize` directly from the terminal to process URLs.
 
 ```bash
 $ url-normalize "www.foo.com:80/foo"
-# Output: https://www.foo.com/foo
+# Output: https://www.foo.com:80/foo
 
 # With custom default scheme
 $ url-normalize -s http "www.foo.com/foo"

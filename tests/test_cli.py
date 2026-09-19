@@ -26,6 +26,27 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+def test_cli_help_describes_allowlist_filtering() -> None:
+    """Describe filtering as an allowlist, not a tracking-parameter blocklist."""
+    result = run_cli("--help")
+    assert result.returncode == 0
+    help_text = " ".join(result.stdout.split())
+    assert "Keep only allowlisted query parameters." in help_text
+    assert "Unknown domains have an empty default allowlist." in help_text
+
+
+def test_cli_help_describes_fixed_utf8_encoding() -> None:
+    """Describe charset as a compatibility option for Unicode URL input."""
+    result = run_cli("--help")
+    assert result.returncode == 0
+    help_text = " ".join(result.stdout.split())
+    assert "Retained for compatibility." in help_text
+    assert "Unicode characters use UTF-8 percent encoding." in help_text
+    normalized = run_cli("--charset", "iso-8859-1", "https://example.com/é")
+    assert normalized.returncode == 0
+    assert normalized.stdout.strip() == "https://example.com/%C3%A9"
+
+
 def test_cli_error_handling(capsys, monkeypatch):
     """Test CLI error handling when URL normalization fails."""
     with patch("url_normalize.cli.url_normalize") as mock_normalize:

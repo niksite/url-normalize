@@ -27,7 +27,9 @@ def main() -> None:
         "-c",
         "--charset",
         default="utf-8",
-        help="The charset of the URL. Default: utf-8",
+        help=(
+            "Retained for compatibility. Unicode characters use UTF-8 percent encoding."
+        ),
     )
     parser.add_argument(
         "-s",
@@ -39,7 +41,10 @@ def main() -> None:
         "-f",
         "--filter-params",
         action="store_true",
-        help="Filter common tracking parameters.",
+        help=(
+            "Keep only allowlisted query parameters. "
+            "Unknown domains have an empty default allowlist."
+        ),
     )
     parser.add_argument(
         "-d",

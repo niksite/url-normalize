@@ -38,12 +38,12 @@ def url_normalize(  # noqa: PLR0913
     browsers handle data entered by the user:
 
     >>> url_normalize('http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
-    'http://de.wikipedia.org/wiki/Elf%20%28Begriffskl%C3%A4rung%29'
+    'http://de.wikipedia.org/wiki/Elf%20(Begriffskl%C3%A4rung)'
 
     Params:
         url : str | None : URL to normalize
         charset : str : optional
-            The target charset for the URL if the url was given as unicode string
+            Retained for compatibility. Unicode characters use UTF-8 percent encoding.
         default_scheme : str : default scheme to use if none present
         default_domain : str | None : optional
             Default domain to use for absolute paths (starting with '/')
