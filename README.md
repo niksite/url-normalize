@@ -37,7 +37,7 @@ url-normalize provides a robust URI normalization function that handles IDN doma
 - **Versatile URL Handling**: Handles empty strings, double-slash URLs (//domain.tld), and shebang (#!) URLs.
 - **Developer Friendly**:
   - Python 3.10+ compatibility.
-  - Regression tests for normalization and humanization.
+  - 100% statement coverage, enforced by the test suite.
   - Modern type hints and string handling.
 
 Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm).

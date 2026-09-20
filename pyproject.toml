@@ -73,6 +73,7 @@ build-backend = "setuptools.build_meta"
 addopts = [
   "--cov-report=term-missing:skip-covered",
   "--cov=url_normalize",
+  "--cov-fail-under=100",
   "--disable-socket",
   "-v",
 ]

@@ -47,6 +47,17 @@ def test_cli_help_describes_fixed_utf8_encoding() -> None:
     assert normalized.stdout.strip() == "https://example.com/%C3%A9"
 
 
+def test_cli_successful_main(capsys, monkeypatch):
+    """Exercise successful CLI output in the measured process."""
+    monkeypatch.setattr(
+        sys, "argv", ["url-normalize", "http://EXAMPLE.com/./path/../other/"]
+    )
+    main()
+    captured = capsys.readouterr()
+    assert captured.out == "http://example.com/other/\n"
+    assert not captured.err
+
+
 def test_cli_error_handling(capsys, monkeypatch):
     """Test CLI error handling when URL normalization fails."""
     with patch("url_normalize.cli.url_normalize") as mock_normalize:
