@@ -1,6 +1,6 @@
 [project]
 name = "url-normalize"
-version = "3.0.0"
+version = "3.0.1"
 description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
 license = "MIT"

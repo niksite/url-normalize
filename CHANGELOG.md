@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-09-22
+
+### Upgrade notes
+
+Normalization fixes change canonical output for some URLs, including encoded delimiters, query plus signs, explicit empty query values, and trailing spaces. If normalized URLs are used as cache keys or deduplication identifiers, review stored keys and re-normalize the original URLs where available; information discarded by earlier normalization cannot be recovered from those normalized values alone.
+
 ### Fixed
 
 - Preserve invalid UTF-8 percent-encoded octets instead of replacing them with U+FFFD; valid UTF-8 still normalizes to NFC.
