@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Preserve invalid UTF-8 percent-encoded octets instead of replacing them with U+FFFD; valid UTF-8 still normalizes to NFC.
+- Preserve percent-encoded reserved characters in paths, keeping values such as `a%2Fb` distinct from `a/b`.
+- Preserve encoded plus signs (`%2B`) in query parameters and explicit empty values such as `flag=`.
+- Normalize Unicode and unsafe characters in URL credentials while preserving encoded delimiters; correctly separate credentials containing `@` from the host.
+- Correctly parse bracketed IPv6 hosts and ports, lowercase IPv6 addresses, and preserve zone identifier case.
+- Recognize long and custom URL schemes, protocol-relative URLs, and bare domains or `localhost` with numeric ports.
+- Remove leading whitespace and parser-ignored control characters before applying default domains and detecting URL schemes, preserving the intended destination.
+- Trim trailing authority whitespace without discarding trailing spaces or punctuation belonging to paths, query values, or fragments.
+- Convert hashbang fragments (`#!`) into a single escaped query parameter, preserving existing parameters and leaving ordinary fragments intact.
+- Match query parameter allowlists against normalized hosts and equivalent custom domain keys, including Unicode/Punycode aliases, case variants, and trailing dots. Exact canonical keys take precedence over aliases.
+- Decode IDNA host output as ASCII regardless of the `charset` argument.
+- Keep encoded backslashes and C0/C1 control characters encoded in `url_humanize()` output, and retain the normalized URL when a decoding candidate cannot be parsed.
+- Resolve query parameter allowlists once per URL to avoid repeated domain alias scans for each parameter.
+
+### Documentation
+
+- Correct normalization examples and clarify that parameter filtering uses allowlists, unknown domains have no default allowed parameters, and Unicode URL data uses UTF-8 percent encoding regardless of `charset`.
+
+### Internal
+
+- Enforce 100% statement coverage in the test suite and expand regression coverage for URL component handling.
 
 ## [3.0.0] - 2026-04-24
 

@@ -85,8 +85,56 @@ def test_provide_url_scheme_accepts_whitespace_after_bare_port(
 ):
     """Recognize a bare authority with padding after its numeric port."""
     value = f"{host}:443{whitespace}{suffix}"
-    assert provide_url_scheme(value) == f"https://{value}"
+    cleaned = value.replace("\t", "").replace("\r", "").replace("\n", "")
+    assert provide_url_scheme(value) == f"https://{cleaned}"
     path_suffix = suffix if suffix.startswith("/") else "/" + suffix
     expected = f"https://{host}{path_suffix.replace(' ', '%20')}"
     assert url_normalize(value) == expected
     assert url_normalize(expected) == expected
+
+
+@pytest.mark.parametrize("control", ["\t", "\r", "\n"])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("ht{control}tps://example.com/path", "https://example.com/path"),
+        ("https{control}://example.com/path", "https://example.com/path"),
+        ("git+{control}ssh://example.com/repo", "git+ssh://example.com/repo"),
+        ("mail{control}to:person@example.com", "mailto:person@example.com"),
+        ("/{control}/example.com/path", "https://example.com/path"),
+    ],
+)
+def test_scheme_detection_ignores_parser_control_characters(control, value, expected):
+    """Keep the destination when urlsplit would discard tabs or line breaks."""
+    value = value.format(control=control)
+    assert provide_url_scheme(value) == expected
+    assert url_normalize(value, default_domain="default.example") == expected
+
+
+@pytest.mark.parametrize("prefix", ["\x00", "\x1f", "\x00\u00a0\x01 "])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("http://example.com/path", "http://example.com/path"),
+        ("//example.com/path", "https://example.com/path"),
+        ("/path", "/path"),
+        ("-", "-"),
+        ("", ""),
+    ],
+)
+def test_url_classification_ignores_leading_controls(prefix, value, expected):
+    """Remove leading controls before applying either default domain or scheme."""
+    assert provide_url_scheme(prefix + value) == expected
+    assert url_normalize(prefix + value) == expected
+    with_domain = "https://default.example/path" if value == "/path" else expected
+    assert (
+        url_normalize(prefix + value, default_domain="default.example") == with_domain
+    )
+
+
+def test_scheme_cleanup_preserves_encoded_controls_and_trailing_spaces():
+    """Remove only raw parser controls, keeping escaped bytes and component data."""
+    value = "ht\ntps://example.com/a%09b ?q=%0A%0D #part%00 "
+    assert url_normalize(value) == (
+        "https://example.com/a%09b%20?q=%0A%0D%20#part%00%20"
+    )

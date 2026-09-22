@@ -12,6 +12,13 @@ from urllib.parse import urlsplit, urlunsplit
 RESERVED_CHARACTERS = ":/?#[]@!$&'()*+,;="
 
 
+def cleanup_url_input(url: str) -> str:
+    """Remove parser-ignored characters before URL classification."""
+    # Match urlsplit's C0/tab/newline cleanup, retaining Unicode whitespace support.
+    url = re.sub(r"^[\x00-\x20\s]+", "", url)
+    return url.replace("\t", "").replace("\r", "").replace("\n", "")
+
+
 class URL(NamedTuple):
     """URL components tuple.
 

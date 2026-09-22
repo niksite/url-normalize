@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 from url_normalize import url_normalize
+from url_normalize.param_allowlist import get_allowed_params
 
 
 def test_param_filtering_disabled_by_default():
@@ -202,3 +205,22 @@ def test_custom_allowlist_ignores_unrelated_invalid_domain():
         )
         == "https://xn--e1afmkfd.xn--p1ai/?q=1"
     )
+
+
+@pytest.mark.parametrize("host", ["target.example", "unlisted.example"])
+def test_filtering_resolves_domain_rules_once_per_url(host):
+    """Bound domain lookups independently of how many parameters are supplied."""
+    allowlist = {f"d{index}.example": ["q"] for index in range(20)}
+    allowlist["TARGET.EXAMPLE."] = ["q"]
+    query = "&".join(f"q={index}&drop={index}" for index in range(50))
+    with patch(
+        "url_normalize.normalize_query.get_allowed_params", wraps=get_allowed_params
+    ) as lookup:
+        result = url_normalize(
+            f"https://{host}/?{query}", filter_params=True, param_allowlist=allowlist
+        )
+    expected = f"https://{host}/"
+    if host == "target.example":
+        expected += "?" + "&".join(f"q={index}" for index in range(50))
+    assert result == expected
+    lookup.assert_called_once_with(host, allowlist)

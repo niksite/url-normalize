@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from .normalize_scheme import DEFAULT_SCHEME
+from .tools import cleanup_url_input
 
 # Schemes that require authority component reconstruction with //
 AUTHORITY_SCHEMES = frozenset(["http", "https", "ftp", "ftps"])
@@ -21,7 +22,7 @@ def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
         string : updated url with validated/attached scheme
 
     """
-    url = url.lstrip()
+    url = cleanup_url_input(url)
     is_universal_scheme = url.startswith("//")
     is_file_path = url == "-" or (url.startswith("/") and not is_universal_scheme)
     if not url or is_file_path:

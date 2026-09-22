@@ -48,16 +48,17 @@ def normalize_query(
     if not query:
         return ""
 
+    allowed_params = (
+        get_allowed_params(host, param_allowlist) if filter_params else None
+    )
     processed = []
     for param in query.split("&"):
         if not param:
             continue
         key, separator, value = param.partition("=")
         key = process_query_param(key)
-        if filter_params:
-            allowed_params = get_allowed_params(host, param_allowlist)
-            if key not in allowed_params:
-                continue
+        if allowed_params is not None and key not in allowed_params:
+            continue
         value = process_query_param(value)
         processed.append(f"{key}{separator}{value}")
 

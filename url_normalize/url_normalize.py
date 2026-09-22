@@ -18,7 +18,7 @@ from .normalize_scheme import DEFAULT_SCHEME, normalize_scheme
 from .normalize_userinfo import normalize_userinfo
 from .provide_url_domain import provide_url_domain
 from .provide_url_scheme import provide_url_scheme
-from .tools import deconstruct_url, reconstruct_url
+from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
 
 
 def url_normalize(  # noqa: PLR0913
@@ -57,7 +57,7 @@ def url_normalize(  # noqa: PLR0913
 
     """
     if url is not None:
-        url = url.lstrip()
+        url = cleanup_url_input(url)
     if not url:
         return url
     url = provide_url_domain(url, default_domain)
