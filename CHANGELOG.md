@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Internal
+
+- Add Python 3.15 to the CI matrix on Linux, macOS, and Windows.
+- Make `uv` run CI tests with the Python interpreter selected by the matrix.
+- Run `pytest` as a Python module so coverage measures the checkout instead of an installed copy.
+
 ## [3.0.1] - 2026-09-22
 
 ### Upgrade notes
