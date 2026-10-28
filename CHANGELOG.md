@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Strip trailing Unicode IDNA label separators from hosts and custom allowlist domain keys in one normalization pass.
+
 ### Internal
 
 - Add Python 3.15 to the CI matrix on Linux, macOS, and Windows.
