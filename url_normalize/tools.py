@@ -81,35 +81,32 @@ def reconstruct_url(url: URL) -> str:
     return urlunsplit((url.scheme, auth, url.path, url.query, url.fragment))
 
 
-def force_unicode(string: str | bytes, charset: str = "utf-8") -> str:
-    """Ensure string is properly encoded (Python 3 only).
+def force_unicode(string: str | bytes) -> str:
+    """Decode UTF-8 bytes while leaving strings unchanged.
 
     Params:
-        string : str : an input string
-        charset : str : optional : output encoding
+        string : str | bytes : input text or UTF-8 bytes
 
     Returns:
         str
 
     """
     if isinstance(string, bytes):
-        return string.decode(charset, "replace")
+        return string.decode("utf-8", "replace")
     return string
 
 
-def unquote(string: str, charset: str = "utf-8") -> str:
+def unquote(string: str) -> str:
     """Unquote and normalize unicode string.
 
     Params:
         string : string to be unquoted
-        charset : string : optional : output encoding
 
     Returns:
         string : an unquoted and normalized string
 
     """
     string = unquote_orig(string, errors="surrogateescape")
-    string = force_unicode(string, charset)
     return unicodedata.normalize("NFC", string)
 
 

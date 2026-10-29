@@ -4,7 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from url_normalize import url_normalize
+from url_normalize import url_humanize, url_normalize
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_rejects_removed_charset_argument(transform):
+    """Reject the removed option instead of silently ignoring an encoding request."""
+    with pytest.raises(TypeError, match="unexpected keyword argument 'charset'"):
+        transform("https://example.com/é", charset="iso-8859-1")
 
 
 @pytest.mark.parametrize(

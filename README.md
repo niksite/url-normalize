@@ -7,195 +7,182 @@
 [![License](https://img.shields.io/pypi/l/url-normalize.svg)](https://github.com/niksite/url-normalize/blob/master/LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-A Python library for standardizing and normalizing URLs. Ideal for database deduplication, caching, web crawling, and anywhere you need to ensure that equivalent URLs resolve to the exact same string.
+Normalize URL spelling consistently for storage, comparison, and display. Use `url_normalize()` for normalized URLs and `url_humanize()` for readable display URLs.
 
-```python
-from url_normalize import url_normalize
-
-# Fixes IDN, lowercases host/scheme, removes default ports, resolves path segments
-url_normalize("HTTP://User:Pass@www.FOO.com:80///foo/../bar/./baz?q=1#frag")
-# -> 'http://User:Pass@www.foo.com/bar/baz?q=1#frag'
-```
-
-## Features
-
-url-normalize provides a robust URI normalization function that handles IDN domains, scheme/host lowercasing, and RFC-compliant path normalization.
-
-- **IDN Support**: Full internationalized domain name handling (using IDNA2008 with UTS46).
-- **Humanization**: Convert normalized URLs to a readable display format while preserving round-trip normalization.
-- **RFC Compliance**:
-  - Proper percent-encoding (minimal, uppercase hex).
-  - Dot-segment removal in paths.
-  - Default port and authority handling.
-  - UTF-8 NFC normalization.
-- **Configurable Defaults**:
-  - Customizable default scheme (https by default).
-  - Configurable default domain for absolute paths.
-- **Query Parameter Control**:
-  - Parameter filtering with allowlists.
-  - Support for domain-specific parameter rules.
-- **Versatile URL Handling**: Handles empty strings, double-slash URLs (//domain.tld), and shebang (#!) URLs.
-- **Developer Friendly**:
-  - Python 3.11+ compatibility, including Python 3.15.
-  - 100% statement coverage, enforced by the test suite.
-  - Modern type hints and string handling.
-
-Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm).
+Requires **Python 3.11 or newer**. Normalization operates on URL text; it does not fetch pages or follow redirects.
 
 ## Installation
 
-Install as a library:
+Install the library and CLI:
 
 ```sh
-pip install url-normalize
+python -m pip install url-normalize
 ```
 
-Or install as a standalone CLI tool using [uv](https://docs.astral.sh/uv/):
+Or install the CLI in its own environment with [uv](https://docs.astral.sh/uv/):
 
 ```sh
 uv tool install url-normalize
 ```
 
-## Usage
-
-### Python API
-
-#### Basic Normalization
+## Quick start
 
 ```python
 from url_normalize import url_normalize
 
-# Basic normalization (uses https by default)
-print(url_normalize("www.foo.com:80/foo"))
-# Output: https://www.foo.com:80/foo
+print(url_normalize("HTTP://Example.COM:80/a/../b"))
+# Output: http://example.com/b
 
-# With custom default scheme
-print(url_normalize("www.foo.com/foo", default_scheme="http"))
-# Output: http://www.foo.com/foo
+print(url_normalize("bücher.de/résumé"))
+# Output: https://xn--bcher-kva.de/r%C3%A9sum%C3%A9
 ```
 
-The `charset` argument remains for compatibility. Unicode characters use UTF-8 percent encoding, regardless of this argument.
+From the terminal:
 
-#### Query Parameter Filtering
+```sh
+url-normalize "HTTP://Example.COM:80/a/../b"
+# Output: http://example.com/b
+```
 
-With `filter_params=True`, normalization retains only allowlisted query parameters. The built-in rules cover selected domains.
+## Normalization behavior
 
-Other domains have an empty default allowlist. Without a custom allowlist, filtering removes all query parameters from those domains.
+| Behavior | Input | Output |
+| --- | --- | --- |
+| Add a missing scheme | `example.com` | `https://example.com/` |
+| Lowercase scheme and host; remove a default port | `HTTP://Example.COM:80/` | `http://example.com/` |
+| Resolve dot segments | `https://example.com/a/../b` | `https://example.com/b` |
+| Encode Unicode hosts and paths | `https://bücher.de/résumé` | `https://xn--bcher-kva.de/r%C3%A9sum%C3%A9` |
+| Remove trailing host dots, including Unicode equivalents | `https://example.com。/` | `https://example.com/` |
+| Preserve encoded path separators; uppercase escape hex | `https://example.com/a%2fb` | `https://example.com/a%2Fb` |
+| Preserve query order and repeated keys | `https://example.com/?b=2&a=1&a=3` | `https://example.com/?b=2&a=1&a=3` |
+| Preserve explicit empty query values | `https://example.com/?flag=&flag` | `https://example.com/?flag=&flag` |
+
+In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized; hashbang fragments (`#!`) are converted to the `_escaped_fragment_` query parameter.
+
+Normalization applies consistent spelling rules; it does not establish whether two URLs serve the same content. Applications using normalized URLs as persistent cache keys or identifiers should review the [changelog](CHANGELOG.md) when upgrading.
+
+## Python API
+
+Both functions accept a URL as `str` or `None` and return `str` or `None`. An empty string and `None` are returned unchanged. Malformed input can raise `ValueError`, including `UnicodeError` for invalid hostnames.
+
+The following options are keyword-only and apply to both functions:
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `default_scheme` | `"https"` | Scheme to add when the URL has none. |
+| `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
+| `filter_params` | `False` | Retain only allowlisted query parameters. |
+| `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
+
+Unicode URL characters always use UTF-8 percent encoding.
+
+### Query parameter filtering
+
+With `filter_params=True`, only explicitly allowed parameters remain. Built-in rules cover Google, Bing, Baidu, and YouTube; see the [domain rules](url_normalize/param_allowlist.py) for their parameter names.
+
+**Unknown domains have an empty default allowlist**, so filtering removes all their query parameters unless you supply a custom rule. A custom allowlist replaces the built-in rules.
 
 ```python
-# With the built-in Google allowlist
-print(url_normalize("www.google.com/search?q=test&utm_source=test", filter_params=True))
+from url_normalize import url_normalize
+
+# Use the built-in Google rule.
+result = url_normalize(
+    "www.google.com/search?q=test&utm_source=test", filter_params=True
+)
+print(result)
 # Output: https://www.google.com/search?q=test
 
-# With custom parameter allowlist as a list
-print(
-    url_normalize(
-        "example.com?page=1&id=123&ref=test",
-        filter_params=True,
-        param_allowlist=["page", "id"],
-    )
+# Apply a list of allowed names to any domain.
+result = url_normalize(
+    "example.com/?page=1&id=123&ref=test",
+    filter_params=True,
+    param_allowlist=["page", "id"],
 )
+print(result)
 # Output: https://example.com/?page=1&id=123
 
-# With domain-specific parameter allowlists
-print(
-    url_normalize(
-        "example.com?page=1&id=123&ref=test",
-        filter_params=True,
-        param_allowlist={"example.com": ["page", "id"]},
-    )
+# Use domain-specific rules, including Unicode parameter names.
+result = url_normalize(
+    "https://example.com/?r%C3%A9sum%C3%A9=1&drop=2",
+    filter_params=True,
+    param_allowlist={"example.com": ["résumé"]},
 )
-# Output: https://example.com/?page=1&id=123
+print(result)
+# Output: https://example.com/?r%C3%A9sum%C3%A9=1
 ```
 
-#### Default Domain & Scheme
+Allowed names use the same normalization as query keys, including Unicode and spaces. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
 
-Useful for resolving relative URLs found on a specific page.
+### Default domain and scheme
+
+Use `default_domain` for paths starting with a single `/`. URLs starting with `//` already specify their host. This option does not resolve relative paths such as `../images/logo.png` against a page URL.
 
 ```python
-# With default domain for absolute paths
-print(url_normalize("/images/logo.png", default_domain="example.com"))
-# Output: https://example.com/images/logo.png
+from url_normalize import url_normalize
 
-# With default domain and custom scheme
-print(
-    url_normalize(
-        "/images/logo.png", default_scheme="http", default_domain="example.com"
-    )
+result = url_normalize(
+    "/images/logo.png", default_domain="example.com", default_scheme="http"
 )
+print(result)
 # Output: http://example.com/images/logo.png
 ```
 
-#### Humanizing URLs
+### Human-readable URLs
 
-Convert normalized URLs back into a user-friendly format for display, particularly useful for IDN domains and percent-encoded paths.
+`url_humanize()` normalizes its input, then decodes components only when the display URL normalizes back to the same result. Some escapes therefore remain encoded.
 
 ```python
-from url_normalize import url_humanize
+from url_normalize import url_humanize, url_normalize
 
-# Human-readable display form that still normalizes back to the same URL
-print(
-    url_humanize(
-        "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
-    )
-)
-# Output: https://пример.испытание/Служебная
+normalized = "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
+readable = url_humanize(normalized)
+print(readable)
+# Output: https://bücher.de/résumé
 
-# Humanization accepts the same normalization options
-print(
-    url_humanize(
-        "/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F",
-        default_domain="xn--e1afmkfd.xn--80akhbyknj4f",
-    )
-)
-# Output: https://пример.испытание/Служебная
+assert url_normalize(readable) == normalized
 ```
 
-### Command-line Usage
+## Command-line usage
 
-You can also use `url-normalize` directly from the terminal to process URLs.
+The CLI accepts one URL per invocation and prints the result to standard output. Quote URLs containing shell characters such as `&`.
 
-```bash
-$ url-normalize "www.foo.com:80/foo"
-# Output: https://www.foo.com:80/foo
-
-# With custom default scheme
-$ url-normalize -s http "www.foo.com/foo"
-# Output: http://www.foo.com/foo
-
-# With query parameter filtering
-$ url-normalize -f "www.google.com/search?q=test&utm_source=test"
-# Output: https://www.google.com/search?q=test
-
-# With custom allowlist
-$ url-normalize -f -p page,id "example.com?page=1&id=123&ref=test"
+```sh
+# Keep selected query parameters.
+url-normalize -f -p page,id "example.com/?page=1&id=123&ref=test"
 # Output: https://example.com/?page=1&id=123
 
-# With default domain for absolute paths
-$ url-normalize -d example.com "/images/logo.png"
-# Output: https://example.com/images/logo.png
-
-# With default domain and custom scheme
-$ url-normalize -d example.com -s http "/images/logo.png"
+# Supply a domain and scheme for an absolute path.
+url-normalize -d example.com -s http "/images/logo.png"
 # Output: http://example.com/images/logo.png
 
-# Human-readable display form
-$ url-normalize -H "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
-# Output: https://пример.испытание/Служебная
-
-# Via uv tool/uvx
-$ uvx url-normalize www.foo.com:80/foo
-# Output: https://www.foo.com:80/foo
+# Display a readable URL.
+url-normalize -H "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
+# Output: https://bücher.de/résumé
 ```
 
-## Documentation
+Use `url-normalize --help` for all options and `url-normalize --version` for the installed version. Normalization errors are written to standard error with exit status 1; invalid command-line arguments use exit status 2.
 
-For a complete history of changes, see [CHANGELOG.md](CHANGELOG.md).
+To run without a persistent tool installation:
+
+```sh
+uvx url-normalize "example.com"
+# Output: https://example.com/
+```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+After cloning the repository, install the development dependencies and run the checks with [uv](https://docs.astral.sh/uv/):
 
-## License
+```sh
+uv sync --locked --extra dev
+uv run --locked --extra dev python -m pytest
+uv run --locked --extra dev pre-commit run --all-files
+```
 
-MIT License
+The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.15 on Linux, macOS, and Windows. Please include regression tests with bug fixes.
+
+## Changelog and license
+
+See [CHANGELOG.md](CHANGELOG.md) for release history and upgrade notes. Distributed under the [MIT License](LICENSE).
+
+Inspired by Sam Ruby's [urlnorm.py](http://intertwingly.net/blog/2004/08/04/Urlnorm).

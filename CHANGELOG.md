@@ -13,11 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Python 3.11 or newer and `idna>=3.20` are now required. Python 3.10 users must upgrade Python before installing this release.
 
+Remove the `charset` keyword from calls to `url_normalize()` and `url_humanize()`, and remove `-c` / `--charset` from CLI commands. These options have been removed; Unicode URL characters always use UTF-8 percent encoding.
+
 Hosts ending in Unicode equivalents of a dot now normalize without a trailing dot on the first pass. Query filtering now retains explicitly allowed names containing Unicode or spaces. If normalized URLs are used as cache keys or deduplication identifiers, review stored keys and re-normalize the original URLs where available.
 
 ### Changed
 
 - **BREAKING:** Drop support for end-of-life Python 3.10; Python 3.11 or newer is required.
+- **BREAKING:** Remove the legacy `charset` API argument and `-c` / `--charset` CLI option.
 - Declare Python 3.15 support in package metadata.
 - Require `idna>=3.20`.
 

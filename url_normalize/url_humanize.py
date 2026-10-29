@@ -7,7 +7,6 @@ from urllib.parse import unquote
 
 import idna
 
-from .normalize_host import DEFAULT_CHARSET
 from .normalize_scheme import DEFAULT_SCHEME
 from .tools import URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
@@ -93,10 +92,9 @@ def _humanize_query(url: URL, normalized: str) -> URL:
     return url
 
 
-def url_humanize(  # noqa: PLR0913
+def url_humanize(
     url: str | None,
     *,
-    charset: str = DEFAULT_CHARSET,
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
@@ -111,7 +109,6 @@ def url_humanize(  # noqa: PLR0913
     """
     normalized = url_normalize(
         url,
-        charset=charset,
         default_scheme=default_scheme,
         default_domain=default_domain,
         filter_params=filter_params,

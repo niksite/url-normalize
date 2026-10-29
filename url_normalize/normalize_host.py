@@ -6,24 +6,21 @@ import idna
 
 from .tools import force_unicode
 
-DEFAULT_CHARSET = "utf-8"
 
-
-def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
+def normalize_host(host: str | bytes) -> str:
     """Normalize host part of the url.
 
     Lowercase and strip of final dot.
     Also, handle IDN domains using IDNA2008 with UTS46 processing.
 
     Params:
-        host : string : url host, e.g., 'site.com'
-        charset : string : encoding charset
+        host : str | bytes : URL host as text or UTF-8 bytes, e.g., 'site.com'
 
     Returns:
         string : normalized host data.
 
     """
-    host = force_unicode(host, charset)
+    host = force_unicode(host)
     if host.startswith("[") and host.endswith("]"):
         address, separator, zone = host.partition("%")
         return address.lower() + separator + zone

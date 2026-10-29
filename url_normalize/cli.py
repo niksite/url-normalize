@@ -24,14 +24,6 @@ def main() -> None:
     )
     parser.add_argument("url", help="The URL to normalize.")
     parser.add_argument(
-        "-c",
-        "--charset",
-        default="utf-8",
-        help=(
-            "Retained for compatibility. Unicode characters use UTF-8 percent encoding."
-        ),
-    )
-    parser.add_argument(
         "-s",
         "--default-scheme",
         default="https",
@@ -73,7 +65,6 @@ def main() -> None:
     try:
         output_url = transform_url(
             args.url,
-            charset=args.charset,
             default_scheme=args.default_scheme,
             default_domain=args.default_domain,
             filter_params=args.filter_params,

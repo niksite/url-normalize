@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from .generic_url_cleanup import generic_url_cleanup
 from .normalize_fragment import normalize_fragment
-from .normalize_host import DEFAULT_CHARSET, normalize_host
+from .normalize_host import normalize_host
 from .normalize_path import normalize_path
 from .normalize_port import normalize_port
 from .normalize_query import normalize_query
@@ -21,10 +21,9 @@ from .provide_url_scheme import provide_url_scheme
 from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
 
 
-def url_normalize(  # noqa: PLR0913
+def url_normalize(
     url: str | None,
     *,  # Force keyword-only arguments
-    charset: str = DEFAULT_CHARSET,
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
@@ -42,8 +41,6 @@ def url_normalize(  # noqa: PLR0913
 
     Params:
         url : str | None : URL to normalize
-        charset : str : optional
-            Retained for compatibility. Unicode characters use UTF-8 percent encoding.
         default_scheme : str : default scheme to use if none present
         default_domain : str | None : optional
             Default domain to use for absolute paths (starting with '/')
@@ -64,9 +61,7 @@ def url_normalize(  # noqa: PLR0913
     url = provide_url_scheme(url, default_scheme)
     url = generic_url_cleanup(url)
     url_elements = deconstruct_url(url)
-    url_elements = url_elements._replace(
-        host=normalize_host(url_elements.host, charset)
-    )
+    url_elements = url_elements._replace(host=normalize_host(url_elements.host))
     url_elements = url_elements._replace(
         scheme=normalize_scheme(url_elements.scheme),
         userinfo=normalize_userinfo(url_elements.userinfo),

@@ -35,16 +35,21 @@ def test_cli_help_describes_allowlist_filtering() -> None:
     assert "Unknown domains have an empty default allowlist." in help_text
 
 
-def test_cli_help_describes_fixed_utf8_encoding() -> None:
-    """Describe charset as a compatibility option for Unicode URL input."""
+def test_cli_help_omits_removed_charset_option() -> None:
+    """Remove the obsolete encoding option from CLI help."""
     result = run_cli("--help")
     assert result.returncode == 0
-    help_text = " ".join(result.stdout.split())
-    assert "Retained for compatibility." in help_text
-    assert "Unicode characters use UTF-8 percent encoding." in help_text
-    normalized = run_cli("--charset", "iso-8859-1", "https://example.com/é")
-    assert normalized.returncode == 0
-    assert normalized.stdout.strip() == "https://example.com/%C3%A9"
+    assert "charset" not in result.stdout
+
+
+@pytest.mark.parametrize("option", ["-c", "--charset"])
+def test_cli_rejects_removed_charset_option(option):
+    """Report removed encoding flags as invalid command-line arguments."""
+    usage_error_status = 2
+    result = run_cli(option, "utf-8", "https://example.com/é")
+    assert result.returncode == usage_error_status
+    assert "unrecognized arguments" in result.stderr
+    assert not result.stdout
 
 
 def test_cli_successful_main(capsys, monkeypatch):
@@ -284,35 +289,12 @@ def test_cli_version_short() -> None:
     assert not result.stderr
 
 
-@pytest.mark.skipif(
-    sys.platform == "win32", reason="Charset handling differs on Windows CLI"
-)
-def test_cli_charset() -> None:
-    """Test charset handling via CLI (might be platform-dependent)."""
-    # Example using Cyrillic characters which need correct encoding
-    url = "http://пример.рф/path"
-    expected_idn = "http://xn--e1afmkfd.xn--p1ai/path"
-
-    # Test with default UTF-8
-    result_utf8 = run_cli(url)
-
-    assert result_utf8.returncode == 0
-    assert result_utf8.stdout.strip() == expected_idn
-    assert not result_utf8.stderr
-
-    # Test specifying UTF-8 explicitly
-    result_charset = run_cli("--charset", "utf-8", url)
-
-    assert result_charset.returncode == 0
-    assert result_charset.stdout.strip() == expected_idn
-    assert not result_charset.stderr
-
-    # Test specifying UTF-8 explicitly using short arg
-    result_charset_short = run_cli("-c", "utf-8", url)
-
-    assert result_charset_short.returncode == 0
-    assert result_charset_short.stdout.strip() == expected_idn
-    assert not result_charset_short.stderr
+def test_cli_unicode_host_and_path() -> None:
+    """Encode Unicode hosts with IDNA and paths with UTF-8 on every platform."""
+    result = run_cli("http://пример.рф/é")
+    assert result.returncode == 0
+    assert result.stdout.strip() == "http://xn--e1afmkfd.xn--p1ai/%C3%A9"
+    assert not result.stderr
 
 
 def test_cli_default_domain() -> None:
