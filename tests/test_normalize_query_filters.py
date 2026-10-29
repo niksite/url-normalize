@@ -84,6 +84,31 @@ def test_custom_allowlist_normalizes_parameter_names(
 
 
 @pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("a+b", "a+b=1"),
+        ("a%2Bb", "a%2Bb=2"),
+        ("a b", "a%20b=3"),
+        ("a%20b", "a%20b=3"),
+    ],
+)
+@pytest.mark.parametrize("domain_specific", [False, True])
+def test_custom_allowlist_keeps_plus_and_space_names_distinct(
+    name, expected, domain_specific
+):
+    """Keep literal plus, encoded plus, and encoded space keys distinct."""
+    allowlist = {"example.com": [name]} if domain_specific else [name]
+    assert (
+        url_normalize(
+            "https://example.com/?a+b=1&a%2Bb=2&a%20b=3&drop=4",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://example.com/?{expected}"
+    )
+
+
+@pytest.mark.parametrize(
     ("url", "expected"),
     [
         # Basic parameter filtering
