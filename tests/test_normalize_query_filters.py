@@ -60,9 +60,9 @@ def test_custom_list_allowlist():
 @pytest.mark.parametrize(
     ("name", "query", "expected"),
     [
-        ("café", "café=1", "caf%C3%A9=1"),
-        ("café", "caf%C3%A9=1", "caf%C3%A9=1"),
-        ("cafe\u0301", "caf%C3%A9=1", "caf%C3%A9=1"),
+        ("café", "café=1", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("café", "caf%C3%A9=1", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("cafe\u0301", "caf%C3%A9=1", "caf%C3%A9=1"),  # codespell:ignore caf
         ("search term", "search%20term=1", "search%20term=1"),
     ],
 )
