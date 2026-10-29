@@ -58,6 +58,32 @@ def test_custom_list_allowlist():
 
 
 @pytest.mark.parametrize(
+    ("name", "query", "expected"),
+    [
+        ("café", "café=1", "caf%C3%A9=1"),
+        ("café", "caf%C3%A9=1", "caf%C3%A9=1"),
+        ("cafe\u0301", "caf%C3%A9=1", "caf%C3%A9=1"),
+        ("search term", "search%20term=1", "search%20term=1"),
+    ],
+)
+@pytest.mark.parametrize("domain_specific", [False, True])
+def test_custom_allowlist_normalizes_parameter_names(
+    name, query, expected, domain_specific
+):
+    """Match parameter names using the same normalization as query keys."""
+    allowlist = {"example.com": [name]} if domain_specific else [name]
+    assert (
+        url_normalize(
+            f"https://example.com/?{query}&drop=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://example.com/?{expected}"
+    )
+    assert allowlist == ({"example.com": [name]} if domain_specific else [name])
+
+
+@pytest.mark.parametrize(
     ("url", "expected"),
     [
         # Basic parameter filtering

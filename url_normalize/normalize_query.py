@@ -49,7 +49,12 @@ def normalize_query(
         return ""
 
     allowed_params = (
-        get_allowed_params(host, param_allowlist) if filter_params else None
+        {
+            process_query_param(param)
+            for param in get_allowed_params(host, param_allowlist)
+        }
+        if filter_params
+        else None
     )
     processed = []
     for param in query.split("&"):
