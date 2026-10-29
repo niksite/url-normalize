@@ -5,18 +5,18 @@ description = "URL normalization for Python"
 authors = [{ name = "Nikolay Panov", email = "github@npanov.com" }]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["url", "normalization", "normalize", "normalizer"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
 ]
-dependencies = ["idna>=3.3"]
+dependencies = ["idna>=3.20"]
 
 [project.urls]
 Homepage = "https://github.com/niksite/url-normalize"
@@ -31,7 +31,7 @@ url-normalize = "url_normalize.cli:main"
 dev = ["mypy", "pre-commit", "pytest-cov", "pytest-socket", "pytest", "ruff"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 88
 unsafe-fixes = true
 
@@ -45,6 +45,7 @@ extend-select = [
 fixable = ["ALL"]
 ignore = [
   "COM812", # missing-trailing-comma
+  "CPY001", # License is documented in LICENSE rather than per-file headers
   "D203",   # One blank line before class - we prefer D211 instead
   "D213",   # multi-line-summary-second-line - we prefer D212 instead
 ]
@@ -53,7 +54,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["INP001", "ANN001", "ANN201", "S101", "CPY001"]
+"tests/**" = ["INP001", "ANN001", "ANN201", "S101"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -62,7 +63,7 @@ indent-style = "space"
 [tool.mypy]
 ignore_missing_imports = true
 exclude = ["tests"]
-python_version = "3.10"
+python_version = "3.11"
 show_error_codes = true
 
 [build-system]

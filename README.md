@@ -36,7 +36,7 @@ url-normalize provides a robust URI normalization function that handles IDN doma
   - Support for domain-specific parameter rules.
 - **Versatile URL Handling**: Handles empty strings, double-slash URLs (//domain.tld), and shebang (#!) URLs.
 - **Developer Friendly**:
-  - Python 3.10+ compatibility.
+  - Python 3.11+ compatibility, including Python 3.15.
   - 100% statement coverage, enforced by the test suite.
   - Modern type hints and string handling.
 
@@ -88,19 +88,23 @@ print(url_normalize("www.google.com/search?q=test&utm_source=test", filter_param
 # Output: https://www.google.com/search?q=test
 
 # With custom parameter allowlist as a list
-print(url_normalize(
-    "example.com?page=1&id=123&ref=test",
-    filter_params=True,
-    param_allowlist=["page", "id"]
-))
+print(
+    url_normalize(
+        "example.com?page=1&id=123&ref=test",
+        filter_params=True,
+        param_allowlist=["page", "id"],
+    )
+)
 # Output: https://example.com/?page=1&id=123
 
 # With domain-specific parameter allowlists
-print(url_normalize(
-    "example.com?page=1&id=123&ref=test",
-    filter_params=True,
-    param_allowlist={"example.com": ["page", "id"]}
-))
+print(
+    url_normalize(
+        "example.com?page=1&id=123&ref=test",
+        filter_params=True,
+        param_allowlist={"example.com": ["page", "id"]},
+    )
+)
 # Output: https://example.com/?page=1&id=123
 ```
 
@@ -114,7 +118,11 @@ print(url_normalize("/images/logo.png", default_domain="example.com"))
 # Output: https://example.com/images/logo.png
 
 # With default domain and custom scheme
-print(url_normalize("/images/logo.png", default_scheme="http", default_domain="example.com"))
+print(
+    url_normalize(
+        "/images/logo.png", default_scheme="http", default_domain="example.com"
+    )
+)
 # Output: http://example.com/images/logo.png
 ```
 
@@ -126,11 +134,20 @@ Convert normalized URLs back into a user-friendly format for display, particular
 from url_normalize import url_humanize
 
 # Human-readable display form that still normalizes back to the same URL
-print(url_humanize("https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"))
+print(
+    url_humanize(
+        "https://xn--e1afmkfd.xn--80akhbyknj4f/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
+    )
+)
 # Output: https://пример.испытание/Служебная
 
 # Humanization accepts the same normalization options
-print(url_humanize("/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F", default_domain="xn--e1afmkfd.xn--80akhbyknj4f"))
+print(
+    url_humanize(
+        "/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F",
+        default_domain="xn--e1afmkfd.xn--80akhbyknj4f",
+    )
+)
 # Output: https://пример.испытание/Служебная
 ```
 

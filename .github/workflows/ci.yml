@@ -25,20 +25,20 @@ jobs:
     outputs:
       wheel-distribution: ${{ steps.wheel-distribution.outputs.path }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: {fetch-depth: 0}  # deep clone for setuptools-scm
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: {python-version-file: "pyproject.toml"}
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
       - name: Run static analysis and format checkers
-        run: uv run --with '.[dev]' pre-commit run --all-files
+        run: uv run --locked --extra dev pre-commit run --all-files
       - name: Build package distribution files
         run: uv build
       - name: Record the path of wheel distribution
         id: wheel-distribution
         run: echo "path=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
       - name: Store the distribution files for use in other stages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-distribution-files
           path: dist/
@@ -49,28 +49,30 @@ jobs:
     strategy:
       matrix:
         python:
-        - "3.10"  # oldest currently supported Python
-        - "3.x"   # newest Python that is stable
-        - "3.15"
+        - "3.11"  # oldest currently supported Python
+        - "3.12"
+        - "3.13"
+        - "3.14"
+        - "3.15"  # newest stable Python
         platform:
         - ubuntu-latest
         - macos-latest
         - windows-latest
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         id: python
         with:
           python-version: ${{ matrix.python }}
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
       - name: Retrieve pre-built distribution files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with: {name: python-distribution-files, path: dist/}
       - name: Run tests
         env:
           UV_PYTHON: ${{ steps.python.outputs.python-path }}
-        run: uv run --with '.[dev]' python -m pytest --cov-report=lcov:coverage.lcov
+        run: uv run --locked --extra dev python -m pytest --cov-report=lcov:coverage.lcov
       - name: Upload partial coverage report
         uses: coverallsapp/github-action@v2
         with:
@@ -96,12 +98,12 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: {python-version-file: "pyproject.toml"}
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
       - name: Retrieve pre-built distribution files
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with: {name: python-distribution-files, path: dist/}
       - name: Publish Package to PyPI
         run: uv publish dist/*

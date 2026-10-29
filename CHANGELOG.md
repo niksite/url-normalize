@@ -7,12 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING:** Drop support for end-of-life Python 3.10; Python 3.11 or newer is required.
+- Declare Python 3.15 support in package metadata.
+- Require `idna>=3.20`.
+
 ### Fixed
 
 - Strip trailing Unicode IDNA label separators from hosts and custom allowlist domain keys in one normalization pass.
 
 ### Internal
 
+- Refresh dependencies, pre-commit hooks, and GitHub Actions.
+- Use the committed dependency lockfile for CI checks and tests.
+- Test every supported Python version from 3.11 through 3.15 on Linux, macOS, and Windows.
 - Add Python 3.15 to the CI matrix on Linux, macOS, and Windows.
 - Make `uv` run CI tests with the Python interpreter selected by the matrix.
 - Run `pytest` as a Python module so coverage measures the checkout instead of an installed copy.

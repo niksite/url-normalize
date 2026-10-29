@@ -11,8 +11,10 @@ import url_normalize as package
     ("normalized", "expected"),
     [
         (
-            "https://xn--e1afmkfd.xn--80akhbyknj4f/"
-            "%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test",
+            (
+                "https://xn--e1afmkfd.xn--80akhbyknj4f/"
+                "%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F:Search/Test"
+            ),
             "https://пример.испытание/Служебная:Search/Test",
         ),
         (
