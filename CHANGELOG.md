@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-28
+
+### Upgrade notes
+
+Python 3.11 or newer and `idna>=3.20` are now required. Python 3.10 users must upgrade Python before installing this release.
+
+Hosts ending in Unicode equivalents of a dot now normalize without a trailing dot on the first pass. Query filtering now retains explicitly allowed names containing Unicode or spaces. If normalized URLs are used as cache keys or deduplication identifiers, review stored keys and re-normalize the original URLs where available.
+
 ### Changed
 
 - **BREAKING:** Drop support for end-of-life Python 3.10; Python 3.11 or newer is required.
@@ -16,13 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Strip trailing Unicode IDNA label separators from hosts and custom allowlist domain keys in one normalization pass.
+- Normalize allowlisted query parameter names consistently with URL query keys, including Unicode and spaces, while keeping literal plus signs, encoded plus signs, and encoded spaces distinct.
 
 ### Internal
 
 - Refresh dependencies, pre-commit hooks, and GitHub Actions.
 - Use the committed dependency lockfile for CI checks and tests.
 - Test every supported Python version from 3.11 through 3.15 on Linux, macOS, and Windows.
-- Add Python 3.15 to the CI matrix on Linux, macOS, and Windows.
 - Make `uv` run CI tests with the Python interpreter selected by the matrix.
 - Run `pytest` as a Python module so coverage measures the checkout instead of an installed copy.
 
