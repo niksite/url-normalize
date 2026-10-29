@@ -71,6 +71,57 @@ def test_custom_allowlist_matches_trailing_idna_separator(separator):
 
 
 @pytest.mark.parametrize(
+    ("name", "query", "expected"),
+    [
+        ("café", "café=1", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("café", "caf%C3%A9=1", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("cafe\u0301", "caf%C3%A9=1", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("search term", "search%20term=1", "search%20term=1"),
+    ],
+)
+@pytest.mark.parametrize("domain_specific", [False, True])
+def test_custom_allowlist_normalizes_parameter_names(
+    name, query, expected, domain_specific
+):
+    """Match parameter names using the same normalization as query keys."""
+    allowlist = {"example.com": [name]} if domain_specific else [name]
+    assert (
+        url_normalize(
+            f"https://example.com/?{query}&drop=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://example.com/?{expected}"
+    )
+    assert allowlist == ({"example.com": [name]} if domain_specific else [name])
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("a+b", "a+b=1"),
+        ("a%2Bb", "a%2Bb=2"),
+        ("a b", "a%20b=3"),
+        ("a%20b", "a%20b=3"),
+    ],
+)
+@pytest.mark.parametrize("domain_specific", [False, True])
+def test_custom_allowlist_keeps_plus_and_space_names_distinct(
+    name, expected, domain_specific
+):
+    """Keep literal plus, encoded plus, and encoded space keys distinct."""
+    allowlist = {"example.com": [name]} if domain_specific else [name]
+    assert (
+        url_normalize(
+            "https://example.com/?a+b=1&a%2Bb=2&a%20b=3&drop=4",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://example.com/?{expected}"
+    )
+
+
+@pytest.mark.parametrize(
     ("url", "expected"),
     [
         # Basic parameter filtering
