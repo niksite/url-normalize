@@ -26,6 +26,7 @@ Hosts ending in Unicode equivalents of a dot now normalize without a trailing do
 
 ### Fixed
 
+- Write CLI error diagnostics in UTF-8, including Unicode arguments on Windows.
 - Strip trailing Unicode IDNA label separators from hosts and custom allowlist domain keys in one normalization pass.
 - Normalize allowlisted query parameter names consistently with URL query keys, including Unicode and spaces, while keeping literal plus signs, encoded plus signs, and encoded spaces distinct.
 

@@ -43,12 +43,14 @@ def test_cli_help_omits_removed_charset_option() -> None:
 
 
 @pytest.mark.parametrize("option", ["-c", "--charset"])
-def test_cli_rejects_removed_charset_option(option):
-    """Report removed encoding flags as invalid command-line arguments."""
+def test_cli_rejects_removed_charset_option(option, monkeypatch):
+    """Report removed flags with UTF-8 diagnostics even under a legacy encoding."""
+    monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
     usage_error_status = 2
     result = run_cli(option, "utf-8", "https://example.com/é")
     assert result.returncode == usage_error_status
     assert "unrecognized arguments" in result.stderr
+    assert "https://example.com/é" in result.stderr
     assert not result.stdout
 
 
