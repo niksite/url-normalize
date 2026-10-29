@@ -28,7 +28,8 @@ def normalize_host(host: str, charset: str = DEFAULT_CHARSET) -> str:
         address, separator, zone = host.partition("%")
         return address.lower() + separator + zone
     host = host.lower()
-    host = host.strip(".")
+    # Strip trailing IDNA separators before they are mapped to ASCII dots.
+    host = host.lstrip(".").rstrip(".\u3002\uff0e\uff61")
 
     # Split domain into parts to handle each label separately
     parts = host.split(".")

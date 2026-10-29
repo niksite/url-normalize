@@ -32,6 +32,36 @@ def test_normalize_host_result_is_expected(host: str, expected: str) -> None:
     assert result == expected, host
 
 
+@pytest.mark.parametrize("separator", [".", "\u3002", "\uff0e", "\uff61"])
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        ("EXAMPLE.COM", "example.com"),
+        ("faß.de", "xn--fa-hia.de"),
+        ("under_score.example", "under_score.example"),
+    ],
+)
+def test_normalize_host_strips_trailing_idna_separator(host, expected, separator):
+    """Strip equivalent trailing label separators before IDNA conversion."""
+    normalized = normalize_host(host + separator)
+    assert normalized == expected
+    assert normalize_host(normalized) == normalized
+
+
+@pytest.mark.parametrize("prefix", ["", "."])
+@pytest.mark.parametrize("separator", ["\u3002", "\uff0e", "\uff61"])
+def test_normalize_host_rejects_leading_unicode_separator(prefix, separator):
+    """Keep rejecting leading Unicode label separators as before."""
+    with pytest.raises(UnicodeError):
+        normalize_host(prefix + separator + "example.com")
+
+
+@pytest.mark.parametrize("prefix", [".", ".."])
+def test_normalize_host_strips_leading_ascii_dots(prefix):
+    """Retain the existing normalization of leading ASCII dots."""
+    assert normalize_host(prefix + "example.com") == "example.com"
+
+
 @pytest.mark.parametrize("charset", ["utf-8", "utf-16", "utf-32", "iso-8859-1"])
 @pytest.mark.parametrize(
     ("host", "expected"),

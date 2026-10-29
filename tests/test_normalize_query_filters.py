@@ -57,6 +57,19 @@ def test_custom_list_allowlist():
     )
 
 
+@pytest.mark.parametrize("separator", [".", "\u3002", "\uff0e", "\uff61"])
+def test_custom_allowlist_matches_trailing_idna_separator(separator):
+    """Match custom domain keys with any IDNA trailing label separator."""
+    assert (
+        url_normalize(
+            "https://example.com/?q=1&drop=2",
+            filter_params=True,
+            param_allowlist={f"example.com{separator}": ["q"]},
+        )
+        == "https://example.com/?q=1"
+    )
+
+
 @pytest.mark.parametrize(
     ("url", "expected"),
     [
