@@ -28,7 +28,7 @@ Changelog = "https://github.com/niksite/url-normalize/blob/master/CHANGELOG.md"
 url-normalize = "url_normalize.cli:main"
 
 [project.optional-dependencies]
-dev = ["hypothesis", "mypy", "pre-commit", "pytest-cov", "pytest-socket", "pytest", "ruff"]
+dev = ["hypothesis", "pre-commit", "pytest-cov", "pytest-socket", "pytest", "ruff", "ty"]
 
 [tool.ruff]
 target-version = "py311"
@@ -60,11 +60,11 @@ convention = "google"
 quote-style = "double"
 indent-style = "space"
 
-[tool.mypy]
-ignore_missing_imports = true
-exclude = ["tests"]
-python_version = "3.11"
-show_error_codes = true
+[tool.ty.src]
+include = ["url_normalize"]
+
+[tool.ty.environment]
+python-platform = "all"
 
 [build-system]
 requires = ["setuptools>=77", "wheel"]

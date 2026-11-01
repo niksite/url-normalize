@@ -181,6 +181,8 @@ uv run --locked --extra dev pre-commit run --all-files
 
 The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.15 on Linux, macOS, and Windows. Please include regression tests with bug fixes.
 
+Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
+
 Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URLs per property to check normalization idempotence and humanization round trips with the default options. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 
 ## Changelog and license

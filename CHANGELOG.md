@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Support CLI output streams whose `reconfigure` attribute is not callable.
 - Keep bidirectional controls and Unicode line/paragraph separators percent-encoded in `url_humanize()` output, including when supplied as literal characters. Ordinary multilingual text and join controls remain readable.
 - Avoid rebuilding and re-normalizing URLs for unchanged components in `url_humanize()`, improving performance for already-readable queries while retaining round-trip checks for decoded candidates.
 - Normalize empty WebSocket paths to `/`, including query-only URLs, in both `url_normalize()` and `url_humanize()`. For example, `wss://example.com?room=1` now becomes `wss://example.com/?room=1`; stored normalized WebSocket URLs without a path can be re-normalized to adopt this spelling.
 
 ### Internal
 
+- Replace mypy with ty, running package type checks through the locked development environment.
 - Add bounded Hypothesis tests for HTTP(S) normalization idempotence and humanization round trips.
 
 ## [3.1.0] - 2026-10-28

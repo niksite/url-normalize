@@ -2,6 +2,7 @@
 
 import subprocess
 import sys
+from io import StringIO
 from unittest.mock import patch
 
 import pytest
@@ -65,6 +66,26 @@ def test_cli_successful_main(capsys, monkeypatch):
     assert not captured.err
 
 
+@pytest.mark.parametrize("reconfigure_attribute", ["missing", "non-callable"])
+def test_cli_replacement_streams(reconfigure_attribute, monkeypatch):
+    """Support output streams without a callable reconfigure method."""
+    stdout, stderr = StringIO(), StringIO()
+    for stream_name, stream in (("stdout", stdout), ("stderr", stderr)):
+        if reconfigure_attribute == "non-callable":
+            monkeypatch.setattr(stream, "reconfigure", None, raising=False)
+        monkeypatch.setattr(sys, stream_name, stream)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["url-normalize", "--humanize", "https://xn--bcher-kva.de/%C3%A9"],
+    )
+
+    main()
+
+    assert stdout.getvalue() == "https://bücher.de/é\n"
+    assert not stderr.getvalue()
+
+
 def test_cli_error_handling(capsys, monkeypatch):
     """Test CLI error handling when URL normalization fails."""
     with patch("url_normalize.cli.url_normalize") as mock_normalize:
@@ -105,8 +126,10 @@ def test_cli_basic_normalization_short_args() -> None:
     assert not result.stderr
 
 
-def test_cli_humanize() -> None:
-    """Test human-readable URL output via CLI."""
+@pytest.mark.parametrize("io_encoding", ["utf-8", "cp1252"])
+def test_cli_humanize(io_encoding, monkeypatch):
+    """Print Unicode display URLs in UTF-8 even under a legacy encoding."""
+    monkeypatch.setenv("PYTHONIOENCODING", io_encoding)
     url = (
         "https://xn--e1afmkfd.xn--80akhbyknj4f/"
         "%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"

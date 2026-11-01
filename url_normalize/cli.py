@@ -13,8 +13,9 @@ def main() -> None:
     """Parse arguments and run url_normalize."""
     # Keep normal output and error diagnostics in UTF-8 on every platform.
     for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="backslashreplace")
 
     parser = argparse.ArgumentParser(description="Normalize a URL.")
     parser.add_argument(
