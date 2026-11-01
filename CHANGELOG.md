@@ -13,6 +13,10 @@ Repeated path slashes are now preserved by default. This changes normalized URLs
 
 Use `collapse_slashes=True` in either Python API, or `--collapse-slashes` in the CLI, when your application wants repeated slashes collapsed. Dot segments are resolved first, so this option is not an exact legacy mode: `/a//../b` now becomes `/a/b` even with collapsing enabled, whereas the old algorithm produced `/b`.
 
+Fragment output also changes: `#!/route` remains a fragment instead of becoming `?_escaped_fragment_=/route`, and literal routing and text-directive punctuation stays literal. Existing ASCII escapes remain encoded, including unreserved letters, hyphens and tildes, to preserve syntax interpreted before percent-decoding. The humanizer follows the same rule while decoding safe Unicode; fragment spaces remain `%20`.
+
+There is no legacy hashbang conversion flag. Applications that need the old crawler-specific query representation must construct it explicitly. Rebuild stored normalized keys from original URLs: previously encoded punctuation cannot reliably be distinguished from originally escaped data, and an existing `_escaped_fragment_` query parameter is treated as ordinary query data.
+
 ### Added
 
 - Add `remove_trailing_slash=False` to both Python APIs and `--remove-trailing-slash` to the CLI. When enabled, it removes the entire trailing run of literal path slashes after dot resolution and optional collapsing, while keeping the root `/`. It shares the scheme scope of `collapse_slashes` and leaves encoded separators intact.
@@ -21,6 +25,7 @@ Use `collapse_slashes=True` in either Python API, or `--collapse-slashes` in the
 ### Changed
 
 - **BREAKING:** Preserve repeated path slashes by default, including trailing empty segments.
+- **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
 
 ### Fixed
 

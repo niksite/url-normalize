@@ -21,6 +21,22 @@ QUERY_FIELD = st.one_of(
     COMPONENT_TEXT,
     st.builds(lambda key, value: f"{key}={value}", COMPONENT_TEXT, COMPONENT_TEXT),
 )
+FRAGMENT_TEXT = st.one_of(
+    COMPONENT_TEXT,
+    st.sampled_from(
+        [
+            "!/route?x=1&x=2",
+            "/a//../b",
+            ":~:text=prefix-,start,end,-suffix",
+            ":~:text=%C3%A9%2Dtest%2C%26text=second",
+            "%3A~%3Atext=hello",
+            ":%7e:text=hello",
+            ":~:te%78t=hello",  # codespell:ignore te
+            ":~:text%3dhello",
+            ":~:text=%252D%252C%2526",
+        ]
+    ),
+)
 
 
 @st.composite
@@ -57,7 +73,7 @@ def http_urls(draw):
             ),
         )
     )
-    fragment = draw(st.one_of(st.just(""), COMPONENT_TEXT.map(lambda text: "#" + text)))
+    fragment = draw(st.one_of(st.just(""), FRAGMENT_TEXT.map(lambda text: "#" + text)))
     return f"{scheme}://{userinfo}{host}{port}{path}{query}{fragment}"
 
 

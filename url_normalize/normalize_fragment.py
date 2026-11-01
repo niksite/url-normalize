@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+import re
+
 from .tools import quote, unquote
+
+# Fragments can embed syntax parsed before percent-decoding, including
+# unreserved ASCII characters (e.g. "-", "~" and the letters in "text=").
+FRAGMENT_ASCII_ESCAPE_RE = re.compile(r"(%[0-7][0-9A-Fa-f])")
 
 
 def normalize_fragment(fragment: str) -> str:
@@ -20,8 +26,12 @@ def normalize_fragment(fragment: str) -> str:
         pchar       = unreserved / pct-encoded / sub-delims / ":" / "@"
         unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
         sub-delims  = "!" / "$" / "&" / "'" / "(" / ")" / "*" / "+" / "," / ";" / "="
-        We specifically allow "~" and "=" as safe characters during normalization.
-        Other sub-delimiters could potentially be added to the `safe` list if needed.
+        Preserve these literal characters and existing ASCII escapes so embedded
+        routing and text-directive syntax is not activated or deactivated.
+        Non-ASCII text retains the usual UTF-8 and NFC normalization.
 
     """
-    return quote(unquote(fragment), safe="~=")
+    return "".join(
+        part.upper() if index % 2 else quote(unquote(part), safe="~!$&'()*+,;=:@/?")
+        for index, part in enumerate(FRAGMENT_ASCII_ESCAPE_RE.split(fragment))
+    )

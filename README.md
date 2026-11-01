@@ -57,8 +57,12 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Preserve encoded path separators; uppercase escape hex | `https://example.com/a%2fb` | `https://example.com/a%2Fb` |
 | Preserve query order and repeated keys | `https://example.com/?b=2&a=1&a=3` | `https://example.com/?b=2&a=1&a=3` |
 | Preserve explicit empty query values | `https://example.com/?flag=&flag` | `https://example.com/?flag=&flag` |
+| Preserve fragment routes | `https://example.com/#!/users/42` | `https://example.com/#!/users/42` |
+| Preserve text-highlight syntax | `https://example.com/#:~:text=hello%20world` | `https://example.com/#:~:text=hello%20world` |
 
-In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized; hashbang fragments (`#!`) are converted to the `_escaped_fragment_` query parameter.
+In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized, including hashbang routes (`#!/route`) and text directives (`#:~:text=hello`).
+
+Fragments keep literal RFC 3986 fragment punctuation and existing ASCII escapes, with uppercase escape hex. This deliberately includes escaped letters, hyphens and tildes: fragment syntax can be interpreted before percent-decoding. For example, `#:%7E:text=hello` stays encoded instead of becoming an active text directive. Unicode text uses UTF-8 and NFC normalization as usual. Hashbang fragments are no longer converted into `_escaped_fragment_` query parameters.
 
 Normalization applies consistent spelling rules; it does not establish whether two URLs serve the same content. Applications using normalized URLs as persistent cache keys or identifiers should review the [changelog](CHANGELOG.md) when upgrading.
 
@@ -159,7 +163,7 @@ print(result)
 
 ### Human-readable URLs
 
-`url_humanize()` normalizes its input, then decodes components only when the display URL normalizes back to the same result. Some escapes therefore remain encoded.
+`url_humanize()` normalizes its input, then decodes components only when the display URL normalizes back to the same result. Some escapes therefore remain encoded. In fragments, ASCII escapes remain encoded even when a round trip would allow decoding; safe Unicode can still become readable. For example, `#:~:text=r%C3%A9sum%C3%A9%2Dnotes` becomes `#:~:text=résumé%2Dnotes`, preserving the encoded hyphen as text rather than directive syntax. Fragment spaces remain `%20`.
 
 ```python
 from url_normalize import url_humanize, url_normalize

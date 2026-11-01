@@ -153,7 +153,7 @@ def test_url_normalize_mixed_trailing_idna_separators(suffix):
         ("http://example.com/a/./b", "http://example.com/a/b"),
         (
             "http://example.com/#!5753509/hello-world",
-            "http://example.com/?_escaped_fragment_=5753509/hello-world",
+            "http://example.com/#!5753509/hello-world",
         ),
         (
             "http://USER:pass@www.Example.COM/foo/bar",

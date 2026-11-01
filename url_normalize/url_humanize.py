@@ -9,6 +9,7 @@ from urllib.parse import unquote
 
 import idna
 
+from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
 from .normalize_scheme import DEFAULT_SCHEME
 from .tools import URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
@@ -67,6 +68,14 @@ def _safe_unquote(value: str) -> str:
     ):
         return value
     return decoded
+
+
+def _humanize_fragment(fragment: str) -> str:
+    """Decode safe Unicode around ASCII escapes without exposing fragment syntax."""
+    return "".join(
+        part if index % 2 else _safe_unquote(part)
+        for index, part in enumerate(FRAGMENT_ASCII_ESCAPE_RE.split(fragment))
+    )
 
 
 def _format_query_param(key: str, separator: str, value: str) -> str:
@@ -141,8 +150,9 @@ def url_humanize(  # noqa: PLR0913
     components only when the result normalizes back to that same URL, so decoding
     is intentionally conservative around reserved URL characters and malformed
     percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
-    separators remain escaped for display. The selected path policy is also
-    used for round-trip checks.
+    separators remain escaped for display. Fragment ASCII escapes remain encoded
+    to preserve embedded syntax. The selected path policy is also used for
+    round-trip checks.
     """
     normalized = url_normalize(
         url,
@@ -169,7 +179,7 @@ def url_humanize(  # noqa: PLR0913
         host=_humanize_host(url_elements.host),
     )
 
-    for component in ("userinfo", "path", "fragment"):
+    for component in ("userinfo", "path"):
         value = getattr(url_elements, component)
         url_elements = _replace_if_round_trips(
             url_elements,
@@ -177,6 +187,12 @@ def url_humanize(  # noqa: PLR0913
             normalize=normalize_candidate,
             **{component: _safe_unquote(value)},
         )
+    url_elements = _replace_if_round_trips(
+        url_elements,
+        normalized,
+        normalize=normalize_candidate,
+        fragment=_humanize_fragment(url_elements.fragment),
+    )
     url_elements = _humanize_query(
         url_elements, normalized, normalize=normalize_candidate
     )

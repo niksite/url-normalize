@@ -144,6 +144,23 @@ def test_cli_humanize(io_encoding, monkeypatch):
 
 
 @pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize(
+    "fragment", ["!/route", ":~:text=%C3%A9%2Dtest", ":%7E:text=%C3%A9"]
+)
+def test_cli_preserves_fragment_syntax(humanize, fragment):
+    """Keep routes and text directives in the fragment in both output modes."""
+    options = ["--humanize"] if humanize else []
+    value = f"https://example.com/?keep=1#{fragment}"
+    expected = value.replace("%C3%A9", "é") if humanize else value
+
+    result = run_cli(*options, value)
+
+    assert result.returncode == 0
+    assert result.stdout == f"{expected}\n"
+    assert not result.stderr
+
+
+@pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("collapse_slashes", [False, True])
 @pytest.mark.parametrize("remove_trailing_slash", [False, True])
 def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
