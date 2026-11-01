@@ -15,6 +15,7 @@ Use `collapse_slashes=True` in either Python API, or `--collapse-slashes` in the
 
 ### Added
 
+- Add `remove_trailing_slash=False` to both Python APIs and `--remove-trailing-slash` to the CLI. When enabled, it removes the entire trailing run of literal path slashes after dot resolution and optional collapsing, while keeping the root `/`. It shares the scheme scope of `collapse_slashes` and leaves encoded separators intact.
 - Add the keyword-only `collapse_slashes` option to `url_normalize()` and `url_humanize()`, plus `--collapse-slashes` in the CLI. It applies to HTTP(S), WS(S), FTP, file URLs and path references; encoded separators and a single trailing slash remain intact.
 
 ### Changed

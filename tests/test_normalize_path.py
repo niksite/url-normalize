@@ -98,6 +98,27 @@ def test_normalize_path_collapses_only_after_resolving_dots(path, expected):
     assert normalize_path(path, "https", collapse_slashes=True) == expected
 
 
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("", "/"),
+        ("/", "/"),
+        ("///", "/"),
+        ("/a/", "/a"),
+        ("/a///", "/a"),
+        ("/a//b///", "/a//b"),
+        ("/a/../", "/"),
+        ("/a//../b///", "/a/b"),
+        ("/a/.", "/a"),
+        ("/a/%2f/", "/a/%2F"),
+        ("/a%2f", "/a%2F"),
+    ],
+)
+def test_normalize_path_removes_trailing_slash_runs(path, expected):
+    """Remove only trailing literal slashes after resolving dots, keeping root."""
+    assert normalize_path(path, "https", remove_trailing_slash=True) == expected
+
+
 @pytest.mark.parametrize("character", ":/?#[]@!$&'()*+,;=")
 def test_normalize_path_preserves_encoded_reserved_characters(character):
     """Keep escaped delimiters distinct from literal path syntax."""

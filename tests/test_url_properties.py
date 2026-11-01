@@ -62,22 +62,38 @@ def http_urls(draw):
 
 
 @PROPERTY_SETTINGS
-@given(value=http_urls(), collapse_slashes=st.booleans())
-def test_normalization_is_idempotent(value, collapse_slashes):
+@given(
+    value=http_urls(),
+    collapse_slashes=st.booleans(),
+    remove_trailing_slash=st.booleans(),
+)
+def test_normalization_is_idempotent(value, collapse_slashes, remove_trailing_slash):
     """Reach a fixed point after one normalization of a supported URL."""
-    normalized = url_normalize(value, collapse_slashes=collapse_slashes)
+    options = {
+        "collapse_slashes": collapse_slashes,
+        "remove_trailing_slash": remove_trailing_slash,
+    }
+    normalized = url_normalize(value, **options)
 
     assert isinstance(normalized, str)
-    assert url_normalize(normalized, collapse_slashes=collapse_slashes) == normalized
+    assert url_normalize(normalized, **options) == normalized
 
 
 @PROPERTY_SETTINGS
-@given(value=http_urls(), collapse_slashes=st.booleans())
-def test_humanization_normalizes_back_to_the_same_url(value, collapse_slashes):
+@given(
+    value=http_urls(),
+    collapse_slashes=st.booleans(),
+    remove_trailing_slash=st.booleans(),
+)
+def test_humanization_normalizes_back_to_the_same_url(
+    value, collapse_slashes, remove_trailing_slash
+):
     """Keep normalized output stable when rendering a URL for display."""
-    humanized = url_humanize(value, collapse_slashes=collapse_slashes)
+    options = {
+        "collapse_slashes": collapse_slashes,
+        "remove_trailing_slash": remove_trailing_slash,
+    }
+    humanized = url_humanize(value, **options)
 
     assert isinstance(humanized, str)
-    assert url_normalize(humanized, collapse_slashes=collapse_slashes) == url_normalize(
-        value, collapse_slashes=collapse_slashes
-    )
+    assert url_normalize(humanized, **options) == url_normalize(value, **options)

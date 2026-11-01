@@ -145,16 +145,24 @@ def test_cli_humanize(io_encoding, monkeypatch):
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("collapse_slashes", [False, True])
-def test_cli_path_policy(humanize, collapse_slashes):
-    """Expose opt-in slash collapsing in both CLI output modes."""
+@pytest.mark.parametrize("remove_trailing_slash", [False, True])
+def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
+    """Expose independent path cleanup options in both CLI output modes."""
     options = []
     if humanize:
         options.append("--humanize")
     if collapse_slashes:
         options.append("--collapse-slashes")
+    if remove_trailing_slash:
+        options.append("--remove-trailing-slash")
     result = run_cli(*options, "https://example.com/a//%C3%A9///?q=a//b")
     segment = "é" if humanize else "%C3%A9"
-    path = f"/a/{segment}/" if collapse_slashes else f"/a//{segment}///"
+    path = {
+        (False, False): f"/a//{segment}///",
+        (True, False): f"/a/{segment}/",
+        (False, True): f"/a//{segment}",
+        (True, True): f"/a/{segment}",
+    }[collapse_slashes, remove_trailing_slash]
     assert result.returncode == 0
     assert result.stdout == f"https://example.com{path}?q=a//b\n"
     assert not result.stderr

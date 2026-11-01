@@ -75,6 +75,7 @@ The following options are keyword-only and apply to both functions:
 | `filter_params` | `False` | Retain only allowlisted query parameters. |
 | `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
 | `collapse_slashes` | `False` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. |
+| `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 
 Unicode URL characters always use UTF-8 percent encoding.
 
@@ -92,11 +93,16 @@ print(url_normalize(url))
 print(url_normalize(url, collapse_slashes=True))
 # Output: https://example.com/a/b/
 
+print(url_normalize(url, remove_trailing_slash=True))
+# Output: https://example.com/a//b
+
 print(url_normalize("https://example.com/a//../b", collapse_slashes=True))
 # Output: https://example.com/a/b
 ```
 
-Dot segments are resolved before slash collapsing: in `/a//../b`, `..` removes the empty segment, leaving `/a/b`. Encoded separators such as `%2F` remain encoded. Collapsing affects the path; query and fragment handling follows the usual normalization rules. A single trailing slash is retained.
+Path operations run in order: resolve dot segments, optionally collapse slash runs, then optionally remove trailing slashes. In `/a//../b`, `..` removes the empty segment, leaving `/a/b`. Encoded separators such as `%2F` remain encoded. Query and fragment handling follows the usual normalization rules.
+
+`collapse_slashes` retains a single trailing slash. Enable `remove_trailing_slash` to remove the whole trailing run while preserving internal slashes; setting both options to `True` turns `/a//b///` into `/a/b`. The root remains `/`, including when the input path consists entirely of slashes.
 
 These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Other schemes keep their existing path handling. A path reference that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
 
@@ -183,6 +189,10 @@ url-normalize -d example.com -s http "/images/logo.png"
 url-normalize --collapse-slashes "https://example.com/a//b///"
 # Output: https://example.com/a/b/
 
+# Remove trailing slashes while preserving internal empty segments.
+url-normalize --remove-trailing-slash "https://example.com/a//b///"
+# Output: https://example.com/a//b
+
 # Display a readable URL.
 url-normalize -H "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
 # Output: https://bücher.de/résumé
@@ -211,7 +221,7 @@ The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.
 
 Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
-Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and slash-policy combinations per property to check normalization idempotence and humanization round trips. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
+Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and path-policy combinations per property to check normalization idempotence and humanization round trips. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 
 ## Changelog and license
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import unicodedata
+from functools import partial
+from typing import TYPE_CHECKING
 from urllib.parse import unquote
 
 import idna
@@ -10,6 +12,9 @@ import idna
 from .normalize_scheme import DEFAULT_SCHEME
 from .tools import URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
 # Bidi_Control: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
@@ -31,16 +36,17 @@ def _humanize_host_label(label: str) -> str:
 
 
 def _replace_if_round_trips(
-    url: URL, normalized: str, *, collapse_slashes: bool, **changes: str
+    url: URL,
+    normalized: str,
+    *,
+    normalize: Callable[[str], str | None],
+    **changes: str,
 ) -> URL:
     candidate = url._replace(**changes)
     if candidate == url:
         return url
     try:
-        if (
-            url_normalize(reconstruct_url(candidate), collapse_slashes=collapse_slashes)
-            == normalized
-        ):
+        if normalize(reconstruct_url(candidate)) == normalized:
             return candidate
     except ValueError:
         # Invalid candidate syntax or Unicode must not reject the original URL.
@@ -74,7 +80,7 @@ def _replace_query_part_if_round_trips(  # noqa: PLR0913
     index: int,
     part: str,
     *,
-    collapse_slashes: bool,
+    normalize: Callable[[str], str | None],
 ) -> tuple[URL, list[str]]:
     if part == parts[index]:
         return url, parts
@@ -83,7 +89,7 @@ def _replace_query_part_if_round_trips(  # noqa: PLR0913
     candidate = _replace_if_round_trips(
         url,
         normalized,
-        collapse_slashes=collapse_slashes,
+        normalize=normalize,
         query="&".join(candidate_parts),
     )
     if candidate is not url:
@@ -91,7 +97,9 @@ def _replace_query_part_if_round_trips(  # noqa: PLR0913
     return url, parts
 
 
-def _humanize_query(url: URL, normalized: str, *, collapse_slashes: bool) -> URL:
+def _humanize_query(
+    url: URL, normalized: str, *, normalize: Callable[[str], str | None]
+) -> URL:
     parts = url.query.split("&")
     for index, param in enumerate(parts):
         key, separator, value = param.partition("=")
@@ -102,7 +110,7 @@ def _humanize_query(url: URL, normalized: str, *, collapse_slashes: bool) -> URL
             parts,
             index,
             _format_query_param(_safe_unquote(key), separator, value),
-            collapse_slashes=collapse_slashes,
+            normalize=normalize,
         )
         key, separator, value = parts[index].partition("=")  # noqa: PLR1736
         url, parts = _replace_query_part_if_round_trips(
@@ -111,7 +119,7 @@ def _humanize_query(url: URL, normalized: str, *, collapse_slashes: bool) -> URL
             parts,
             index,
             _format_query_param(key, separator, _safe_unquote(value)),
-            collapse_slashes=collapse_slashes,
+            normalize=normalize,
         )
 
     return url
@@ -125,6 +133,7 @@ def url_humanize(  # noqa: PLR0913
     filter_params: bool = False,
     param_allowlist: dict | list | None = None,
     collapse_slashes: bool = False,
+    remove_trailing_slash: bool = False,
 ) -> str | None:
     """Return a human-readable URL representation when it is safe.
 
@@ -132,8 +141,8 @@ def url_humanize(  # noqa: PLR0913
     components only when the result normalizes back to that same URL, so decoding
     is intentionally conservative around reserved URL characters and malformed
     percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
-    separators remain escaped for display. The path policy, including
-    collapse_slashes, is also used for round-trip checks.
+    separators remain escaped for display. The selected path policy is also
+    used for round-trip checks.
     """
     normalized = url_normalize(
         url,
@@ -142,15 +151,21 @@ def url_humanize(  # noqa: PLR0913
         filter_params=filter_params,
         param_allowlist=param_allowlist,
         collapse_slashes=collapse_slashes,
+        remove_trailing_slash=remove_trailing_slash,
     )
     if not normalized:
         return normalized
 
+    normalize_candidate = partial(
+        url_normalize,
+        collapse_slashes=collapse_slashes,
+        remove_trailing_slash=remove_trailing_slash,
+    )
     url_elements = deconstruct_url(normalized)
     url_elements = _replace_if_round_trips(
         url_elements,
         normalized,
-        collapse_slashes=collapse_slashes,
+        normalize=normalize_candidate,
         host=_humanize_host(url_elements.host),
     )
 
@@ -159,11 +174,11 @@ def url_humanize(  # noqa: PLR0913
         url_elements = _replace_if_round_trips(
             url_elements,
             normalized,
-            collapse_slashes=collapse_slashes,
+            normalize=normalize_candidate,
             **{component: _safe_unquote(value)},
         )
     url_elements = _humanize_query(
-        url_elements, normalized, collapse_slashes=collapse_slashes
+        url_elements, normalized, normalize=normalize_candidate
     )
 
     return reconstruct_url(url_elements)

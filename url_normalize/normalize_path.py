@@ -25,15 +25,22 @@ def _remove_dot_segments(path: str) -> str:
     return "/".join(output)
 
 
-def normalize_path(path: str, scheme: str, *, collapse_slashes: bool = False) -> str:
+def normalize_path(
+    path: str,
+    scheme: str,
+    *,
+    collapse_slashes: bool = False,
+    remove_trailing_slash: bool = False,
+) -> str:
     """Normalize path part of the url.
 
-    Preserve empty segments while resolving dots, then optionally collapse slashes.
+    Resolve dots, optionally collapse slashes, then optionally remove trailing runs.
 
     Params:
         path : string : url path, e.g., '/section/page.html'
         scheme : string : url scheme, e.g., 'http'
         collapse_slashes : bool : collapse literal path slashes after dot removal
+        remove_trailing_slash : bool : remove trailing literal slashes, keeping root
 
     Returns:
         string : normalized path data.
@@ -47,6 +54,8 @@ def normalize_path(path: str, scheme: str, *, collapse_slashes: bool = False) ->
         path = _remove_dot_segments(path)
         if collapse_slashes:
             path = re.sub(r"/{2,}", "/", path)
+        if remove_trailing_slash and path:
+            path = path.rstrip("/") or "/"
     if not scheme and path.startswith("//"):
         # Keep a path reference from becoming an authority reference on reparse.
         path = "/." + path

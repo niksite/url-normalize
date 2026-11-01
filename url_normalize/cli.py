@@ -58,6 +58,11 @@ def main() -> None:
         help="Collapse repeated path slashes after resolving dot segments.",
     )
     parser.add_argument(
+        "--remove-trailing-slash",
+        action="store_true",
+        help="Remove trailing path slashes while keeping the root slash.",
+    )
+    parser.add_argument(
         "-H",
         "--humanize",
         action="store_true",
@@ -77,6 +82,7 @@ def main() -> None:
             filter_params=args.filter_params,
             param_allowlist=allowlist,
             collapse_slashes=args.collapse_slashes,
+            remove_trailing_slash=args.remove_trailing_slash,
         )
     except Exception as e:  # noqa: BLE001
         print(f"Error normalizing URL: {e}", file=sys.stderr)  # noqa: T201
