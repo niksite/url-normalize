@@ -10,7 +10,7 @@ from .tools import cleanup_url_input
 
 
 def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
-    """Make sure we have valid url scheme.
+    """Attach a scheme to host inputs, preserving explicit relative references.
 
     Params:
         url : string : the URL
@@ -23,7 +23,8 @@ def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
     url = cleanup_url_input(url)
     is_universal_scheme = url.startswith("//")
     is_file_path = url == "-" or (url.startswith("/") and not is_universal_scheme)
-    if not url or is_file_path:
+    is_relative_reference = re.match(r"\.{1,2}(?:/|[?#]|$)|[?#]", url)
+    if not url or is_file_path or is_relative_reference:
         return url
     if is_universal_scheme:
         return f"{default_scheme}:{url}"

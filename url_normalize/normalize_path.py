@@ -25,6 +25,29 @@ def _remove_dot_segments(path: str) -> str:
     return "/".join(output)
 
 
+def _remove_relative_dot_segments(path: str) -> str:
+    """Resolve internal dots while retaining parents that need a base directory."""
+    if path in {".", ".."}:
+        return path
+    output: list[str] = []
+    directory = False
+    for part in path.split("/"):
+        directory = part == "."
+        if part == "..":
+            if output and output[-1] != "..":
+                output.pop()
+                directory = True
+            else:
+                output.append(part)
+        elif part != ".":
+            output.append(part)
+    if directory:
+        output.append("")
+    result = "/".join(output)
+    # Keep the result distinct from a bare host, a scheme or a root-relative path.
+    return result if output[0] == ".." else "./" + result
+
+
 def normalize_path(
     path: str,
     scheme: str,
@@ -35,6 +58,7 @@ def normalize_path(
     """Normalize path part of the url.
 
     Resolve dots, optionally collapse slashes, then optionally remove trailing runs.
+    Document-relative paths keep unresolved parents and an explicit relative prefix.
 
     Params:
         path : string : url path, e.g., '/section/page.html'
@@ -52,7 +76,10 @@ def normalize_path(
     # All portions of the URI must be utf-8 encoded NFC from Unicode strings
     path = normalize_component(path, "~:/[]@!$&'()*+,;=", RESERVED_CHARACTERS)
     if scheme in PATH_NORMALIZATION_SCHEMES:
-        path = _remove_dot_segments(path)
+        if not scheme and path and not path.startswith("/") and path != "-":
+            path = _remove_relative_dot_segments(path)
+        else:
+            path = _remove_dot_segments(path)
         if collapse_slashes:
             path = re.sub(r"/{2,}", "/", path)
         if remove_trailing_slash and path:

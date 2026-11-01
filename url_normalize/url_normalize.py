@@ -42,9 +42,12 @@ def url_normalize(  # noqa: PLR0913
     >>> url_normalize('http://de.wikipedia.org/wiki/Elf (Begriffsklärung)')
     'http://de.wikipedia.org/wiki/Elf%20(Begriffskl%C3%A4rung)'
 
+    Explicit relative references keep their relative form. Document-relative paths
+    resolve internal dots, retain unresolved parents, and honor the slash options.
+
     Params:
         url : str | None : URL to normalize
-        default_scheme : str : default scheme to use if none present
+        default_scheme : str : scheme for bare hosts and network-path references
         default_domain : str | None : optional
             Default domain to use for absolute paths (starting with '/')
         filter_params : bool : optional

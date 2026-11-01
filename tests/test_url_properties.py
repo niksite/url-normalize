@@ -1,4 +1,4 @@
-"""Generated checks for supported HTTP(S) URLs, alongside exact-output tests."""
+"""Generated HTTP(S) and explicit-reference checks, alongside exact examples."""
 
 from string import ascii_letters, digits
 from urllib.parse import urlsplit
@@ -78,6 +78,24 @@ def http_urls(draw):
     return f"{scheme}://{userinfo}{host}{port}{path}{query}{fragment}"
 
 
+@st.composite
+def relative_references(draw):
+    """Compose explicit path, query and fragment references without an authority."""
+    path = draw(
+        st.one_of(
+            st.sampled_from(["", ".", ".."]),
+            st.builds(
+                lambda prefix, segments: prefix + "/".join(segments),
+                st.sampled_from(["./", "../"]),
+                st.lists(PATH_SEGMENT, max_size=6),
+            ),
+        )
+    )
+    query = draw(st.one_of(st.just(""), QUERY_FIELD.map(lambda text: "?" + text)))
+    fragment = draw(st.one_of(st.just(""), FRAGMENT_TEXT.map(lambda text: "#" + text)))
+    return path + query + fragment
+
+
 def assert_component_presence(original, result, *, keep_empty_components):
     """Check delimiter policy independently of normalization equality."""
     parts = urlsplit(result)
@@ -89,6 +107,42 @@ def assert_component_presence(original, result, *, keep_empty_components):
     )
     assert ("?" in result.split("#", 1)[0]) == query_present
     assert ("#" in result) == fragment_present
+
+
+@PROPERTY_SETTINGS
+@given(
+    value=relative_references(),
+    collapse_slashes=st.booleans(),
+    remove_trailing_slash=st.booleans(),
+    keep_empty_components=st.booleans(),
+)
+def test_relative_references_remain_stable_without_an_authority(
+    value, collapse_slashes, remove_trailing_slash, keep_empty_components
+):
+    """Apply path policy without inventing an authority or losing relative context."""
+    options = {
+        "collapse_slashes": collapse_slashes,
+        "remove_trailing_slash": remove_trailing_slash,
+        "keep_empty_components": keep_empty_components,
+    }
+    normalized = url_normalize(value, **options)
+    humanized = url_humanize(value, **options)
+    parts = urlsplit(normalized)
+    assert not parts.scheme
+    assert not parts.netloc
+    assert not parts.path.startswith("/")
+    if urlsplit(value).path:
+        assert parts.path
+        assert parts.path in {".", ".."} or parts.path.startswith(("./", "../"))
+    if collapse_slashes:
+        assert "//" not in parts.path
+    if remove_trailing_slash:
+        assert not parts.path.endswith("/")
+    assert url_normalize(normalized, **options) == normalized
+    assert url_normalize(humanized, **options) == normalized
+    assert_component_presence(
+        value, normalized, keep_empty_components=keep_empty_components
+    )
 
 
 @PROPERTY_SETTINGS

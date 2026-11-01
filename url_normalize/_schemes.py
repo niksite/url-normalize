@@ -17,7 +17,7 @@ DEFAULT_PORT = {
 # Schemes whose missing authority slashes are repaired during input handling.
 AUTHORITY_SCHEMES = frozenset({"http", "https", "ftp", "ftps"})
 
-# An empty scheme here represents a path reference, not an opaque URI.
+# An empty scheme allows path references; document-relative paths retain parents.
 PATH_NORMALIZATION_SCHEMES = frozenset(
     {"", "http", "https", "ftp", "file", "ws", "wss"}
 )

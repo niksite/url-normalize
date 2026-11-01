@@ -58,6 +58,7 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Preserve query order and repeated keys | `https://example.com/?b=2&a=1&a=3` | `https://example.com/?b=2&a=1&a=3` |
 | Preserve explicit empty query values | `https://example.com/?flag=&flag` | `https://example.com/?flag=&flag` |
 | Remove empty query and fragment components | `https://example.com/?#` | `https://example.com/` |
+| Preserve an explicit relative reference | `../images/a.png` | `../images/a.png` |
 | Preserve fragment routes | `https://example.com/#!/users/42` | `https://example.com/#!/users/42` |
 | Preserve text-highlight syntax | `https://example.com/#:~:text=hello%20world` | `https://example.com/#:~:text=hello%20world` |
 
@@ -79,7 +80,7 @@ The following options are keyword-only and apply to both functions:
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `default_scheme` | `"https"` | Scheme to add when the URL has none. |
+| `default_scheme` | `"https"` | Scheme to add to bare hosts and network-path references such as `//example.com/`. |
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Retain only allowlisted query parameters. |
 | `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
@@ -117,7 +118,7 @@ Path operations run in order: resolve dot segments, collapse slash runs unless d
 
 Collapsing retains a single trailing slash. Enable `remove_trailing_slash` to remove it as well; `/a//b///` then becomes `/a/b`. With `collapse_slashes=False`, trailing-slash removal preserves internal slash runs, producing `/a//b`. The root remains `/`, including when the input path consists entirely of slashes.
 
-These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Other schemes keep their existing path handling. When collapsing is disabled, a path reference that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
+These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Document-relative paths resolve internal dots while retaining leading `../` segments that need a base URL. Other schemes keep their existing path handling. When collapsing is disabled, a root-relative path that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
 
 ### Query parameter filtering
 
@@ -171,6 +172,50 @@ result = url_normalize(
 print(result)
 # Output: http://example.com/images/logo.png
 ```
+
+### Relative references
+
+Explicit references starting with `./`, `../`, `?`, or `#` stay relative in both APIs and the CLI. The standalone paths `.` and `..`, including query or fragment suffixes, also stay relative. `default_domain` and `default_scheme` do not turn these references into absolute URLs.
+
+```python
+from url_normalize import url_normalize
+
+print(url_normalize("../images/a.png"))
+# Output: ../images/a.png
+
+print(url_normalize("./a//../b"))
+# Output: ./a/b
+
+print(url_normalize("../a//../b///"))
+# Output: ../a/b/
+
+print(url_normalize("../a//../b///", collapse_slashes=False))
+# Output: ../a/b///
+
+print(url_normalize("../a//../b///", remove_trailing_slash=True))
+# Output: ../a/b
+
+print(url_normalize("?q=é#section"))
+# Output: ?q=%C3%A9#section
+```
+
+Document-relative paths use the same operation order: resolve internal dots, collapse slashes by default, then optionally remove trailing slashes. Unresolved parents stay relative: `../a/../../b` becomes `../../b`. The `./` prefix keeps an ordinary path from being interpreted as a hostname or scheme; `./a/../b` becomes `./b`, and `./a/../this:that` becomes `./this:that`. With collapsing disabled, `./a/..//b` becomes `.//b`, preserving its empty segment without changing it into a root-relative path.
+
+Paths that reduce to the current directory retain a nonempty reference: `./a/..` becomes `./`, or `.` with `remove_trailing_slash=True`. Similarly, `../a/..` becomes `../`, or `..` with trailing-slash removal. Percent encoding, Unicode handling, query filtering, and empty-component policy still apply. Use `keep_empty_components=True` when empty `?` or `#` delimiters matter to later resolution.
+
+To obtain an absolute URL, [resolve the reference against a base URL](https://www.rfc-editor.org/rfc/rfc3986.html#section-5.2.2). For example:
+
+```python
+from urllib.parse import urljoin
+
+from url_normalize import url_normalize
+
+absolute = urljoin("https://example.com/docs/page.html", "../images/a.png")
+print(url_normalize(absolute))
+# Output: https://example.com/images/a.png
+```
+
+Bare inputs retain host inference: `site/page` becomes `https://site/page`. Use `./site/page` to explicitly identify a document-relative path. Network-path references such as `//example.com/page` receive the selected default scheme.
 
 ### Human-readable URLs
 
@@ -244,7 +289,7 @@ The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.
 
 Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
-Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and option combinations per property to check normalization idempotence, humanization round trips, and empty-component policy. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
+Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and option combinations per property to check normalization idempotence, humanization round trips, and empty-component policy. Another 200 explicit relative references check stable output, slash options, and the absence of invented schemes or authorities. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 
 ## Changelog and license
 

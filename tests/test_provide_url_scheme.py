@@ -2,7 +2,8 @@
 
 import pytest
 
-from url_normalize.url_normalize import provide_url_scheme, url_normalize
+from url_normalize import url_normalize
+from url_normalize.provide_url_scheme import provide_url_scheme
 
 
 @pytest.mark.parametrize(
@@ -14,6 +15,14 @@ from url_normalize.url_normalize import provide_url_scheme, url_normalize
         ("//site/path", "https://site/path"),
         ("ftp://site/", "ftp://site/"),
         ("site/page", "https://site/page"),
+        (".", "."),
+        ("..", ".."),
+        ("./a", "./a"),
+        ("../a", "../a"),
+        (".?q=1", ".?q=1"),
+        ("..#section", "..#section"),
+        ("?q=1", "?q=1"),
+        ("#section", "#section"),
     ],
 )
 def test_provide_url_scheme_result_is_expected(url: str, expected: str) -> None:

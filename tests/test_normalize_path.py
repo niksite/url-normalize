@@ -6,6 +6,27 @@ from url_normalize import url_normalize
 from url_normalize.normalize_path import normalize_path
 
 
+@pytest.mark.parametrize("collapse_slashes", [False, True])
+@pytest.mark.parametrize("remove_trailing_slash", [False, True])
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [(".", "."), ("..", ".."), ("./a", "./a"), ("a/../b", "./b")],
+)
+def test_normalize_path_preserves_document_relative_context(
+    path, expected, collapse_slashes, remove_trailing_slash
+):
+    """Resolve internal dots without introducing an authority or losing parents."""
+    assert (
+        normalize_path(
+            path,
+            "",
+            collapse_slashes=collapse_slashes,
+            remove_trailing_slash=remove_trailing_slash,
+        )
+        == expected
+    )
+
+
 @pytest.mark.parametrize("scheme", ["ws", "wss"])
 def test_normalize_path_websocket_empty_path(scheme):
     """Use the root resource for an empty WebSocket path (RFC 6455 section 3)."""

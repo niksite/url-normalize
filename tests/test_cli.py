@@ -27,6 +27,47 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize("prefix", ["../", "./", "?q=", "#"])
+def test_cli_preserves_relative_references(humanize, prefix):
+    """Print relative text without adding a scheme, domain or root path."""
+    options = ["--humanize"] if humanize else []
+    result = run_cli(*options, prefix + "%C3%A9")
+    expected = prefix + ("é" if humanize else "%C3%A9")
+    assert result.returncode == 0
+    assert result.stdout == expected + "\n"
+    assert not result.stderr
+
+
+@pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize("collapse_slashes", [None, False, True])
+@pytest.mark.parametrize("remove_trailing_slash", [False, True])
+def test_cli_relative_policy_options(humanize, collapse_slashes, remove_trailing_slash):
+    """Apply dot removal and each path option while retaining relative context."""
+    options = ["--humanize"] if humanize else []
+    if collapse_slashes is not None:
+        options.append(
+            "--collapse-slashes" if collapse_slashes else "--no-collapse-slashes"
+        )
+    if remove_trailing_slash:
+        options.append("--remove-trailing-slash")
+    value = "../a//../%C3%A9///?#"
+    result = run_cli(
+        *options,
+        "--keep-empty-components",
+        "--default-domain",
+        "example.com",
+        value,
+    )
+    segment = "é" if humanize else "%C3%A9"
+    trailing = (
+        "" if remove_trailing_slash else "///" if collapse_slashes is False else "/"
+    )
+    assert result.returncode == 0
+    assert result.stdout == f"../a/{segment}{trailing}?#\n"
+    assert not result.stderr
+
+
 def test_cli_help_describes_allowlist_filtering() -> None:
     """Describe filtering as an allowlist, not a tracking-parameter blocklist."""
     result = run_cli("--help")

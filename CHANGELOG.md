@@ -11,7 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Path normalization now resolves dot segments before collapsing repeated slashes. For example, `/a//../b` becomes `/a/b`, whereas the old algorithm produced `/b`. This changes normalized URLs and requires a major release under the project's versioning policy. Applications using persisted cache keys or deduplication identifiers should rebuild them from original URLs.
 
-Repeated path slashes collapse by default. Use `collapse_slashes=False` in either Python API, or `--no-collapse-slashes` in the CLI, to preserve them. Dot segments are resolved first with either setting. Previously collapsed URLs cannot recover their lost empty segments; apply preservation to original URLs when available.
+Repeated path slashes collapse by default. Use `collapse_slashes=False` in either Python API, or `--no-collapse-slashes` in the CLI, to preserve them. Dot segments are resolved first with either setting, including internal dots in document-relative paths. Previously collapsed URLs cannot recover their lost empty segments; apply preservation to original URLs when available.
+
+Explicit relative references now stay relative: `../images/a.png`, `./a`, `?q=1`, and `#section` no longer gain an empty HTTPS authority. The paths `.` and `..` are also preserved. Internal dots are resolved while leading unresolved `../` segments remain. The same slash options apply: `../a//../b///` becomes `../a/b/` by default, `../a/b///` with `collapse_slashes=False`, or `../a/b` with trailing-slash removal. An explicit `./` prefix protects ordinary relative results from host/scheme inference, and a path reduced to the current directory remains `./` (or `.` with trailing-slash removal). Bare hosts and network-path references still receive the selected default scheme, and `default_domain` still applies only to root-relative paths. Reprocess original references to recover this behavior from previously stored malformed output.
 
 Fragment output also changes: `#!/route` remains a fragment instead of becoming `?_escaped_fragment_=/route`, and literal routing and text-directive punctuation stays literal. Existing ASCII escapes remain encoded, including unreserved letters, hyphens and tildes, to preserve syntax interpreted before percent-decoding. The humanizer follows the same rule while decoding safe Unicode; fragment spaces remain `%20`.
 
@@ -26,11 +28,13 @@ There is no legacy hashbang conversion flag. Applications that need the old craw
 ### Changed
 
 - **BREAKING:** Resolve dot segments before collapsing repeated path slashes, retaining empty segments during dot resolution.
+- **BREAKING:** Preserve explicit document-relative, query-only and fragment-only references instead of inventing a scheme and authority. Resolve internal relative dots while retaining unresolved parents and honoring path cleanup options.
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
 
 ### Fixed
 
 - Resolve dot segments against empty path segments correctly, including for WebSocket URLs. Keep path references from being reinterpreted as hostnames when dot removal exposes leading `//`.
+- Keep explicit relative references stable across repeated normalization and humanization, including references with Unicode, empty components and query filtering.
 - Support CLI output streams whose `reconfigure` attribute is not callable.
 - Keep bidirectional controls and Unicode line/paragraph separators percent-encoded in `url_humanize()` output, including when supplied as literal characters. Ordinary multilingual text and join controls remain readable.
 - Avoid rebuilding and re-normalizing URLs for unchanged components in `url_humanize()`, improving performance for already-readable queries while retaining round-trip checks for decoded candidates.
@@ -40,7 +44,7 @@ There is no legacy hashbang conversion flag. Applications that need the old craw
 
 - Centralize independent scheme rules for default ports, authority repair, path operations and empty paths.
 - Replace mypy with ty, running package type checks through the locked development environment.
-- Add bounded Hypothesis tests for HTTP(S) normalization idempotence and humanization round trips.
+- Add bounded Hypothesis tests for HTTP(S) normalization idempotence and humanization round trips, plus explicit relative-reference structure and stability checks.
 
 ## [3.1.0] - 2026-10-28
 
