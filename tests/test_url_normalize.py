@@ -14,6 +14,29 @@ def test_public_api_rejects_removed_charset_argument(transform):
         transform("https://example.com/é", charset="iso-8859-1")
 
 
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (
+            "HTTP://User:PaSS@Example.COM:080/socket?b=2&a=1#end",
+            "http://User:PaSS@example.com/socket?b=2&a=1#end",
+        ),
+        ("HTTPS://Example.COM:0443/socket", "https://example.com/socket"),
+        ("WS://Example.COM:080/socket", "ws://example.com/socket"),
+        ("WSS://[2001:DB8::1]:0443/socket", "wss://[2001:db8::1]/socket"),
+        ("http://example.com:443/socket", "http://example.com:443/socket"),
+        ("https://example.com:80/socket", "https://example.com:80/socket"),
+        ("ws://example.com:443/socket", "ws://example.com:443/socket"),
+        ("wss://example.com:80/socket", "wss://example.com:80/socket"),
+    ],
+)
+def test_public_api_normalizes_scheme_specific_ports(transform, value, expected):
+    """Normalize ports without changing credentials or unrelated components."""
+    assert transform(value) == expected
+    assert transform(expected) == expected
+
+
 @pytest.mark.parametrize(
     "value",
     [
