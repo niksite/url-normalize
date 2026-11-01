@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import patch
+from urllib.parse import quote
 
 import pytest
 
@@ -178,6 +179,64 @@ def test_url_humanize_keeps_control_characters_encoded(component, escaped):
         f"https:{suffix}" if suffix.startswith("//") else f"https://example.com{suffix}"
     )
     assert package.url_humanize(value) == value
+
+
+@pytest.mark.parametrize("literal_input", [False, True], ids=["escaped", "literal"])
+@pytest.mark.parametrize(
+    "template",
+    [
+        "https://example.com/a{value}b",
+        "https://example.com/?a{value}b=x",
+        "https://example.com/?q=a{value}b",
+        "https://example.com/#a{value}b",
+        "https://a{value}b@example.com/",
+        "https://user:a{value}b@example.com/",
+    ],
+    ids=["path", "query-key", "query-value", "fragment", "username", "password"],
+)
+@pytest.mark.parametrize(
+    ("character", "escaped"),
+    [
+        pytest.param("\u061c", "%D8%9C", id="arabic-letter-mark"),
+        pytest.param("\u200e", "%E2%80%8E", id="left-to-right-mark"),
+        pytest.param("\u200f", "%E2%80%8F", id="right-to-left-mark"),
+        pytest.param("\u202a", "%E2%80%AA", id="left-to-right-embedding"),
+        pytest.param("\u202b", "%E2%80%AB", id="right-to-left-embedding"),
+        pytest.param("\u202c", "%E2%80%AC", id="pop-directional-formatting"),
+        pytest.param("\u202d", "%E2%80%AD", id="left-to-right-override"),
+        pytest.param("\u202e", "%E2%80%AE", id="right-to-left-override"),
+        pytest.param("\u2066", "%E2%81%A6", id="left-to-right-isolate"),
+        pytest.param("\u2067", "%E2%81%A7", id="right-to-left-isolate"),
+        pytest.param("\u2068", "%E2%81%A8", id="first-strong-isolate"),
+        pytest.param("\u2069", "%E2%81%A9", id="pop-directional-isolate"),
+        pytest.param("\u2028", "%E2%80%A8", id="line-separator"),
+        pytest.param("\u2029", "%E2%80%A9", id="paragraph-separator"),
+    ],
+)
+def test_url_humanize_keeps_display_controls_encoded(
+    character, escaped, template, literal_input
+):
+    """Keep bidi controls and Unicode line breaks encoded in display URLs."""
+    value = template.format(value=character if literal_input else escaped)
+    expected = template.format(value=escaped)
+
+    humanized = package.url_humanize(value)
+
+    assert humanized == expected
+    assert character not in humanized
+    assert package.url_normalize(humanized) == package.url_normalize(value)
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["שלום", "مرحبا", "می\u200cروم", "👩\u200d💻"],
+    ids=["hebrew", "arabic", "persian-non-joiner", "emoji-joiner"],
+)
+def test_url_humanize_preserves_readable_multilingual_text(text):
+    """Decode ordinary RTL text and join controls used for text shaping."""
+    value = f"https://example.com/{quote(text)}"
+
+    assert package.url_humanize(value) == f"https://example.com/{text}"
 
 
 @pytest.mark.parametrize("scheme", ["http", "https", "ftp"])

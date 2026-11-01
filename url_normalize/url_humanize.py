@@ -12,6 +12,11 @@ from .tools import URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
 
 UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
+# Bidi_Control: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+# Join_Control characters are separate.
+BIDI_CONTROL_CHARACTERS = frozenset(
+    "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+)
 
 
 def _humanize_host(host: str) -> str:
@@ -43,7 +48,11 @@ def _safe_unquote(value: str) -> str:
     if (
         UNICODE_REPLACEMENT_CHARACTER in decoded
         or "\\" in decoded
-        or any(unicodedata.category(character) == "Cc" for character in decoded)
+        or any(
+            unicodedata.category(character) in {"Cc", "Zl", "Zp"}
+            or character in BIDI_CONTROL_CHARACTERS
+            for character in decoded
+        )
     ):
         return value
     return decoded
@@ -109,7 +118,8 @@ def url_humanize(
     The input is normalized first. Humanization then decodes display-friendly
     components only when the result normalizes back to that same URL, so decoding
     is intentionally conservative around reserved URL characters and malformed
-    percent-encoded bytes.
+    percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
+    separators remain escaped for display.
     """
     normalized = url_normalize(
         url,
