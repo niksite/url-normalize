@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 
 import url_normalize as package
@@ -42,6 +44,36 @@ def test_url_humanize_returns_readable_url_that_normalizes_back(
 def test_url_humanize_preserves_empty_values(value: str | None) -> None:
     """Assert empty inputs match url_normalize behavior."""
     assert package.url_humanize(value) == value
+
+
+@pytest.mark.parametrize("param_count", [0, 25, 200])
+def test_url_humanize_readable_url_needs_one_normalization(param_count):
+    """Keep whole-URL normalization cost constant for already-readable queries."""
+    value = "https://example.com/path"
+    if param_count:
+        value += "?" + "&".join(f"key{i}=value{i}" for i in range(param_count))
+
+    with patch(
+        "url_normalize.url_humanize.url_normalize", wraps=package.url_normalize
+    ) as normalize:
+        assert package.url_humanize(value) == value
+
+    assert normalize.call_count == 1
+
+
+def test_url_humanize_only_rechecks_changed_query_values():
+    """Validate a decoded value without rechecking every unchanged field."""
+    expected_normalizations = 2  # Initial normalization and one round trip.
+    query = "&".join(f"key{i}=value{i}" for i in range(100))
+    value = f"https://example.com/path?{query}&title=%C3%A9"
+    expected = f"https://example.com/path?{query}&title=é"
+
+    with patch(
+        "url_normalize.url_humanize.url_normalize", wraps=package.url_normalize
+    ) as normalize:
+        assert package.url_humanize(value) == expected
+
+    assert normalize.call_count == expected_normalizations
 
 
 @pytest.mark.parametrize(

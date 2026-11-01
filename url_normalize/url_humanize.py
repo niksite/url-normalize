@@ -27,6 +27,8 @@ def _humanize_host_label(label: str) -> str:
 
 def _replace_if_round_trips(url: URL, normalized: str, **changes: str) -> URL:
     candidate = url._replace(**changes)
+    if candidate == url:
+        return url
     try:
         if url_normalize(reconstruct_url(candidate)) == normalized:
             return candidate
@@ -58,6 +60,8 @@ def _replace_query_part_if_round_trips(
     index: int,
     part: str,
 ) -> tuple[URL, list[str]]:
+    if part == parts[index]:
+        return url, parts
     candidate_parts = [*parts]
     candidate_parts[index] = part
     candidate = _replace_if_round_trips(
