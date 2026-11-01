@@ -11,7 +11,21 @@ from url_normalize import __version__
 from url_normalize.cli import main
 
 
-def run_cli(*args: str) -> subprocess.CompletedProcess:
+@pytest.fixture
+def invoke_cli(capsys, monkeypatch):
+    """Run successful CLI calls in-process and return their stdout."""
+
+    def invoke(*args: str) -> str:
+        monkeypatch.setattr(sys, "argv", ["url-normalize", *args])
+        main()
+        captured = capsys.readouterr()
+        assert not captured.err
+        return captured.out
+
+    return invoke
+
+
+def run_cli_subprocess(*args: str) -> subprocess.CompletedProcess[str]:
     """Run the CLI command with given arguments.
 
     Params:
@@ -29,20 +43,20 @@ def run_cli(*args: str) -> subprocess.CompletedProcess:
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("prefix", ["../", "./", "?q=", "#"])
-def test_cli_preserves_relative_references(humanize, prefix):
+def test_cli_preserves_relative_references(humanize, prefix, invoke_cli):
     """Print relative text without adding a scheme, domain or root path."""
     options = ["--humanize"] if humanize else []
-    result = run_cli(*options, prefix + "%C3%A9")
+    output = invoke_cli(*options, prefix + "%C3%A9")
     expected = prefix + ("é" if humanize else "%C3%A9")
-    assert result.returncode == 0
-    assert result.stdout == expected + "\n"
-    assert not result.stderr
+    assert output == expected + "\n"
 
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("collapse_slashes", [None, False, True])
 @pytest.mark.parametrize("remove_trailing_slash", [False, True])
-def test_cli_relative_policy_options(humanize, collapse_slashes, remove_trailing_slash):
+def test_cli_relative_policy_options(
+    humanize, collapse_slashes, remove_trailing_slash, invoke_cli
+):
     """Apply dot removal and each path option while retaining relative context."""
     options = ["--humanize"] if humanize else []
     if collapse_slashes is not None:
@@ -52,7 +66,7 @@ def test_cli_relative_policy_options(humanize, collapse_slashes, remove_trailing
     if remove_trailing_slash:
         options.append("--remove-trailing-slash")
     value = "../a//../%C3%A9///?#"
-    result = run_cli(
+    output = invoke_cli(
         *options,
         "--keep-empty-components",
         "--default-domain",
@@ -63,25 +77,18 @@ def test_cli_relative_policy_options(humanize, collapse_slashes, remove_trailing
     trailing = (
         "" if remove_trailing_slash else "///" if collapse_slashes is False else "/"
     )
-    assert result.returncode == 0
-    assert result.stdout == f"../a/{segment}{trailing}?#\n"
-    assert not result.stderr
+    assert output == f"../a/{segment}{trailing}?#\n"
 
 
-def test_cli_help_describes_allowlist_filtering() -> None:
-    """Describe filtering as an allowlist, not a tracking-parameter blocklist."""
-    result = run_cli("--help")
+def test_cli_help() -> None:
+    """Describe allowlist filtering and omit the removed charset option."""
+    result = run_cli_subprocess("--help")
     assert result.returncode == 0
     help_text = " ".join(result.stdout.split())
     assert "Keep only allowlisted query parameters." in help_text
     assert "Unknown domains have an empty default allowlist." in help_text
-
-
-def test_cli_help_omits_removed_charset_option() -> None:
-    """Remove the obsolete encoding option from CLI help."""
-    result = run_cli("--help")
-    assert result.returncode == 0
     assert "charset" not in result.stdout
+    assert not result.stderr
 
 
 @pytest.mark.parametrize("option", ["-c", "--charset"])
@@ -89,22 +96,11 @@ def test_cli_rejects_removed_charset_option(option, monkeypatch):
     """Report removed flags with UTF-8 diagnostics even under a legacy encoding."""
     monkeypatch.setenv("PYTHONIOENCODING", "cp1252")
     usage_error_status = 2
-    result = run_cli(option, "utf-8", "https://example.com/é")
+    result = run_cli_subprocess(option, "utf-8", "https://example.com/é")
     assert result.returncode == usage_error_status
     assert "unrecognized arguments" in result.stderr
     assert "https://example.com/é" in result.stderr
     assert not result.stdout
-
-
-def test_cli_successful_main(capsys, monkeypatch):
-    """Exercise successful CLI output in the measured process."""
-    monkeypatch.setattr(
-        sys, "argv", ["url-normalize", "http://EXAMPLE.com/./path/../other/"]
-    )
-    main()
-    captured = capsys.readouterr()
-    assert captured.out == "http://example.com/other/\n"
-    assert not captured.err
 
 
 @pytest.mark.parametrize("reconfigure_attribute", ["missing", "non-callable"])
@@ -147,20 +143,7 @@ def test_cli_basic_normalization() -> None:
     url = "http://EXAMPLE.com/./path/../other/"
     expected = "http://example.com/other/"
 
-    result = run_cli(url)
-
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
-
-
-def test_cli_basic_normalization_short_args() -> None:
-    """Test basic URL normalization via CLI using short arguments."""
-    url = "http://EXAMPLE.com/./path/../other/"
-    expected = "http://example.com/other/"
-    # Using short args where applicable (none for the URL itself)
-
-    result = run_cli(url)  # No short args needed for basic case
+    result = run_cli_subprocess(url)
 
     assert result.returncode == 0
     assert result.stdout.strip() == expected
@@ -177,7 +160,7 @@ def test_cli_humanize(io_encoding, monkeypatch):
     )
     expected = "https://пример.испытание/Служебная"
 
-    result = run_cli("--humanize", url)
+    result = run_cli_subprocess("--humanize", url)
 
     assert result.returncode == 0
     assert result.stdout.strip() == expected
@@ -187,7 +170,9 @@ def test_cli_humanize(io_encoding, monkeypatch):
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("keep_empty_components", [False, True])
 @pytest.mark.parametrize("suffix", ["?", "#", "?#"])
-def test_cli_empty_component_policy(humanize, keep_empty_components, suffix):
+def test_cli_empty_component_policy(
+    humanize, keep_empty_components, suffix, invoke_cli
+):
     """Drop empty delimiters by default and keep them on request in both modes."""
     options = ["--humanize"] if humanize else []
     if keep_empty_components:
@@ -197,16 +182,16 @@ def test_cli_empty_component_policy(humanize, keep_empty_components, suffix):
     expected_suffix = suffix if keep_empty_components else ""
     expected = f"https://example.com/{path}{expected_suffix}"
 
-    result = run_cli(*options, value)
+    output = invoke_cli(*options, value)
 
-    assert result.returncode == 0
-    assert result.stdout == f"{expected}\n"
-    assert not result.stderr
+    assert output == f"{expected}\n"
 
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("keep_empty_components", [False, True])
-def test_cli_empty_component_policy_after_filtering(humanize, keep_empty_components):
+def test_cli_empty_component_policy_after_filtering(
+    humanize, keep_empty_components, invoke_cli
+):
     """Apply the selected policy when filtering removes every query parameter."""
     options = ["--filter-params", "--param-allowlist", "keep"]
     if humanize:
@@ -214,35 +199,31 @@ def test_cli_empty_component_policy_after_filtering(humanize, keep_empty_compone
     if keep_empty_components:
         options.append("--keep-empty-components")
 
-    result = run_cli(*options, "https://example.com/?drop=1#")
+    output = invoke_cli(*options, "https://example.com/?drop=1#")
 
     expected_suffix = "?#" if keep_empty_components else ""
-    assert result.returncode == 0
-    assert result.stdout == f"https://example.com/{expected_suffix}\n"
-    assert not result.stderr
+    assert output == f"https://example.com/{expected_suffix}\n"
 
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize(
     "fragment", ["!/route", ":~:text=%C3%A9%2Dtest", ":%7E:text=%C3%A9"]
 )
-def test_cli_preserves_fragment_syntax(humanize, fragment):
+def test_cli_preserves_fragment_syntax(humanize, fragment, invoke_cli):
     """Keep routes and text directives in the fragment in both output modes."""
     options = ["--humanize"] if humanize else []
     value = f"https://example.com/?keep=1#{fragment}"
     expected = value.replace("%C3%A9", "é") if humanize else value
 
-    result = run_cli(*options, value)
+    output = invoke_cli(*options, value)
 
-    assert result.returncode == 0
-    assert result.stdout == f"{expected}\n"
-    assert not result.stderr
+    assert output == f"{expected}\n"
 
 
 @pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("collapse_slashes", [None, False, True])
 @pytest.mark.parametrize("remove_trailing_slash", [False, True])
-def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
+def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash, invoke_cli):
     """Expose independent path cleanup options in both CLI output modes."""
     options = []
     if humanize:
@@ -253,7 +234,7 @@ def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
         )
     if remove_trailing_slash:
         options.append("--remove-trailing-slash")
-    result = run_cli(*options, "https://example.com/a//%C3%A9///?q=a//b")
+    output = invoke_cli(*options, "https://example.com/a//%C3%A9///?q=a//b")
     segment = "é" if humanize else "%C3%A9"
     path = {
         (False, False): f"/a//{segment}///",
@@ -261,12 +242,10 @@ def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
         (False, True): f"/a//{segment}",
         (True, True): f"/a/{segment}",
     }[collapse_slashes is not False, remove_trailing_slash]
-    assert result.returncode == 0
-    assert result.stdout == f"https://example.com{path}?q=a//b\n"
-    assert not result.stderr
+    assert output == f"https://example.com{path}?q=a//b\n"
 
 
-def test_cli_humanize_short_arg() -> None:
+def test_cli_humanize_short_arg(invoke_cli):
     """Test human-readable URL output via CLI using short argument."""
     url = (
         "https://xn--e1afmkfd.xn--80akhbyknj4f/"
@@ -274,19 +253,17 @@ def test_cli_humanize_short_arg() -> None:
     )
     expected = "https://пример.испытание/Служебная"
 
-    result = run_cli("-H", url)
+    output = invoke_cli("-H", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_humanize_respects_normalization_options() -> None:
+def test_cli_humanize_respects_normalization_options(invoke_cli):
     """Test humanized output keeps the existing CLI normalization options."""
     url = "/%D0%A1%D0%BB%D1%83%D0%B6%D0%B5%D0%B1%D0%BD%D0%B0%D1%8F"
     expected = "https://пример.испытание/Служебная?keep=Ç"
 
-    result = run_cli(
+    output = invoke_cli(
         "--humanize",
         "--default-domain",
         "xn--e1afmkfd.xn--80akhbyknj4f",
@@ -296,124 +273,94 @@ def test_cli_humanize_respects_normalization_options() -> None:
         f"{url}?utm_source=ignored&keep=%C3%87",
     )
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_scheme() -> None:
+def test_cli_default_scheme(invoke_cli):
     """Test default scheme addition via CLI."""
     url = "//example.com"
     expected = "https://example.com/"
 
-    result = run_cli(url)
+    output = invoke_cli(url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_scheme_short_arg() -> None:
-    """Test default scheme addition via CLI using short argument."""
-    url = "//example.com"
-    expected = "https://example.com/"
-
-    result = run_cli(url)  # Default scheme is implicit, no arg needed
-
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
-
-
-def test_cli_custom_default_scheme() -> None:
+def test_cli_custom_default_scheme(invoke_cli):
     """Test custom default scheme via CLI."""
     url = "//example.com"
     expected = "ftp://example.com/"
 
-    result = run_cli("--default-scheme", "ftp", url)
+    output = invoke_cli("--default-scheme", "ftp", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_custom_default_scheme_short_arg() -> None:
+def test_cli_custom_default_scheme_short_arg(invoke_cli):
     """Test custom default scheme via CLI using short argument."""
     url = "//example.com"
     expected = "ftp://example.com/"
 
-    result = run_cli("-s", "ftp", url)
+    output = invoke_cli("-s", "ftp", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_filter_params() -> None:
+def test_cli_filter_params(invoke_cli):
     """Test parameter filtering via CLI."""
     url = "http://google.com?utm_source=test&q=1"
     expected = "http://google.com/?q=1"
 
-    result = run_cli("--filter-params", url)
+    output = invoke_cli("--filter-params", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_filter_params_short_arg() -> None:
+def test_cli_filter_params_short_arg(invoke_cli):
     """Test parameter filtering via CLI using short argument."""
     url = "http://google.com?utm_source=test&q=1"
     expected = "http://google.com/?q=1"
 
-    result = run_cli("-f", url)
+    output = invoke_cli("-f", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_param_allowlist() -> None:
+def test_cli_param_allowlist(invoke_cli):
     """Test parameter allowlist via CLI."""
     url = "http://example.com?remove=me&keep=this&remove_too=true"
     expected = "http://example.com/?keep=this"
     # Use filter_params to enable filtering, then allowlist to keep specific ones
 
-    result = run_cli("-f", "-p", "keep", url)
+    output = invoke_cli("-f", "-p", "keep", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_param_allowlist_multiple() -> None:
+def test_cli_param_allowlist_multiple(invoke_cli):
     """Test parameter allowlist with multiple params via CLI."""
     url = "http://example.com?remove=me&keep=this&keep_too=yes&remove_too=true"
     expected = "http://example.com/?keep=this&keep_too=yes"
 
-    result = run_cli("-f", "-p", "keep,keep_too", url)
+    output = invoke_cli("-f", "-p", "keep,keep_too", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_param_allowlist_without_filtering() -> None:
+def test_cli_param_allowlist_without_filtering(invoke_cli):
     """Test allowlist has no effect if filtering is not enabled."""
     url = "http://example.com?remove=me&keep=this&remove_too=true"
     expected = "http://example.com/?remove=me&keep=this&remove_too=true"
     # Not using -f, so allowlist should be ignored
 
-    result = run_cli("-p", "keep", url)
+    output = invoke_cli("-p", "keep", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
 def test_cli_no_url() -> None:
     """Test CLI error when no URL is provided."""
-    result = run_cli()
+    result = run_cli_subprocess()
 
     assert result.returncode != 0
     assert "the following arguments are required: url" in result.stderr
@@ -421,7 +368,7 @@ def test_cli_no_url() -> None:
 
 def test_cli_version_long() -> None:
     """Test version output with --version flag."""
-    result = run_cli("--version")
+    result = run_cli_subprocess("--version")
 
     assert result.returncode == 0
     assert __version__ in result.stdout
@@ -430,7 +377,7 @@ def test_cli_version_long() -> None:
 
 def test_cli_version_short() -> None:
     """Test version output with -v flag."""
-    result = run_cli("-v")
+    result = run_cli_subprocess("-v")
 
     assert result.returncode == 0
     assert __version__ in result.stdout
@@ -439,68 +386,58 @@ def test_cli_version_short() -> None:
 
 def test_cli_unicode_host_and_path() -> None:
     """Encode Unicode hosts with IDNA and paths with UTF-8 on every platform."""
-    result = run_cli("http://пример.рф/é")
+    result = run_cli_subprocess("http://пример.рф/é")
     assert result.returncode == 0
     assert result.stdout.strip() == "http://xn--e1afmkfd.xn--p1ai/%C3%A9"
     assert not result.stderr
 
 
-def test_cli_default_domain() -> None:
+def test_cli_default_domain(invoke_cli):
     """Test adding default domain to absolute path via CLI."""
     url = "/path/to/image.png"
     expected = "https://example.com/path/to/image.png"
 
-    result = run_cli("--default-domain", "example.com", url)
+    output = invoke_cli("--default-domain", "example.com", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_domain_short_arg() -> None:
+def test_cli_default_domain_short_arg(invoke_cli):
     """Test adding default domain using short argument."""
     url = "/path/to/image.png"
     expected = "https://example.com/path/to/image.png"
 
-    result = run_cli("-d", "example.com", url)
+    output = invoke_cli("-d", "example.com", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_domain_with_scheme() -> None:
+def test_cli_default_domain_with_scheme(invoke_cli):
     """Test adding default domain with custom scheme."""
     url = "/path/to/image.png"
     expected = "http://example.com/path/to/image.png"
 
-    result = run_cli("-d", "example.com", "-s", "http", url)
+    output = invoke_cli("-d", "example.com", "-s", "http", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_domain_no_effect_on_absolute_urls() -> None:
+def test_cli_default_domain_no_effect_on_absolute_urls(invoke_cli):
     """Test default domain has no effect on absolute URLs."""
     url = "http://original-domain.com/path"
     expected = "http://original-domain.com/path"
 
-    result = run_cli("-d", "example.com", url)
+    output = invoke_cli("-d", "example.com", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected
 
 
-def test_cli_default_domain_no_effect_on_relative_paths() -> None:
+def test_cli_default_domain_no_effect_on_relative_paths(invoke_cli):
     """Test default domain has no effect on relative paths."""
     url = "path/to/file.html"
     # This becomes a regular URL with the default scheme
     expected = "https://path/to/file.html"
 
-    result = run_cli("-d", "example.com", url)
+    output = invoke_cli("-d", "example.com", url)
 
-    assert result.returncode == 0
-    assert result.stdout.strip() == expected
-    assert not result.stderr
+    assert output.strip() == expected

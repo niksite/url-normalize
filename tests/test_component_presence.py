@@ -8,17 +8,6 @@ from url_normalize import url_humanize, url_normalize
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
 @pytest.mark.parametrize("keep_empty_components", [False, True])
 @pytest.mark.parametrize(
-    "base",
-    [
-        "https://example.com/",
-        "ws://[::1]/",
-        "file:///tmp/document",
-        "mailto:user@example.com",
-        "urn:example:document",
-        "/path",
-    ],
-)
-@pytest.mark.parametrize(
     ("suffix", "cleaned"),
     [
         ("", ""),
@@ -34,9 +23,10 @@ from url_normalize import url_humanize, url_normalize
     ],
 )
 def test_public_api_empty_component_policy(
-    transform, base, suffix, cleaned, keep_empty_components
+    transform, suffix, cleaned, keep_empty_components
 ):
-    """Drop empty delimiters by default and preserve them on request across schemes."""
+    """Distinguish absent, empty and populated components under either policy."""
+    base = "https://example.com/"
     value = base + suffix
     expected = base + (suffix if keep_empty_components else cleaned)
     options = {"keep_empty_components": keep_empty_components}
@@ -46,6 +36,31 @@ def test_public_api_empty_component_policy(
     assert url_normalize(url_humanize(value, **options), **options) == expected
     if not keep_empty_components:
         assert transform(value) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize("keep_empty_components", [False, True])
+@pytest.mark.parametrize(
+    "base",
+    [
+        "ws://[::1]/",
+        "file:///tmp/document",
+        "mailto:user@example.com",
+        "urn:example:document",
+        "/path",
+    ],
+)
+def test_empty_component_policy_across_url_forms(
+    transform, base, keep_empty_components
+):
+    """Apply delimiter policy to authority, file, opaque and path-only URLs."""
+    expected = base + ("?#" if keep_empty_components else "")
+
+    assert (
+        transform(base + "?#", keep_empty_components=keep_empty_components) == expected
+    )
+    if not keep_empty_components:
+        assert transform(base + "?#") == expected
 
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])

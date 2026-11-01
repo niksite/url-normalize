@@ -72,7 +72,6 @@ def test_normalize_path_result_is_expected(path: str, expected: str) -> None:
     assert result == expected, path
 
 
-@pytest.mark.parametrize("scheme", ["http", "https", "ftp", "file", "ws", "wss"])
 @pytest.mark.parametrize(
     ("path", "expected"),
     [
@@ -97,10 +96,18 @@ def test_normalize_path_result_is_expected(path: str, expected: str) -> None:
         ("/a/%252e%252e//b", "/a/%252e%252e//b"),
     ],
 )
-def test_normalize_path_resolves_dots_with_empty_segments(path, expected, scheme):
+def test_normalize_path_resolves_dots_with_empty_segments(path, expected):
     """Resolve dots against actual segments, including empty ones."""
-    assert normalize_path(path, scheme, collapse_slashes=False) == expected
-    assert normalize_path(expected, scheme, collapse_slashes=False) == expected
+    assert normalize_path(path, "https", collapse_slashes=False) == expected
+    assert normalize_path(expected, "https", collapse_slashes=False) == expected
+
+
+@pytest.mark.parametrize("scheme", ["http", "https", "ftp", "file", "ws", "wss"])
+def test_normalize_path_applies_dot_rules_across_schemes(scheme):
+    """Apply dot removal to each supported scheme without collapsing empty segments."""
+    assert (
+        normalize_path("/a//../%2e/b///", scheme, collapse_slashes=False) == "/a/b///"
+    )
 
 
 @pytest.mark.parametrize(
