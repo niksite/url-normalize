@@ -2,7 +2,14 @@
 
 import pytest
 
-from url_normalize.url_normalize import normalize_path, url_normalize
+from url_normalize import url_normalize
+from url_normalize.normalize_path import normalize_path
+
+
+@pytest.mark.parametrize("scheme", ["ws", "wss"])
+def test_normalize_path_websocket_empty_path(scheme):
+    """Use the root resource for an empty WebSocket path (RFC 6455 section 3)."""
+    assert normalize_path("", scheme) == "/"
 
 
 @pytest.mark.parametrize(

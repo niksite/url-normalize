@@ -37,6 +37,24 @@ def test_public_api_normalizes_scheme_specific_ports(transform, value, expected)
     assert transform(expected) == expected
 
 
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("WS://Example.COM", "ws://example.com/"),
+        ("WSS://Example.COM", "wss://example.com/"),
+        ("ws://example.com:080?b=2&a=1", "ws://example.com/?b=2&a=1"),
+        ("wss://example.com:443?b=2&a=1", "wss://example.com/?b=2&a=1"),
+        ("ws://[2001:DB8::1]:443", "ws://[2001:db8::1]:443/"),
+        ("wss://example.com:80", "wss://example.com:80/"),
+    ],
+)
+def test_public_api_normalizes_empty_websocket_paths(transform, value, expected):
+    """Use a root path while preserving WebSocket query order and non-default ports."""
+    assert transform(value) == expected
+    assert transform(expected) == expected
+
+
 @pytest.mark.parametrize(
     "value",
     [

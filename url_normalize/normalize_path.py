@@ -43,6 +43,6 @@ def normalize_path(path: str, scheme: str) -> str:
         path = "/".join(output)
     # For schemes that define an empty path to be equivalent to a path of "/",
     # use "/".
-    if not path and scheme in {"http", "https", "ftp", "file"}:
+    if not path and scheme in {"http", "https", "ftp", "file", "ws", "wss"}:
         path = "/"
     return path
