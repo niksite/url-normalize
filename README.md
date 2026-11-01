@@ -51,6 +51,7 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Add a missing scheme | `example.com` | `https://example.com/` |
 | Lowercase scheme and host; remove a default port | `HTTP://Example.COM:80/` | `http://example.com/` |
 | Resolve dot segments | `https://example.com/a/../b` | `https://example.com/b` |
+| Preserve repeated path slashes | `https://example.com/a//b///` | `https://example.com/a//b///` |
 | Encode Unicode hosts and paths | `https://bücher.de/résumé` | `https://xn--bcher-kva.de/r%C3%A9sum%C3%A9` |
 | Remove trailing host dots, including Unicode equivalents | `https://example.com。/` | `https://example.com/` |
 | Preserve encoded path separators; uppercase escape hex | `https://example.com/a%2fb` | `https://example.com/a%2Fb` |
@@ -73,8 +74,31 @@ The following options are keyword-only and apply to both functions:
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Retain only allowlisted query parameters. |
 | `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
+| `collapse_slashes` | `False` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. |
 
 Unicode URL characters always use UTF-8 percent encoding.
+
+### Path slashes and dot segments
+
+Repeated slashes represent empty path segments and are preserved by default, including trailing slashes. Use `collapse_slashes=True` when your application treats those segments as equivalent:
+
+```python
+from url_normalize import url_normalize
+
+url = "https://example.com/a//b///"
+print(url_normalize(url))
+# Output: https://example.com/a//b///
+
+print(url_normalize(url, collapse_slashes=True))
+# Output: https://example.com/a/b/
+
+print(url_normalize("https://example.com/a//../b", collapse_slashes=True))
+# Output: https://example.com/a/b
+```
+
+Dot segments are resolved before slash collapsing: in `/a//../b`, `..` removes the empty segment, leaving `/a/b`. Encoded separators such as `%2F` remain encoded. Collapsing affects the path; query and fragment handling follows the usual normalization rules. A single trailing slash is retained.
+
+These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Other schemes keep their existing path handling. A path reference that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
 
 ### Query parameter filtering
 
@@ -155,6 +179,10 @@ url-normalize -f -p page,id "example.com/?page=1&id=123&ref=test"
 url-normalize -d example.com -s http "/images/logo.png"
 # Output: http://example.com/images/logo.png
 
+# Collapse repeated slashes in the path.
+url-normalize --collapse-slashes "https://example.com/a//b///"
+# Output: https://example.com/a/b/
+
 # Display a readable URL.
 url-normalize -H "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
 # Output: https://bücher.de/résumé
@@ -183,7 +211,7 @@ The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.
 
 Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
-Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URLs per property to check normalization idempotence and humanization round trips with the default options. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
+Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and slash-policy combinations per property to check normalization idempotence and humanization round trips. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 
 ## Changelog and license
 

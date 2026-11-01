@@ -143,6 +143,23 @@ def test_cli_humanize(io_encoding, monkeypatch):
     assert not result.stderr
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize("collapse_slashes", [False, True])
+def test_cli_path_policy(humanize, collapse_slashes):
+    """Expose opt-in slash collapsing in both CLI output modes."""
+    options = []
+    if humanize:
+        options.append("--humanize")
+    if collapse_slashes:
+        options.append("--collapse-slashes")
+    result = run_cli(*options, "https://example.com/a//%C3%A9///?q=a//b")
+    segment = "é" if humanize else "%C3%A9"
+    path = f"/a/{segment}/" if collapse_slashes else f"/a//{segment}///"
+    assert result.returncode == 0
+    assert result.stdout == f"https://example.com{path}?q=a//b\n"
+    assert not result.stderr
+
+
 def test_cli_humanize_short_arg() -> None:
     """Test human-readable URL output via CLI using short argument."""
     url = (

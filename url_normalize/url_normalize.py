@@ -21,13 +21,14 @@ from .provide_url_scheme import provide_url_scheme
 from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
 
 
-def url_normalize(
+def url_normalize(  # noqa: PLR0913
     url: str | None,
     *,  # Force keyword-only arguments
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | None = None,
+    collapse_slashes: bool = False,
 ) -> str | None:
     """URI normalization routine.
 
@@ -48,6 +49,9 @@ def url_normalize(
             Whether to filter non-allowlisted parameters (False by default)
         param_allowlist : dict | list | None : optional
             Override for the parameter allowlist
+        collapse_slashes : bool : optional
+            Collapse literal path slashes after resolving dot segments
+            (False by default)
 
     Returns:
         str | None : a normalized url
@@ -75,6 +79,8 @@ def url_normalize(
     )
     url_elements = url_elements._replace(
         port=normalize_port(url_elements.port, url_elements.scheme),
-        path=normalize_path(url_elements.path, url_elements.scheme),
+        path=normalize_path(
+            url_elements.path, url_elements.scheme, collapse_slashes=collapse_slashes
+        ),
     )
     return reconstruct_url(url_elements)

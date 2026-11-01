@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import re
 
+from ._schemes import AUTHORITY_SCHEMES
 from .normalize_scheme import DEFAULT_SCHEME
 from .tools import cleanup_url_input
-
-# Schemes that require authority component reconstruction with //
-AUTHORITY_SCHEMES = frozenset(["http", "https", "ftp", "ftps"])
 
 
 def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:

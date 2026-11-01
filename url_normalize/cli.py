@@ -53,6 +53,11 @@ def main() -> None:
         help="Comma-separated list of query parameters to allow (e.g., 'q,id').",
     )
     parser.add_argument(
+        "--collapse-slashes",
+        action="store_true",
+        help="Collapse repeated path slashes after resolving dot segments.",
+    )
+    parser.add_argument(
         "-H",
         "--humanize",
         action="store_true",
@@ -71,6 +76,7 @@ def main() -> None:
             default_domain=args.default_domain,
             filter_params=args.filter_params,
             param_allowlist=allowlist,
+            collapse_slashes=args.collapse_slashes,
         )
     except Exception as e:  # noqa: BLE001
         print(f"Error normalizing URL: {e}", file=sys.stderr)  # noqa: T201

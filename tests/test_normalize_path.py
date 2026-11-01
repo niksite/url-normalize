@@ -29,8 +29,8 @@ def test_normalize_path_websocket_empty_path(scheme):
         ("/FOO", "/FOO"),
         ("/foo/../bar", "/bar"),
         ("/foo/./bar", "/foo/bar"),
-        ("/foo//", "/foo/"),
-        ("/foo///bar//", "/foo/bar/"),
+        ("/foo//", "/foo//"),
+        ("/foo///bar//", "/foo///bar//"),
         ("/foo/bar/..", "/foo/"),
         ("/foo/bar/../..", "/"),
         ("/foo/bar/../../../../baz", "/baz"),
@@ -49,6 +49,53 @@ def test_normalize_path_result_is_expected(path: str, expected: str) -> None:
     """Assert we got expected results from the normalize_path function."""
     result = normalize_path(path, "http")
     assert result == expected, path
+
+
+@pytest.mark.parametrize("scheme", ["http", "https", "ftp", "file", "ws", "wss"])
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        # RFC 3986 section 5.2.4 examples, then empty-segment boundaries.
+        ("/a/b/c/./../../g", "/a/g"),
+        ("mid/content=5/../6", "mid/6"),
+        ("./a", "a"),
+        ("../a", "a"),
+        ("a/../b", "/b"),
+        (".", "/"),
+        ("/a//../b", "/a/b"),
+        ("/a///../b", "/a//b"),
+        ("/a//../../b", "/b"),
+        ("/a/.//b", "/a//b"),
+        ("/a//.", "/a//"),
+        ("/a///..", "/a//"),
+        ("/a/..//b", "//b"),
+        ("//a///b//", "//a///b//"),
+        ("/../../a", "/a"),
+        ("/a/%2e%2E//b", "//b"),
+        ("/a%2f%2f//b", "/a%2F%2F//b"),
+        ("/a/%252e%252e//b", "/a/%252e%252e//b"),
+    ],
+)
+def test_normalize_path_resolves_dots_with_empty_segments(path, expected, scheme):
+    """Resolve dots against actual segments, including empty ones."""
+    assert normalize_path(path, scheme) == expected
+    assert normalize_path(expected, scheme) == expected
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/a//b///", "/a/b/"),
+        ("/a//../b", "/a/b"),
+        ("/a///../b", "/a/b"),
+        ("/a/..//b", "/b"),
+        ("/a%2f%2f//b", "/a%2F%2F/b"),
+        ("///", "/"),
+    ],
+)
+def test_normalize_path_collapses_only_after_resolving_dots(path, expected):
+    """Collapse literal slashes after dot removal, retaining a trailing slash."""
+    assert normalize_path(path, "https", collapse_slashes=True) == expected
 
 
 @pytest.mark.parametrize("character", ":/?#[]@!$&'()*+,;=")

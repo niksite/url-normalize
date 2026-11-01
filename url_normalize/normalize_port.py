@@ -2,19 +2,7 @@
 
 from __future__ import annotations
 
-DEFAULT_PORT = {
-    "ftp": "21",
-    "gopher": "70",
-    "http": "80",
-    "https": "443",
-    "news": "119",
-    "nntp": "119",
-    "snews": "563",
-    "snntp": "563",
-    "telnet": "23",
-    "ws": "80",
-    "wss": "443",
-}
+from ._schemes import DEFAULT_PORT
 
 
 def normalize_port(port: str, scheme: str) -> str:

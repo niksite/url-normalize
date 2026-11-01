@@ -7,8 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Upgrade notes
+
+Repeated path slashes are now preserved by default. This changes normalized URLs and requires a major release under the project's versioning policy. Applications using persisted cache keys or deduplication identifiers should rebuild them from original URLs; previously collapsed paths cannot recover their lost empty segments.
+
+Use `collapse_slashes=True` in either Python API, or `--collapse-slashes` in the CLI, when your application wants repeated slashes collapsed. Dot segments are resolved first, so this option is not an exact legacy mode: `/a//../b` now becomes `/a/b` even with collapsing enabled, whereas the old algorithm produced `/b`.
+
+### Added
+
+- Add the keyword-only `collapse_slashes` option to `url_normalize()` and `url_humanize()`, plus `--collapse-slashes` in the CLI. It applies to HTTP(S), WS(S), FTP, file URLs and path references; encoded separators and a single trailing slash remain intact.
+
+### Changed
+
+- **BREAKING:** Preserve repeated path slashes by default, including trailing empty segments.
+
 ### Fixed
 
+- Resolve dot segments against empty path segments correctly, including for WebSocket URLs. Keep path references from being reinterpreted as hostnames when dot removal exposes leading `//`.
 - Support CLI output streams whose `reconfigure` attribute is not callable.
 - Keep bidirectional controls and Unicode line/paragraph separators percent-encoded in `url_humanize()` output, including when supplied as literal characters. Ordinary multilingual text and join controls remain readable.
 - Avoid rebuilding and re-normalizing URLs for unchanged components in `url_humanize()`, improving performance for already-readable queries while retaining round-trip checks for decoded candidates.
@@ -16,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Centralize independent scheme rules for default ports, authority repair, path operations and empty paths.
 - Replace mypy with ty, running package type checks through the locked development environment.
 - Add bounded Hypothesis tests for HTTP(S) normalization idempotence and humanization round trips.
 

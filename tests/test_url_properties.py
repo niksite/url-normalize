@@ -62,20 +62,22 @@ def http_urls(draw):
 
 
 @PROPERTY_SETTINGS
-@given(value=http_urls())
-def test_normalization_is_idempotent(value):
+@given(value=http_urls(), collapse_slashes=st.booleans())
+def test_normalization_is_idempotent(value, collapse_slashes):
     """Reach a fixed point after one normalization of a supported URL."""
-    normalized = url_normalize(value)
+    normalized = url_normalize(value, collapse_slashes=collapse_slashes)
 
     assert isinstance(normalized, str)
-    assert url_normalize(normalized) == normalized
+    assert url_normalize(normalized, collapse_slashes=collapse_slashes) == normalized
 
 
 @PROPERTY_SETTINGS
-@given(value=http_urls())
-def test_humanization_normalizes_back_to_the_same_url(value):
+@given(value=http_urls(), collapse_slashes=st.booleans())
+def test_humanization_normalizes_back_to_the_same_url(value, collapse_slashes):
     """Keep normalized output stable when rendering a URL for display."""
-    humanized = url_humanize(value)
+    humanized = url_humanize(value, collapse_slashes=collapse_slashes)
 
     assert isinstance(humanized, str)
-    assert url_normalize(humanized) == url_normalize(value)
+    assert url_normalize(humanized, collapse_slashes=collapse_slashes) == url_normalize(
+        value, collapse_slashes=collapse_slashes
+    )
