@@ -17,7 +17,7 @@ def test_param_filtering_disabled_by_default():
 
 
 def test_empty_query():
-    """Test handling empty query strings."""
+    """Remove an empty query delimiter by default."""
     assert url_normalize("https://example.com/page?") == "https://example.com/page"
 
 

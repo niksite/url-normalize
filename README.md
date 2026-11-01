@@ -51,18 +51,23 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Add a missing scheme | `example.com` | `https://example.com/` |
 | Lowercase scheme and host; remove a default port | `HTTP://Example.COM:80/` | `http://example.com/` |
 | Resolve dot segments | `https://example.com/a/../b` | `https://example.com/b` |
-| Preserve repeated path slashes | `https://example.com/a//b///` | `https://example.com/a//b///` |
+| Collapse repeated path slashes | `https://example.com/a//b///` | `https://example.com/a/b/` |
 | Encode Unicode hosts and paths | `https://bücher.de/résumé` | `https://xn--bcher-kva.de/r%C3%A9sum%C3%A9` |
 | Remove trailing host dots, including Unicode equivalents | `https://example.com。/` | `https://example.com/` |
 | Preserve encoded path separators; uppercase escape hex | `https://example.com/a%2fb` | `https://example.com/a%2Fb` |
 | Preserve query order and repeated keys | `https://example.com/?b=2&a=1&a=3` | `https://example.com/?b=2&a=1&a=3` |
 | Preserve explicit empty query values | `https://example.com/?flag=&flag` | `https://example.com/?flag=&flag` |
+| Remove empty query and fragment components | `https://example.com/?#` | `https://example.com/` |
 | Preserve fragment routes | `https://example.com/#!/users/42` | `https://example.com/#!/users/42` |
 | Preserve text-highlight syntax | `https://example.com/#:~:text=hello%20world` | `https://example.com/#:~:text=hello%20world` |
 
 In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized, including hashbang routes (`#!/route`) and text directives (`#:~:text=hello`).
 
 Fragments keep literal RFC 3986 fragment punctuation and existing ASCII escapes, with uppercase escape hex. This deliberately includes escaped letters, hyphens and tildes: fragment syntax can be interpreted before percent-decoding. For example, `#:%7E:text=hello` stays encoded instead of becoming an active text directive. Unicode text uses UTF-8 and NFC normalization as usual. Hashbang fragments are no longer converted into `_escaped_fragment_` query parameters.
+
+Empty query and fragment delimiters are removed by default. Set `keep_empty_components=True` in either Python API, or use `--keep-empty-components` in the CLI, to retain them when your application needs to distinguish an empty component from an absent one. For example, `https://example.com/?#` stays unchanged with this option.
+
+The option applies to query and fragment delimiters. Empty parameter values such as `flag=` are preserved with either setting. Empty query fields are still removed: `?a&&b&` becomes `?a&b`, while `?&&` disappears by default or becomes `?` with `keep_empty_components=True`.
 
 Normalization applies consistent spelling rules; it does not establish whether two URLs serve the same content. Applications using normalized URLs as persistent cache keys or identifiers should review the [changelog](CHANGELOG.md) when upgrading.
 
@@ -78,41 +83,47 @@ The following options are keyword-only and apply to both functions:
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Retain only allowlisted query parameters. |
 | `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
-| `collapse_slashes` | `False` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. |
+| `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
+| `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
 
 Unicode URL characters always use UTF-8 percent encoding.
 
 ### Path slashes and dot segments
 
-Repeated slashes represent empty path segments and are preserved by default, including trailing slashes. Use `collapse_slashes=True` when your application treats those segments as equivalent:
+Repeated path slashes collapse by default, including trailing runs. Use `collapse_slashes=False` to preserve empty path segments when they matter to your application:
 
 ```python
 from url_normalize import url_normalize
 
 url = "https://example.com/a//b///"
 print(url_normalize(url))
-# Output: https://example.com/a//b///
-
-print(url_normalize(url, collapse_slashes=True))
 # Output: https://example.com/a/b/
 
+print(url_normalize(url, collapse_slashes=False))
+# Output: https://example.com/a//b///
+
 print(url_normalize(url, remove_trailing_slash=True))
+# Output: https://example.com/a/b
+
+print(url_normalize(url, collapse_slashes=False, remove_trailing_slash=True))
 # Output: https://example.com/a//b
 
-print(url_normalize("https://example.com/a//../b", collapse_slashes=True))
+print(url_normalize("https://example.com/a//../b"))
 # Output: https://example.com/a/b
 ```
 
-Path operations run in order: resolve dot segments, optionally collapse slash runs, then optionally remove trailing slashes. In `/a//../b`, `..` removes the empty segment, leaving `/a/b`. Encoded separators such as `%2F` remain encoded. Query and fragment handling follows the usual normalization rules.
+Path operations run in order: resolve dot segments, collapse slash runs unless disabled, then optionally remove trailing slashes. In `/a//../b`, `..` removes the empty segment, leaving `/a/b` with either collapse setting. Encoded separators such as `%2F` remain encoded. Query and fragment handling follows the usual normalization rules.
 
-`collapse_slashes` retains a single trailing slash. Enable `remove_trailing_slash` to remove the whole trailing run while preserving internal slashes; setting both options to `True` turns `/a//b///` into `/a/b`. The root remains `/`, including when the input path consists entirely of slashes.
+Collapsing retains a single trailing slash. Enable `remove_trailing_slash` to remove it as well; `/a//b///` then becomes `/a/b`. With `collapse_slashes=False`, trailing-slash removal preserves internal slash runs, producing `/a//b`. The root remains `/`, including when the input path consists entirely of slashes.
 
-These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Other schemes keep their existing path handling. A path reference that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
+These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Other schemes keep their existing path handling. When collapsing is disabled, a path reference that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
 
 ### Query parameter filtering
 
 With `filter_params=True`, only explicitly allowed parameters remain. Built-in rules cover Google, Bing, Baidu, and YouTube; see the [domain rules](url_normalize/param_allowlist.py) for their parameter names.
+
+Filtering that removes every parameter also removes the query delimiter by default. With `keep_empty_components=True`, the delimiter remains even when filtering empties the query. For example, filtering `https://example.com/?drop=1#` with no matching allowed name produces `https://example.com/` by default or `https://example.com/?#` with this option.
 
 **Unknown domains have an empty default allowlist**, so filtering removes all their query parameters unless you supply a custom rule. A custom allowlist replaces the built-in rules.
 
@@ -189,13 +200,21 @@ url-normalize -f -p page,id "example.com/?page=1&id=123&ref=test"
 url-normalize -d example.com -s http "/images/logo.png"
 # Output: http://example.com/images/logo.png
 
-# Collapse repeated slashes in the path.
-url-normalize --collapse-slashes "https://example.com/a//b///"
+# Collapse repeated slashes in the path (the default).
+url-normalize "https://example.com/a//b///"
 # Output: https://example.com/a/b/
 
+# Preserve repeated slashes in the path.
+url-normalize --no-collapse-slashes "https://example.com/a//b///"
+# Output: https://example.com/a//b///
+
 # Remove trailing slashes while preserving internal empty segments.
-url-normalize --remove-trailing-slash "https://example.com/a//b///"
+url-normalize --no-collapse-slashes --remove-trailing-slash "https://example.com/a//b///"
 # Output: https://example.com/a//b
+
+# Retain explicitly empty query and fragment components.
+url-normalize --keep-empty-components "https://example.com/?#"
+# Output: https://example.com/?#
 
 # Display a readable URL.
 url-normalize -H "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
@@ -225,7 +244,7 @@ The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.
 
 Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
-Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and path-policy combinations per property to check normalization idempotence and humanization round trips. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
+Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and option combinations per property to check normalization idempotence, humanization round trips, and empty-component policy. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 
 ## Changelog and license
 

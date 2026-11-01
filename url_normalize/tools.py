@@ -24,6 +24,7 @@ class URL(NamedTuple):
 
     A named tuple containing the parsed components of a URL:
     scheme, userinfo, host, port, path, query, and fragment.
+    Presence flags distinguish absent queries/fragments from empty ones.
     """
 
     scheme: str
@@ -33,6 +34,8 @@ class URL(NamedTuple):
     path: str
     query: str
     fragment: str
+    query_present: bool = False
+    fragment_present: bool = False
 
 
 def deconstruct_url(url: str) -> URL:
@@ -46,6 +49,7 @@ def deconstruct_url(url: str) -> URL:
 
     """
     scheme, auth, path, query, fragment = urlsplit(url)
+    before_fragment, fragment_separator, _ = url.partition("#")
     userinfo, separator, host_port = auth.rstrip().rpartition("@")
     userinfo += separator
     if host_port.startswith("["):
@@ -62,6 +66,8 @@ def deconstruct_url(url: str) -> URL:
         query=query,
         scheme=scheme,
         userinfo=userinfo or "",
+        query_present="?" in before_fragment,
+        fragment_present=bool(fragment_separator),
     )
 
 
@@ -78,7 +84,12 @@ def reconstruct_url(url: URL) -> str:
     auth = (url.userinfo or "") + url.host
     if url.port:
         auth += ":" + url.port
-    return urlunsplit((url.scheme, auth, url.path, url.query, url.fragment))
+    result = urlunsplit((url.scheme, auth, url.path, "", ""))
+    if url.query or url.query_present:
+        result += "?" + url.query
+    if url.fragment or url.fragment_present:
+        result += "#" + url.fragment
+    return result
 
 
 def force_unicode(string: str | bytes) -> str:

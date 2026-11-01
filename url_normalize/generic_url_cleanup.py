@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def generic_url_cleanup(url: str) -> str:
-    """Remove empty query fields without interpreting fragment content.
+    """Remove empty query fields, retaining delimiters and fragment content.
 
     Params:
         url : string : the URL
@@ -14,6 +14,6 @@ def generic_url_cleanup(url: str) -> str:
 
     """
     base, fragment_separator, fragment = url.partition("#")
-    path, _, query = base.partition("?")
+    path, query_separator, query = base.partition("?")
     query = "&".join(param for param in query.split("&") if param)
-    return path + (f"?{query}" if query else "") + fragment_separator + fragment
+    return path + query_separator + query + fragment_separator + fragment

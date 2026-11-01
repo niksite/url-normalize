@@ -8,11 +8,13 @@ from url_normalize import url_humanize, url_normalize
 
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
-def test_default_path_policy_preserves_slashes(transform):
-    """Keep empty segments when the caller supplies no path option."""
+def test_default_path_policy_collapses_slashes(transform):
+    """Collapse literal slash runs when the caller supplies no path option."""
     value = "https://example.com/a//b///"
-    assert transform(value) == value
-    assert transform(value, remove_trailing_slash=False) == value
+    expected = "https://example.com/a/b/"
+    assert transform(value) == expected
+    assert transform(value, remove_trailing_slash=False) == expected
+    assert transform(value, collapse_slashes=False) == value
 
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
@@ -56,12 +58,14 @@ def test_default_path_policy_preserves_slashes(transform):
     ],
 )
 def test_public_path_policy(transform, collapse_slashes, value, preserved, collapsed):
-    """Preserve empty path segments unless the caller opts into collapsing."""
+    """Collapse by default and retain empty segments when explicitly disabled."""
     expected = collapsed if collapse_slashes else preserved
     result = transform(value, collapse_slashes=collapse_slashes)
     assert result == expected
     assert transform(result, collapse_slashes=collapse_slashes) == expected
     assert url_normalize(result, collapse_slashes=collapse_slashes) == expected
+    if collapse_slashes:
+        assert transform(value) == expected
 
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
@@ -131,6 +135,7 @@ def test_path_policy_leaves_other_schemes_alone(
     transform, collapse_slashes, remove_trailing_slash, value
 ):
     """Keep path cleanup scoped to schemes with a defined policy."""
+    assert transform(value) == value
     assert (
         transform(
             value,
@@ -191,3 +196,20 @@ def test_path_policy_combines_with_existing_options(
     result = transform(value, **options)
     assert result == f"http://example.com{expected_path}?{expected_query}"
     assert url_normalize(result, **options) == url_normalize(value, **options)
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_preservation_options_combine_with_humanization(transform):
+    """Preserve slashes and empty components while rendering safe Unicode."""
+    value = "https://xn--bcher-kva.de/a//%C3%A9///?#"
+    host, segment = (
+        ("bücher.de", "é")
+        if transform is url_humanize
+        else ("xn--bcher-kva.de", "%C3%A9")
+    )
+    options = {"collapse_slashes": False, "keep_empty_components": True}
+
+    result = transform(value, **options)
+
+    assert result == f"https://{host}/a//{segment}///?#"
+    assert url_normalize(result, **options) == value

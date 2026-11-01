@@ -31,6 +31,8 @@ from url_normalize.tools import URL, deconstruct_url
                 query="param=val",
                 scheme="http",
                 userinfo="user@",
+                query_present=True,
+                fragment_present=True,
             ),
         ),
     ],
@@ -39,6 +41,36 @@ def test_deconstruct_url_result_is_expected(url: str, expected: URL) -> None:
     """Assert we got expected results from the deconstruct_url function."""
     result = deconstruct_url(url)
     assert result == expected, url
+
+
+@pytest.mark.parametrize(
+    ("suffix", "query", "fragment", "query_present", "fragment_present"),
+    [
+        ("", "", "", False, False),
+        ("?", "", "", True, False),
+        ("#", "", "", False, True),
+        ("?#", "", "", True, True),
+        ("?q=1", "q=1", "", True, False),
+        ("?q=1#", "q=1", "", True, True),
+        ("?#end", "", "end", True, True),
+        ("#?", "", "?", False, True),
+        ("#x?y", "", "x?y", False, True),
+        ("?q=%23", "q=%23", "", True, False),
+        ("?q=why?#", "q=why?", "", True, True),
+        ("#%3F", "", "%3F", False, True),
+        ("%3F%23", "", "", False, False),
+    ],
+)
+def test_deconstruct_url_tracks_component_presence(
+    suffix, query, fragment, query_present, fragment_present
+):
+    """Distinguish absent components from empty ones at the actual URL boundaries."""
+    parts = deconstruct_url(f"https://example.com/{suffix}")
+
+    assert parts.query == query
+    assert parts.fragment == fragment
+    assert parts.query_present is query_present
+    assert parts.fragment_present is fragment_present
 
 
 @pytest.mark.parametrize(
@@ -59,7 +91,15 @@ def test_deconstruct_url_separates_bracketed_host_and_port(
     """Parse the entire bracketed host before considering a port separator."""
     url = f"http://{authority}/path?q=1#fragment"
     assert deconstruct_url(url) == URL(
-        "http", userinfo, host, port, "/path", "q=1", "fragment"
+        "http",
+        userinfo,
+        host,
+        port,
+        "/path",
+        "q=1",
+        "fragment",
+        query_present=True,
+        fragment_present=True,
     )
     assert url_normalize(url) == f"http://{normalized_authority}/path?q=1#fragment"
 

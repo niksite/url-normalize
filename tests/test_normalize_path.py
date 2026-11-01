@@ -29,8 +29,8 @@ def test_normalize_path_websocket_empty_path(scheme):
         ("/FOO", "/FOO"),
         ("/foo/../bar", "/bar"),
         ("/foo/./bar", "/foo/bar"),
-        ("/foo//", "/foo//"),
-        ("/foo///bar//", "/foo///bar//"),
+        ("/foo//", "/foo/"),
+        ("/foo///bar//", "/foo/bar/"),
         ("/foo/bar/..", "/foo/"),
         ("/foo/bar/../..", "/"),
         ("/foo/bar/../../../../baz", "/baz"),
@@ -78,8 +78,8 @@ def test_normalize_path_result_is_expected(path: str, expected: str) -> None:
 )
 def test_normalize_path_resolves_dots_with_empty_segments(path, expected, scheme):
     """Resolve dots against actual segments, including empty ones."""
-    assert normalize_path(path, scheme) == expected
-    assert normalize_path(expected, scheme) == expected
+    assert normalize_path(path, scheme, collapse_slashes=False) == expected
+    assert normalize_path(expected, scheme, collapse_slashes=False) == expected
 
 
 @pytest.mark.parametrize(
@@ -95,6 +95,7 @@ def test_normalize_path_resolves_dots_with_empty_segments(path, expected, scheme
 )
 def test_normalize_path_collapses_only_after_resolving_dots(path, expected):
     """Collapse literal slashes after dot removal, retaining a trailing slash."""
+    assert normalize_path(path, "https") == expected
     assert normalize_path(path, "https", collapse_slashes=True) == expected
 
 
@@ -116,7 +117,12 @@ def test_normalize_path_collapses_only_after_resolving_dots(path, expected):
 )
 def test_normalize_path_removes_trailing_slash_runs(path, expected):
     """Remove only trailing literal slashes after resolving dots, keeping root."""
-    assert normalize_path(path, "https", remove_trailing_slash=True) == expected
+    assert (
+        normalize_path(
+            path, "https", collapse_slashes=False, remove_trailing_slash=True
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize("character", ":/?#[]@!$&'()*+,;=")

@@ -15,7 +15,11 @@ from url_normalize.generic_url_cleanup import generic_url_cleanup
     [
         ("//site/#!fragment", "//site/#!fragment"),
         ("//site/page", "//site/page"),
-        ("//site/?&&", "//site/"),
+        ("//site/?&&", "//site/?"),
+        ("//site/?", "//site/?"),
+        ("//site/#", "//site/#"),
+        ("//site/?#", "//site/?#"),
+        ("//site/#?", "//site/#?"),
         ("//site/?& ", "//site/? "),
     ],
 )

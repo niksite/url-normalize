@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Upgrade notes
 
-Repeated path slashes are now preserved by default. This changes normalized URLs and requires a major release under the project's versioning policy. Applications using persisted cache keys or deduplication identifiers should rebuild them from original URLs; previously collapsed paths cannot recover their lost empty segments.
+Path normalization now resolves dot segments before collapsing repeated slashes. For example, `/a//../b` becomes `/a/b`, whereas the old algorithm produced `/b`. This changes normalized URLs and requires a major release under the project's versioning policy. Applications using persisted cache keys or deduplication identifiers should rebuild them from original URLs.
 
-Use `collapse_slashes=True` in either Python API, or `--collapse-slashes` in the CLI, when your application wants repeated slashes collapsed. Dot segments are resolved first, so this option is not an exact legacy mode: `/a//../b` now becomes `/a/b` even with collapsing enabled, whereas the old algorithm produced `/b`.
+Repeated path slashes collapse by default. Use `collapse_slashes=False` in either Python API, or `--no-collapse-slashes` in the CLI, to preserve them. Dot segments are resolved first with either setting. Previously collapsed URLs cannot recover their lost empty segments; apply preservation to original URLs when available.
 
 Fragment output also changes: `#!/route` remains a fragment instead of becoming `?_escaped_fragment_=/route`, and literal routing and text-directive punctuation stays literal. Existing ASCII escapes remain encoded, including unreserved letters, hyphens and tildes, to preserve syntax interpreted before percent-decoding. The humanizer follows the same rule while decoding safe Unicode; fragment spaces remain `%20`.
 
@@ -19,12 +19,13 @@ There is no legacy hashbang conversion flag. Applications that need the old craw
 
 ### Added
 
+- Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
 - Add `remove_trailing_slash=False` to both Python APIs and `--remove-trailing-slash` to the CLI. When enabled, it removes the entire trailing run of literal path slashes after dot resolution and optional collapsing, while keeping the root `/`. It shares the scheme scope of `collapse_slashes` and leaves encoded separators intact.
-- Add the keyword-only `collapse_slashes` option to `url_normalize()` and `url_humanize()`, plus `--collapse-slashes` in the CLI. It applies to HTTP(S), WS(S), FTP, file URLs and path references; encoded separators and a single trailing slash remain intact.
+- Add the keyword-only `collapse_slashes=True` option to `url_normalize()` and `url_humanize()`, plus `--collapse-slashes` and `--no-collapse-slashes` in the CLI. Collapsing is enabled by default for HTTP(S), WS(S), FTP, file URLs and path references; set the option to `False` to preserve repeated slashes. Encoded separators remain intact.
 
 ### Changed
 
-- **BREAKING:** Preserve repeated path slashes by default, including trailing empty segments.
+- **BREAKING:** Resolve dot segments before collapsing repeated path slashes, retaining empty segments during dot resolution.
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
 
 ### Fixed

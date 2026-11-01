@@ -16,6 +16,17 @@ from .url_normalize import url_normalize
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import TypedDict, Unpack
+
+    class _DisplayChanges(TypedDict, total=False):
+        """Text components eligible for humanization, excluding presence flags."""
+
+        host: str
+        userinfo: str
+        path: str
+        query: str
+        fragment: str
+
 
 UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
 # Bidi_Control: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
@@ -41,7 +52,7 @@ def _replace_if_round_trips(
     normalized: str,
     *,
     normalize: Callable[[str], str | None],
-    **changes: str,
+    **changes: Unpack[_DisplayChanges],
 ) -> URL:
     candidate = url._replace(**changes)
     if candidate == url:
@@ -141,8 +152,9 @@ def url_humanize(  # noqa: PLR0913
     default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | None = None,
-    collapse_slashes: bool = False,
+    collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
 ) -> str | None:
     """Return a human-readable URL representation when it is safe.
 
@@ -151,8 +163,10 @@ def url_humanize(  # noqa: PLR0913
     is intentionally conservative around reserved URL characters and malformed
     percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
     separators remain escaped for display. Fragment ASCII escapes remain encoded
-    to preserve embedded syntax. The selected path policy is also used for
-    round-trip checks.
+    to preserve embedded syntax. Empty query and fragment delimiters are dropped
+    unless keep_empty_components is enabled. Path slashes collapse by default;
+    set collapse_slashes=False to preserve repeated slashes. The selected path
+    and empty-component policies are also used for round-trip checks.
     """
     normalized = url_normalize(
         url,
@@ -162,6 +176,7 @@ def url_humanize(  # noqa: PLR0913
         param_allowlist=param_allowlist,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
+        keep_empty_components=keep_empty_components,
     )
     if not normalized:
         return normalized
@@ -170,6 +185,7 @@ def url_humanize(  # noqa: PLR0913
         url_normalize,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
+        keep_empty_components=keep_empty_components,
     )
     url_elements = deconstruct_url(normalized)
     url_elements = _replace_if_round_trips(

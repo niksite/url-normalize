@@ -28,8 +28,9 @@ def url_normalize(  # noqa: PLR0913
     default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | None = None,
-    collapse_slashes: bool = False,
+    collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
 ) -> str | None:
     """URI normalization routine.
 
@@ -52,10 +53,13 @@ def url_normalize(  # noqa: PLR0913
             Override for the parameter allowlist
         collapse_slashes : bool : optional
             Collapse literal path slashes after resolving dot segments
-            (False by default)
+            (True by default); set False to preserve repeated slashes
         remove_trailing_slash : bool : optional
             Remove trailing literal slashes after dot resolution and optional
             collapsing, keeping the root slash (False by default)
+        keep_empty_components : bool : optional
+            Preserve query and fragment delimiters when their content is empty,
+            including a query emptied by parameter filtering (False by default)
 
     Returns:
         str | None : a normalized url
@@ -79,7 +83,9 @@ def url_normalize(  # noqa: PLR0913
             filter_params=filter_params,
             param_allowlist=param_allowlist,
         ),
+        query_present=keep_empty_components and url_elements.query_present,
         fragment=normalize_fragment(url_elements.fragment),
+        fragment_present=keep_empty_components and url_elements.fragment_present,
     )
     url_elements = url_elements._replace(
         port=normalize_port(url_elements.port, url_elements.scheme),

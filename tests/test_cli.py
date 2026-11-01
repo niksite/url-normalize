@@ -144,6 +144,44 @@ def test_cli_humanize(io_encoding, monkeypatch):
 
 
 @pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize("keep_empty_components", [False, True])
+@pytest.mark.parametrize("suffix", ["?", "#", "?#"])
+def test_cli_empty_component_policy(humanize, keep_empty_components, suffix):
+    """Drop empty delimiters by default and keep them on request in both modes."""
+    options = ["--humanize"] if humanize else []
+    if keep_empty_components:
+        options.append("--keep-empty-components")
+    value = f"https://example.com/%C3%A9{suffix}"
+    path = "é" if humanize else "%C3%A9"
+    expected_suffix = suffix if keep_empty_components else ""
+    expected = f"https://example.com/{path}{expected_suffix}"
+
+    result = run_cli(*options, value)
+
+    assert result.returncode == 0
+    assert result.stdout == f"{expected}\n"
+    assert not result.stderr
+
+
+@pytest.mark.parametrize("humanize", [False, True])
+@pytest.mark.parametrize("keep_empty_components", [False, True])
+def test_cli_empty_component_policy_after_filtering(humanize, keep_empty_components):
+    """Apply the selected policy when filtering removes every query parameter."""
+    options = ["--filter-params", "--param-allowlist", "keep"]
+    if humanize:
+        options.append("--humanize")
+    if keep_empty_components:
+        options.append("--keep-empty-components")
+
+    result = run_cli(*options, "https://example.com/?drop=1#")
+
+    expected_suffix = "?#" if keep_empty_components else ""
+    assert result.returncode == 0
+    assert result.stdout == f"https://example.com/{expected_suffix}\n"
+    assert not result.stderr
+
+
+@pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize(
     "fragment", ["!/route", ":~:text=%C3%A9%2Dtest", ":%7E:text=%C3%A9"]
 )
@@ -161,15 +199,17 @@ def test_cli_preserves_fragment_syntax(humanize, fragment):
 
 
 @pytest.mark.parametrize("humanize", [False, True])
-@pytest.mark.parametrize("collapse_slashes", [False, True])
+@pytest.mark.parametrize("collapse_slashes", [None, False, True])
 @pytest.mark.parametrize("remove_trailing_slash", [False, True])
 def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
     """Expose independent path cleanup options in both CLI output modes."""
     options = []
     if humanize:
         options.append("--humanize")
-    if collapse_slashes:
-        options.append("--collapse-slashes")
+    if collapse_slashes is not None:
+        options.append(
+            "--collapse-slashes" if collapse_slashes else "--no-collapse-slashes"
+        )
     if remove_trailing_slash:
         options.append("--remove-trailing-slash")
     result = run_cli(*options, "https://example.com/a//%C3%A9///?q=a//b")
@@ -179,7 +219,7 @@ def test_cli_path_policy(humanize, collapse_slashes, remove_trailing_slash):
         (True, False): f"/a/{segment}/",
         (False, True): f"/a//{segment}",
         (True, True): f"/a/{segment}",
-    }[collapse_slashes, remove_trailing_slash]
+    }[collapse_slashes is not False, remove_trailing_slash]
     assert result.returncode == 0
     assert result.stdout == f"https://example.com{path}?q=a//b\n"
     assert not result.stderr

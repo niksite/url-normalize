@@ -54,13 +54,25 @@ def main() -> None:
     )
     parser.add_argument(
         "--collapse-slashes",
-        action="store_true",
-        help="Collapse repeated path slashes after resolving dot segments.",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Collapse repeated path slashes after resolving dot segments "
+            "(default: enabled)."
+        ),
     )
     parser.add_argument(
         "--remove-trailing-slash",
         action="store_true",
         help="Remove trailing path slashes while keeping the root slash.",
+    )
+    parser.add_argument(
+        "--keep-empty-components",
+        action="store_true",
+        help=(
+            "Keep empty query (?) and fragment (#) delimiters, "
+            "including after filtering."
+        ),
     )
     parser.add_argument(
         "-H",
@@ -83,6 +95,7 @@ def main() -> None:
             param_allowlist=allowlist,
             collapse_slashes=args.collapse_slashes,
             remove_trailing_slash=args.remove_trailing_slash,
+            keep_empty_components=args.keep_empty_components,
         )
     except Exception as e:  # noqa: BLE001
         print(f"Error normalizing URL: {e}", file=sys.stderr)  # noqa: T201

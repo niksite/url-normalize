@@ -29,7 +29,7 @@ def normalize_path(
     path: str,
     scheme: str,
     *,
-    collapse_slashes: bool = False,
+    collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
 ) -> str:
     """Normalize path part of the url.
@@ -40,6 +40,7 @@ def normalize_path(
         path : string : url path, e.g., '/section/page.html'
         scheme : string : url scheme, e.g., 'http'
         collapse_slashes : bool : collapse literal path slashes after dot removal
+            (True by default)
         remove_trailing_slash : bool : remove trailing literal slashes, keeping root
 
     Returns:

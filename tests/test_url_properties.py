@@ -1,6 +1,7 @@
 """Generated checks for supported HTTP(S) URLs, alongside exact-output tests."""
 
 from string import ascii_letters, digits
+from urllib.parse import urlsplit
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -77,22 +78,42 @@ def http_urls(draw):
     return f"{scheme}://{userinfo}{host}{port}{path}{query}{fragment}"
 
 
+def assert_component_presence(original, result, *, keep_empty_components):
+    """Check delimiter policy independently of normalization equality."""
+    parts = urlsplit(result)
+    query_present = (
+        "?" in original.split("#", 1)[0] if keep_empty_components else bool(parts.query)
+    )
+    fragment_present = (
+        "#" in original if keep_empty_components else bool(parts.fragment)
+    )
+    assert ("?" in result.split("#", 1)[0]) == query_present
+    assert ("#" in result) == fragment_present
+
+
 @PROPERTY_SETTINGS
 @given(
     value=http_urls(),
     collapse_slashes=st.booleans(),
     remove_trailing_slash=st.booleans(),
+    keep_empty_components=st.booleans(),
 )
-def test_normalization_is_idempotent(value, collapse_slashes, remove_trailing_slash):
+def test_normalization_is_idempotent(
+    value, collapse_slashes, remove_trailing_slash, keep_empty_components
+):
     """Reach a fixed point after one normalization of a supported URL."""
     options = {
         "collapse_slashes": collapse_slashes,
         "remove_trailing_slash": remove_trailing_slash,
+        "keep_empty_components": keep_empty_components,
     }
     normalized = url_normalize(value, **options)
 
     assert isinstance(normalized, str)
     assert url_normalize(normalized, **options) == normalized
+    assert_component_presence(
+        value, normalized, keep_empty_components=keep_empty_components
+    )
 
 
 @PROPERTY_SETTINGS
@@ -100,16 +121,21 @@ def test_normalization_is_idempotent(value, collapse_slashes, remove_trailing_sl
     value=http_urls(),
     collapse_slashes=st.booleans(),
     remove_trailing_slash=st.booleans(),
+    keep_empty_components=st.booleans(),
 )
 def test_humanization_normalizes_back_to_the_same_url(
-    value, collapse_slashes, remove_trailing_slash
+    value, collapse_slashes, remove_trailing_slash, keep_empty_components
 ):
     """Keep normalized output stable when rendering a URL for display."""
     options = {
         "collapse_slashes": collapse_slashes,
         "remove_trailing_slash": remove_trailing_slash,
+        "keep_empty_components": keep_empty_components,
     }
     humanized = url_humanize(value, **options)
 
     assert isinstance(humanized, str)
     assert url_normalize(humanized, **options) == url_normalize(value, **options)
+    assert_component_presence(
+        value, humanized, keep_empty_components=keep_empty_components
+    )
