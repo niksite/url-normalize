@@ -181,6 +181,8 @@ uv run --locked --extra dev pre-commit run --all-files
 
 The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.15 on Linux, macOS, and Windows. Please include regression tests with bug fixes.
 
+Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URLs per property to check normalization idempotence and humanization round trips with the default options. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
+
 ## Changelog and license
 
 See [CHANGELOG.md](CHANGELOG.md) for release history and upgrade notes. Distributed under the [MIT License](LICENSE).
