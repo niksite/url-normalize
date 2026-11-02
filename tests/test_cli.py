@@ -103,6 +103,18 @@ def test_cli_rejects_removed_charset_option(option, monkeypatch):
     assert not result.stdout
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_preserves_empty_host_labels(humanize, invoke_cli):
+    """Print unusual host boundaries while normalizing or humanizing Unicode."""
+    options = ["--humanize"] if humanize else []
+    output = invoke_cli(*options, "https://.BÜCHER..de../%C3%A9")
+    host, path = (
+        (".bücher..de..", "é") if humanize else (".xn--bcher-kva..de..", "%C3%A9")
+    )
+
+    assert output == f"https://{host}/{path}\n"
+
+
 @pytest.mark.parametrize("reconfigure_attribute", ["missing", "non-callable"])
 def test_cli_replacement_streams(reconfigure_attribute, monkeypatch):
     """Support output streams without a callable reconfigure method."""

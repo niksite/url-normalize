@@ -53,7 +53,7 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Resolve dot segments | `https://example.com/a/../b` | `https://example.com/b` |
 | Collapse repeated path slashes | `https://example.com/a//b///` | `https://example.com/a/b/` |
 | Encode Unicode hosts and paths | `https://bücher.de/résumé` | `https://xn--bcher-kva.de/r%C3%A9sum%C3%A9` |
-| Remove trailing host dots, including Unicode equivalents | `https://example.com。/` | `https://example.com/` |
+| Remove one trailing host dot, including Unicode equivalents | `https://example.com。/` | `https://example.com/` |
 | Preserve encoded path separators; uppercase escape hex | `https://example.com/a%2fb` | `https://example.com/a%2Fb` |
 | Preserve query order and repeated keys | `https://example.com/?b=2&a=1&a=3` | `https://example.com/?b=2&a=1&a=3` |
 | Preserve explicit empty query values | `https://example.com/?flag=&flag` | `https://example.com/?flag=&flag` |
@@ -89,6 +89,24 @@ The following options are keyword-only and apply to both functions:
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
 
 Unicode URL characters always use UTF-8 percent encoding.
+
+### Hostname boundaries
+
+Leading dots, empty interior labels, repeated trailing dots, and dot-only hosts are preserved in both APIs. A single trailing dot is removed when other host characters precede it. ASCII dots and their IDNA equivalents (`。`, `．`, `｡`) follow the same rule:
+
+| Input | Result |
+| --- | --- |
+| `https://example.com./` | `https://example.com/` |
+| `https://.example.com/` | `https://.example.com/` |
+| `https://a..example.com/` | `https://a..example.com/` |
+| `https://example.com../` | `https://example.com../` |
+| `https://./` | `https://./` |
+| `https://../` | `https://../` |
+| `https://a。。example.com/` | `https://a..example.com/` |
+
+This hostname policy also applies to `default_domain` and custom `param_allowlist` domain keys. Entries for `.example.com` and `example.com` remain distinct; an unusual host can have its own explicit allowlist entry. The CLI uses the same normalization policy.
+
+Preservation does not establish DNS validity. The generic registered-name syntax in [RFC 3986 section 3.2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2) is broader than DNS hostname syntax. Applications that require DNS-valid hostnames should validate them separately. Empty hosts in local file URLs and path references remain supported.
 
 ### Path slashes and dot segments
 

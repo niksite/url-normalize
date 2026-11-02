@@ -107,12 +107,52 @@ def test_url_normalize_trailing_idna_separator_is_idempotent(separator):
     assert url_normalize(normalized) == normalized
 
 
-@pytest.mark.parametrize("suffix", [".\u3002", "\uff0e\uff61", "\u3002."])
-def test_url_normalize_mixed_trailing_idna_separators(suffix):
-    """Strip repeated trailing label separators consistently with ASCII dots."""
-    normalized = url_normalize(f"https://example.com{suffix}/path")
-    assert normalized == "https://example.com/path"
-    assert url_normalize(normalized) == normalized
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("https://.example.com/", "https://.example.com/"),
+        ("https://a..example.com/", "https://a..example.com/"),
+        ("https://example.com../", "https://example.com../"),
+        ("https://example.com\u3002./", "https://example.com../"),
+        ("https://./", "https://./"),
+        ("https://../", "https://../"),
+        ("https://159.189.213../", "https://159.189.213../"),
+        (".example.com/page", "https://.example.com/page"),
+        ("a..example.com/path", "https://a..example.com/path"),
+        ("//a..example.com/path", "https://a..example.com/path"),
+        ("custom://a..example.com/path", "custom://a..example.com/path"),
+        (
+            "https://User:PaSS@a..EXAMPLE.COM:8443/path?q=1#end",
+            "https://User:PaSS@a..example.com:8443/path?q=1#end",
+        ),
+    ],
+)
+def test_public_api_preserves_empty_host_labels(transform, value, expected):
+    """Preserve unusual host boundaries through both public entry points."""
+    assert transform(value) == expected
+    assert transform(expected) == expected
+    assert url_normalize(url_humanize(value)) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_preserves_empty_labels_in_default_domain(transform):
+    """Apply host policy to an explicitly supplied default domain too."""
+    assert (
+        transform("/path", default_domain="a..example.com")
+        == "https://a..example.com/path"
+    )
+
+
+def test_host_label_preservation_allows_unicode_humanization():
+    """Decode safe Unicode without merging labels or dropping empty delimiters."""
+    value = "https://.BÜCHER..de../%C3%A9?#"
+    normalized = "https://.xn--bcher-kva..de../%C3%A9?#"
+    displayed = "https://.bücher..de../é?#"
+
+    assert url_normalize(value, keep_empty_components=True) == normalized
+    assert url_humanize(value, keep_empty_components=True) == displayed
+    assert url_normalize(displayed, keep_empty_components=True) == normalized
 
 
 @pytest.mark.parametrize(

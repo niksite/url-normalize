@@ -70,6 +70,28 @@ def test_custom_allowlist_matches_trailing_idna_separator(separator):
     )
 
 
+@pytest.mark.parametrize("key", [".example.com", "example..com", "example.com.."])
+def test_custom_allowlist_distinguishes_empty_host_labels(key):
+    """Match unusual hostnames only to their own allowlist entries."""
+    allowlist = {key: ["q"], "EXAMPLE.COM.": ["keep"]}
+    assert (
+        url_normalize(
+            "https://example.com/?q=1&keep=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == "https://example.com/?keep=2"
+    )
+    assert (
+        url_normalize(
+            f"https://{key}/?q=1&keep=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == f"https://{key}/?q=1"
+    )
+
+
 @pytest.mark.parametrize(
     ("name", "query", "expected"),
     [

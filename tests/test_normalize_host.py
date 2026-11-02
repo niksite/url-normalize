@@ -2,7 +2,7 @@
 
 import pytest
 
-from url_normalize.url_normalize import normalize_host
+from url_normalize.normalize_host import normalize_host
 
 
 @pytest.mark.parametrize(
@@ -24,6 +24,7 @@ from url_normalize.url_normalize import normalize_host
         # Normalization tests
         ("über.example", "xn--ber-goa.example"),  # IDNA 2008 for umlaut
         ("example。com", "example.com"),  # Normalize full-width punctuation
+        ("", ""),  # Path references and local file URLs have no hostname.
     ],
 )
 def test_normalize_host_result_is_expected(host: str, expected: str) -> None:
@@ -48,18 +49,43 @@ def test_normalize_host_strips_trailing_idna_separator(host, expected, separator
     assert normalize_host(normalized) == normalized
 
 
-@pytest.mark.parametrize("prefix", ["", "."])
-@pytest.mark.parametrize("separator", ["\u3002", "\uff0e", "\uff61"])
-def test_normalize_host_rejects_leading_unicode_separator(prefix, separator):
-    """Keep rejecting leading Unicode label separators as before."""
-    with pytest.raises(UnicodeError):
-        normalize_host(prefix + separator + "example.com")
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        (".EXAMPLE.COM", ".example.com"),
+        ("..example.com", "..example.com"),
+        ("\u3002example.com", ".example.com"),
+        ("\uff0eexample.com", ".example.com"),
+        ("\uff61example.com", ".example.com"),
+        (".\u3002example.com", "..example.com"),
+        ("a..example.com", "a..example.com"),
+        ("a\u3002\u3002example.com", "a..example.com"),
+        ("a.\uff0eexample.com", "a..example.com"),
+        ("a\uff61.example.com", "a..example.com"),
+        ("example.com..", "example.com.."),
+        ("example.com.\u3002", "example.com.."),
+        ("example.com\uff0e\uff61", "example.com.."),
+        ("example.com\u3002.", "example.com.."),
+        ("example.com...", "example.com..."),
+        ("159.189.213..", "159.189.213.."),
+        (".", "."),
+        ("..", ".."),
+        ("\u3002", "."),
+        (".example.com.", ".example.com"),
+        ("a..bücher.de", "a..xn--bcher-kva.de"),
+        (".under_score.example..", ".under_score.example.."),
+        ("faß..under_score.de", "fass..under_score.de"),
+    ],
+)
+def test_normalize_host_preserves_empty_labels(host, expected):
+    """Keep unusual label boundaries while normalizing case and IDNA spelling."""
+    assert normalize_host(host) == expected
+    assert normalize_host(expected) == expected
 
 
-@pytest.mark.parametrize("prefix", [".", ".."])
-def test_normalize_host_strips_leading_ascii_dots(prefix):
-    """Retain the existing normalization of leading ASCII dots."""
-    assert normalize_host(prefix + "example.com") == "example.com"
+def test_normalize_host_preserves_empty_labels_in_utf8_bytes():
+    """Preserve label boundaries after decoding UTF-8 bytes."""
+    assert normalize_host("a.\u3002example.com".encode()) == "a..example.com"
 
 
 @pytest.mark.parametrize(

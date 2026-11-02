@@ -19,6 +19,8 @@ Fragment output also changes: `#!/route` remains a fragment instead of becoming 
 
 There is no legacy hashbang conversion flag. Applications that need the old crawler-specific query representation must construct it explicitly. Rebuild stored normalized keys from original URLs: previously encoded punctuation cannot reliably be distinguished from originally escaped data, and an existing `_escaped_fragment_` query parameter is treated as ordinary query data.
 
+Hostname normalization now preserves leading dots, empty interior labels, repeated trailing dots, and dot-only hosts. For example, `https://a..example.com/` stays unchanged instead of silently becoming `https://a.example.com/`; `https://example.com../` also stays unchanged. A single trailing dot is still removed from an otherwise nonempty host, while `https://./` retains the DNS root dot. Unicode IDNA separators are mapped to ASCII dots without merging label boundaries. The same policy applies to `default_domain` and custom allowlist keys, so `.example.com` no longer selects an entry for `example.com`. Normalization does not validate DNS hostnames. Reprocess original URLs and review allowlist keys; previously discarded dots cannot be recovered from stored normalized output.
+
 ### Added
 
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
@@ -30,6 +32,7 @@ There is no legacy hashbang conversion flag. Applications that need the old craw
 - **BREAKING:** Resolve dot segments before collapsing repeated path slashes, retaining empty segments during dot resolution.
 - **BREAKING:** Preserve explicit document-relative, query-only and fragment-only references instead of inventing a scheme and authority. Resolve internal relative dots while retaining unresolved parents and honoring path cleanup options.
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
+- **BREAKING:** Preserve empty hostname labels instead of silently deleting them. Keep repeated trailing dots and dot-only hosts, while continuing to remove a single trailing dot from other hosts. Map Unicode IDNA separators consistently.
 
 ### Fixed
 
