@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from url_normalize import url_normalize
+from url_normalize import url_humanize, url_normalize
 from url_normalize.param_allowlist import get_allowed_params
 
 
@@ -343,3 +343,19 @@ def test_filtering_resolves_domain_rules_once_per_url(host):
         expected += "?" + "&".join(f"q={index}" for index in range(50))
     assert result == expected
     lookup.assert_called_once_with(host, allowlist)
+
+
+@pytest.mark.parametrize("api", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("allowed", "expected"), [("a/b", "a/b=2"), ("a%2fb", "a%2Fb=1")]
+)
+def test_query_allowlist_distinguishes_reserved_escapes(api, allowed, expected):
+    """Normalize escape case in allowlists without conflating literal punctuation."""
+    assert (
+        api(
+            "https://example.com/?a%2Fb=1&a/b=2",
+            filter_params=True,
+            param_allowlist=[allowed],
+        )
+        == f"https://example.com/?{expected}"
+    )

@@ -160,6 +160,20 @@ Collapsing retains a single trailing slash. Enable `remove_trailing_slash` to re
 
 These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Document-relative paths resolve internal dots while retaining leading `../` segments that need a base URL. Other schemes keep their existing path handling. When collapsing is disabled, a root-relative path that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
 
+### Query escapes
+
+Percent-encoded reserved characters stay encoded in query keys and values, with uppercase hexadecimal digits. A literal `/`, `;`, or other query punctuation stays literal; its escaped form is kept distinct because applications can assign it a delimiter role ([RFC 3986 section 2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-2.2)). Unreserved escapes such as `%7E` become `~`.
+
+| Input | `url_normalize()` | `url_humanize()` |
+| --- | --- | --- |
+| `https://example.com/?q=a%2fb` | `https://example.com/?q=a%2Fb` | `https://example.com/?q=a%2Fb` |
+| `https://example.com/?q=a/b` | `https://example.com/?q=a/b` | `https://example.com/?q=a/b` |
+| `https://example.com/?q=a%3Bb` | `https://example.com/?q=a%3Bb` | `https://example.com/?q=a%3Bb` |
+| `https://example.com/?q=%C3%A9%2F%C3%B1` | `https://example.com/?q=%C3%A9%2F%C3%B1` | `https://example.com/?q=é%2Fñ` |
+| `https://example.com/?q=%7Ehello` | `https://example.com/?q=~hello` | `https://example.com/?q=~hello` |
+
+Parameter order, duplicates, and the distinction between `flag` and `flag=` are preserved. Literal `+`, encoded `%2B`, and `%20` remain distinct in normalized output. Unicode still uses NFC normalization and UTF-8 encoding; these guarantees do not imply byte-for-byte preservation for signed URLs. The CLI uses the same rules in both modes.
+
 ### Query parameter filtering
 
 With `filter_params=True`, only explicitly allowed parameters remain. Built-in rules cover Google, Bing, Baidu, and YouTube; see the [domain rules](url_normalize/param_allowlist.py) for their parameter names.
@@ -197,7 +211,7 @@ print(result)
 # Output: https://example.com/?r%C3%A9sum%C3%A9=1
 ```
 
-Allowed names use the same normalization as query keys, including Unicode and spaces. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
+Allowed names use the same normalization as query keys, including Unicode and spaces. Reserved escapes remain distinct: `param_allowlist=["a/b"]` matches `a/b=1`, while `param_allowlist=["a%2fb"]` matches `a%2Fb=1`. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
 
 ### Default domain and scheme
 

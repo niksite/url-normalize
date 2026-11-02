@@ -25,6 +25,8 @@ Nonempty parsed ports now require ASCII decimal digits. Both APIs raise `ValueEr
 
 IPv6 host spellings now converge: `https://[2001:0DB8:0:0:0:0:0:1]/` becomes `https://[2001:db8::1]/`, and `https://[::FFFF:C000:280]/` becomes `https://[::ffff:192.0.2.128]/`. Zone identifiers retain their exact spelling and case. The same normalization applies to `default_domain` and allowlist keys; expanded and compressed spellings now match, and canonical keys take precedence over aliases. Re-normalize stored IPv6 URL keys and review allowlists with duplicate address spellings.
 
+Query keys and values now retain escapes for all reserved characters. For example, `https://example.com/?q=a%2fb` becomes `https://example.com/?q=a%2Fb` instead of `https://example.com/?q=a/b`. Literal punctuation remains literal. `url_humanize()` also keeps these escapes, including `%3D` in values, while decoding safe Unicode around them. Allowlisted names follow the same policy: `a/b` and `a%2Fb` no longer match each other. Review custom allowlists and rebuild stored keys from original URLs; old output cannot reveal which reserved characters were originally escaped.
+
 ### Added
 
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
@@ -39,6 +41,7 @@ IPv6 host spellings now converge: `https://[2001:0DB8:0:0:0:0:0:1]/` becomes `ht
 - **BREAKING:** Preserve empty hostname labels instead of silently deleting them. Keep repeated trailing dots and dot-only hosts, while continuing to remove a single trailing dot from other hosts. Map Unicode IDNA separators consistently.
 - **BREAKING:** Reject nonempty ports containing characters outside ASCII decimal digits with a clear `ValueError`, consistently across both APIs and the CLI.
 - **BREAKING:** Canonicalize bracketed IPv6 hosts with zero compression and a consistent dotted-decimal suffix for IPv4-mapped addresses, while preserving zone identifiers. Apply the same spelling to default domains and query allowlist keys.
+- **BREAKING:** Preserve reserved-character escapes in query keys and values, including during humanization and allowlist matching. Keep literal punctuation distinct from its escaped form.
 
 ### Fixed
 

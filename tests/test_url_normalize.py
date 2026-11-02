@@ -404,3 +404,12 @@ def test_url_normalize_strips_leading_whitespace_before_defaults(
     actual = url_normalize(prefix + value, default_domain=default_domain)
     assert actual == expected
     assert url_normalize(actual, default_domain=default_domain) == expected
+
+
+@pytest.mark.parametrize("api", [url_normalize, url_humanize])
+@pytest.mark.parametrize("prefix", ["../a//b", "custom://example.com/a//b"])
+def test_reserved_query_escapes_compose_with_url_policies(api, prefix):
+    """Keep query escaping independent of scheme and path/empty-component policy."""
+    value = f"{prefix}?q=a%2fb&q=c%3bd&flag=&flag#"
+    expected = f"{prefix}?q=a%2Fb&q=c%3Bd&flag=&flag#"
+    assert api(value, collapse_slashes=False, keep_empty_components=True) == expected

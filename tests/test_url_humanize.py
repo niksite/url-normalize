@@ -26,7 +26,7 @@ import url_normalize as package
         ),
         (
             "https://example.com/?q=%23test&where=code%3D123",
-            "https://example.com/?q=%23test&where=code=123",
+            "https://example.com/?q=%23test&where=code%3D123",
         ),
     ],
 )
@@ -124,8 +124,27 @@ def test_url_humanize_decodes_safe_query_parts_independently() -> None:
 
     assert (
         package.url_humanize(normalized)
-        == "https://example.com/?letter=Ç&equals=a=b&ключ=value"
+        == "https://example.com/?letter=Ç&equals=a%3Db&ключ=value"
     )
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("%C3%A9%2f%C3%B1=%C3%A9%3b%C3%B1", "é%2Fñ=é%3Bñ"),
+        ("q=%C3%A9%3d%26%23%3f%40%5b%5d", "q=é%3D%26%23%3F%40%5B%5D"),
+        ("q=%C3%A9%21%24%27%28%29%2a%2b%2c%3a", "q=é%21%24%27%28%29%2A%2B%2C%3A"),
+        ("q=%C3%A9%20test%2F&x=%E2%80%AE%2F", "q=é test%2F&x=%E2%80%AE%2F"),
+        ("q=%C3%A9%2F%FF", "q=é%2F%FF"),
+    ],
+)
+def test_url_humanize_decodes_text_around_reserved_query_escapes(query, expected):
+    """Expose readable Unicode without turning encoded punctuation into syntax."""
+    value = f"https://example.com/?{query}"
+    humanized = package.url_humanize(value)
+    assert humanized == f"https://example.com/?{expected}"
+    assert package.url_normalize(humanized) == package.url_normalize(value)
+    assert package.url_humanize(humanized) == humanized
 
 
 def test_url_humanize_keeps_malformed_percent_encoding_normalized() -> None:

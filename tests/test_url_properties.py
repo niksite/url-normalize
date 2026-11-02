@@ -14,7 +14,21 @@ PROPERTY_SETTINGS = settings(
 
 TEXT = st.text(alphabet=ascii_letters + digits + "-._~+é中\u0301", max_size=12)
 ESCAPES = st.sampled_from(
-    ["%2f", "%5C", "%25", "%26", "%3D", "%2B", "%20", "%E9", "%zz", "%%41", "%2%45"]
+    [
+        "%2f",
+        "%3b",
+        "%3F",
+        "%5C",
+        "%25",
+        "%26",
+        "%3D",
+        "%2B",
+        "%20",
+        "%E9",
+        "%zz",
+        "%%41",
+        "%2%45",
+    ]
 )
 COMPONENT_TEXT = st.lists(st.one_of(TEXT, ESCAPES), max_size=3).map("".join)
 PATH_SEGMENT = st.one_of(st.sampled_from(["", ".", ".."]), COMPONENT_TEXT)

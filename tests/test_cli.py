@@ -162,6 +162,17 @@ def test_cli_error_handling(humanize, capsys, monkeypatch):
     assert not captured.out
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_preserves_reserved_query_escapes(humanize, invoke_cli):
+    """Share query escape preservation and readable Unicode with the Python APIs."""
+    value = "https://example.com/?q=%C3%A9%2f&flag=&flag"
+    text = "é" if humanize else "%C3%A9"
+    options = ["--humanize"] if humanize else []
+    assert (
+        invoke_cli(*options, value) == f"https://example.com/?q={text}%2F&flag=&flag\n"
+    )
+
+
 def test_cli_basic_normalization() -> None:
     """Test basic URL normalization via CLI."""
     url = "http://EXAMPLE.com/./path/../other/"

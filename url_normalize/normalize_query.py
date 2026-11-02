@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .param_allowlist import get_allowed_params
-from .tools import normalize_component
+from .tools import RESERVED_CHARACTERS, normalize_component
 
 QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 
@@ -11,8 +11,8 @@ QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 def process_query_param(param: str) -> str:
     """Process a single query parameter.
 
-    This function normalizes the parameter by quoting reserved characters
-    and ensuring the parameter is in the correct format.
+    Keep existing reserved-character escapes distinct from literal punctuation.
+    Decode unreserved escapes, normalize Unicode to NFC, and use UTF-8 encoding.
 
     Params:
         param: The query parameter to process.
@@ -23,7 +23,7 @@ def process_query_param(param: str) -> str:
     """
     if not param:
         return ""
-    return normalize_component(param, QUERY_PARAM_SAFE_CHARS, preserve="+")
+    return normalize_component(param, QUERY_PARAM_SAFE_CHARS, RESERVED_CHARACTERS)
 
 
 def normalize_query(
