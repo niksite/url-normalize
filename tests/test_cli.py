@@ -92,6 +92,8 @@ def test_cli_help() -> None:
     assert "Denied names override allowed names." in help_text
     assert "--remove-tracking-params" in help_text
     assert "exact, case-sensitive tracker names" in help_text
+    assert "--sort-query" in help_text
+    assert "keeping repeated values in their original order" in help_text
     assert "charset" not in result.stdout
     assert not result.stderr
 
@@ -493,6 +495,22 @@ def test_cli_tracker_removal_combines_with_custom_rules(invoke_cli):
             value,
         ).strip()
         == "https://example.com/?id=1"
+    )
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        ((), "https://example.com/?a=caf%C3%A9&a=first&z=1"),  # codespell:ignore caf
+        (("--humanize",), "https://example.com/?a=café&a=first&z=1"),
+    ],
+)
+def test_cli_sort_query(invoke_cli, mode, expected):
+    """Sort keys stably and combine sorting with tracker removal in both modes."""
+    value = "https://example.com/?z=1&a=café&utm_source=email&a=first"
+    assert (
+        invoke_cli(*mode, "--sort-query", "--remove-tracking-params", value).strip()
+        == expected
     )
 
 

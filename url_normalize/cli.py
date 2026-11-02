@@ -73,6 +73,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--sort-query",
+        action="store_true",
+        help=(
+            "Sort query parameters by normalized key, keeping repeated values "
+            "in their original order. Disabled by default."
+        ),
+    )
+    parser.add_argument(
         "--collapse-slashes",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -120,6 +128,7 @@ def main() -> None:
             param_allowlist=allowlist,
             param_denylist=denylist,
             remove_tracking_params=args.remove_tracking_params,
+            sort_query=args.sort_query,
             collapse_slashes=args.collapse_slashes,
             remove_trailing_slash=args.remove_trailing_slash,
             keep_empty_components=args.keep_empty_components,

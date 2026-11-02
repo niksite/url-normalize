@@ -86,6 +86,7 @@ The following options are keyword-only and apply to both functions:
 | `param_allowlist` | `None` | Keep one name, a list of names, or names from a dictionary mapping domains to either form. Supplying a rule enables filtering, including an empty collection. |
 | `param_denylist` | `None` | Remove names using the same rule forms as the allowlist, without an extra flag. Denied names override allowed names; an empty collection removes nothing. |
 | `remove_tracking_params` | `False` | Remove a built-in set of exact, case-sensitive tracking parameter names in addition to any custom filtering. |
+| `sort_query` | `False` | Sort by normalized, percent-encoded query key after filtering. Preserve the order of repeated values and each field's value separator. |
 | `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
@@ -174,7 +175,7 @@ Percent-encoded reserved characters stay encoded in query keys and values, with 
 | `https://example.com/?q=%C3%A9%2F%C3%B1` | `https://example.com/?q=%C3%A9%2F%C3%B1` | `https://example.com/?q=é%2Fñ` |
 | `https://example.com/?q=%7Ehello` | `https://example.com/?q=~hello` | `https://example.com/?q=~hello` |
 
-Parameter order, duplicates, and the distinction between `flag` and `flag=` are preserved. Literal `+`, encoded `%2B`, and `%20` remain distinct in normalized output. Unicode still uses NFC normalization and UTF-8 encoding; these guarantees do not imply byte-for-byte preservation for signed URLs. The CLI uses the same rules in both modes.
+Parameter order is preserved by default. Duplicates and the distinction between `flag` and `flag=` are preserved with either query-sorting setting. Literal `+`, encoded `%2B`, and `%20` remain distinct in normalized output. Unicode still uses NFC normalization and UTF-8 encoding; these guarantees do not imply byte-for-byte preservation for signed URLs. The CLI uses the same rules in both modes.
 
 ### Query parameter filtering
 
@@ -245,7 +246,7 @@ print(result)
 # Output: https://google.com/search?q=hello
 ```
 
-When both rules apply, a parameter must be allowed and must not be denied. For example, `param_allowlist=["id", "tag"]` with `param_denylist="tag"` retains only `id`. Removal preserves the order, duplicates and value separators of the remaining parameters; ordinary URL normalization still applies. Removing the last parameter follows `keep_empty_components`, just like allowlist filtering. These rules also apply to `url_humanize()`.
+When both rules apply, a parameter must be allowed and must not be denied. For example, `param_allowlist=["id", "tag"]` with `param_denylist="tag"` retains only `id`. Removal preserves the order, duplicates and value separators of the remaining parameters; ordinary URL normalization and any requested query sorting still apply. Removing the last parameter follows `keep_empty_components`, just like allowlist filtering. These rules also apply to `url_humanize()`.
 
 ### Tracking parameter removal
 
@@ -282,7 +283,26 @@ The preset removes these exact names, based on provider documentation:
 
 Matching uses normalized query keys: `%75tm_source` matches `utm_source`. Names remain case-sensitive, so `UTM_SOURCE` is retained. There are no prefix or wildcard rules: `utm_custom` and `gclid_extra` remain. Generic names such as `ref`, `source`, `keyword`, and `session_id` are retained because they can select content or identify a session. The preset only examines query keys; it does not remove matching words from paths, parameter values or fragment routes.
 
-The preset adds removals to `param_denylist` and takes precedence over `param_allowlist`. An empty custom denylist does not disable it. To retain a preset name, leave this option off and supply your own `param_denylist`. Retained parameters keep their order, duplicates and value separators, and an emptied query follows `keep_empty_components`.
+The preset adds removals to `param_denylist` and takes precedence over `param_allowlist`. An empty custom denylist does not disable it. To retain a preset name, leave this option off and supply your own `param_denylist`. Retained parameters keep their order unless `sort_query=True` is requested. Duplicates and value separators survive either setting, and an emptied query follows `keep_empty_components`.
+
+### Query sorting
+
+Use `sort_query=True` in either Python API, or `--sort-query` in the CLI, when your application treats the order of different query keys as irrelevant. This can produce common cache or deduplication keys. Sorting is disabled by default because some applications depend on query order.
+
+```python
+from url_normalize import url_normalize
+
+url = "https://example.com/search?tag=red&page=2&tag=blue"
+print(url_normalize(url))
+# Output: https://example.com/search?tag=red&page=2&tag=blue
+
+print(url_normalize(url, sort_query=True))
+# Output: https://example.com/search?page=2&tag=red&tag=blue
+```
+
+Sorting runs after normalization and filtering. It compares the exact normalized, percent-encoded keys in ascending, case-sensitive order. An empty key sorts first; percent escapes sort before letters; uppercase ASCII letters sort before lowercase ones. For example, `https://example.com/?z=1&é=2&a=3` becomes `https://example.com/?%C3%A9=2&a=3&z=1`. `url_humanize()` displays the same order as `https://example.com/?é=2&a=3&z=1`.
+
+Equal normalized keys retain their original order, including when normalization makes `%61` and `a` equal. Values are never used as a sorting key. Thus `tag=red&tag=blue` remains distinct from `tag=blue&tag=red`. Sorting preserves duplicates, each occurrence of `flag` versus `flag=`, and the usual escape distinctions such as `+`, `%2B`, and `%20`. It applies only to query fields; paths and fragment routes follow their existing policies. Allowlist, denylist and tracker removal can all be combined with sorting, and empty queries still follow `keep_empty_components`.
 
 ### Default domain and scheme
 
@@ -382,6 +402,10 @@ url-normalize --param-denylist utm_source,ref "example.com/?id=123&utm_source=ne
 # Remove the built-in tracker names while retaining other parameters.
 url-normalize --remove-tracking-params "https://example.com/product?id=123&ttclid=abc&srsltid=xyz"
 # Output: https://example.com/product?id=123
+
+# Sort query keys while preserving the order of repeated values.
+url-normalize --sort-query "https://example.com/search?tag=red&page=2&tag=blue"
+# Output: https://example.com/search?page=2&tag=red&tag=blue
 
 # Supply a domain and scheme for an absolute path.
 url-normalize -d example.com -s http "/images/logo.png"

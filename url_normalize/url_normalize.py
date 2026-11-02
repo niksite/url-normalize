@@ -30,6 +30,7 @@ def url_normalize(  # noqa: PLR0913
     param_allowlist: dict | list | str | None = None,
     param_denylist: dict | list | str | None = None,
     remove_tracking_params: bool = False,
+    sort_query: bool = False,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -68,6 +69,9 @@ def url_normalize(  # noqa: PLR0913
             Remove the built-in set of exact, case-sensitive tracker names
             in addition to custom filtering (False by default). Does not enable
             the built-in domain allowlist; removal overrides allowed names.
+        sort_query : bool : optional
+            Sort by normalized, percent-encoded query key after filtering,
+            retaining equal-key order and value separators (False by default).
         collapse_slashes : bool : optional
             Collapse literal path slashes after resolving dot segments
             (True by default); set False to preserve repeated slashes
@@ -107,6 +111,7 @@ def url_normalize(  # noqa: PLR0913
             param_allowlist=param_allowlist,
             param_denylist=param_denylist,
             remove_tracking_params=remove_tracking_params,
+            sort_query=sort_query,
         ),
         query_present=keep_empty_components and url_elements.query_present,
         fragment=normalize_fragment(url_elements.fragment),

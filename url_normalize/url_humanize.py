@@ -182,6 +182,7 @@ def url_humanize(  # noqa: PLR0913
     param_allowlist: dict | list | str | None = None,
     param_denylist: dict | list | str | None = None,
     remove_tracking_params: bool = False,
+    sort_query: bool = False,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -208,6 +209,9 @@ def url_humanize(  # noqa: PLR0913
     Set remove_tracking_params=True to also remove the built-in set of exact,
     case-sensitive tracker names, including allowed ones. Disabled by default;
     it does not enable the built-in domain allowlist.
+    Set sort_query=True to sort by normalized, percent-encoded keys after
+    filtering, preserving equal-key order and value separators. Disabled by
+    default; displayed names retain the same order as normalized names.
     """
     normalized = url_normalize(
         url,
@@ -217,6 +221,7 @@ def url_humanize(  # noqa: PLR0913
         param_allowlist=param_allowlist,
         param_denylist=param_denylist,
         remove_tracking_params=remove_tracking_params,
+        sort_query=sort_query,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
         keep_empty_components=keep_empty_components,
@@ -226,6 +231,7 @@ def url_humanize(  # noqa: PLR0913
 
     normalize_candidate = partial(
         url_normalize,
+        sort_query=sort_query,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
         keep_empty_components=keep_empty_components,

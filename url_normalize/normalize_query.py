@@ -36,8 +36,9 @@ def normalize_query(  # noqa: PLR0913
     param_allowlist: list | dict | str | None = None,
     param_denylist: list | dict | str | None = None,
     remove_tracking_params: bool = False,
+    sort_query: bool = False,
 ) -> str:
-    """Normalize query while preserving parameter order.
+    """Normalize query, optionally sorting by key with stable duplicate order.
 
     Params:
         query: URL query string (e.g. 'param1=val1&param2')
@@ -51,9 +52,11 @@ def normalize_query(  # noqa: PLR0913
             Applied without filter_params; denied names override allowed names.
         remove_tracking_params: Remove the built-in set of exact tracker names
             in addition to custom filtering (False by default).
+        sort_query: Sort by normalized, percent-encoded key after filtering,
+            retaining equal-key order and value separators (False by default).
 
     Returns:
-        Normalized query string with original parameter order
+        Normalized query string with original order unless sorting is requested
 
     """
     if not query:
@@ -85,4 +88,6 @@ def normalize_query(  # noqa: PLR0913
         value = process_query_param(value)
         processed.append(f"{key}{separator}{value}")
 
+    if sort_query:
+        processed.sort(key=lambda param: param.partition("=")[0])
     return "&".join(processed)
