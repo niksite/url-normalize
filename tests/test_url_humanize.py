@@ -77,6 +77,55 @@ def test_url_humanize_only_rechecks_changed_query_values():
     assert normalize.call_count == expected_normalizations
 
 
+@pytest.mark.parametrize("param_count", [2, 100])
+def test_url_humanize_checks_readable_query_changes_together(param_count):
+    """Bound whole-URL work as the number of decodable keys and values grows."""
+    value = "https://example.com/search?" + "&".join(
+        f"%C3%A9{i}=%E4%B8%AD" for i in range(param_count)
+    )
+    expected = "https://example.com/search?" + "&".join(
+        f"é{i}=中" for i in range(param_count)
+    )
+    max_normalizations = 2  # Initial normalization plus one combined round trip.
+    with patch(
+        "url_normalize.url_humanize.url_normalize", wraps=package.url_normalize
+    ) as normalize:
+        assert package.url_humanize(value) == expected
+
+    assert normalize.call_count <= max_normalizations
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("bad=%2541&ok=%C3%A9&ok=%E4%B8%AD", "bad=%2541&ok=é&ok=中"),
+        ("%2541=%C3%A9&%E4%B8%AD=%2542", "%2541=é&中=%2542"),
+    ],
+)
+def test_url_humanize_failed_combined_query_keeps_independent_decoding(query, expected):
+    """A rejected percent escape must not block other readable keys or values."""
+    value = f"https://example.com/search?{query}"
+    humanized = package.url_humanize(value)
+    assert humanized == f"https://example.com/search?{expected}"
+    assert package.url_normalize(humanized) == value
+
+
+def test_url_humanize_combined_query_preserves_selected_policies():
+    """Keep duplicate order, flags, reserved escapes and path/fragment policies."""
+    value = "../a//b?tag=%C3%A9%2F&drop=1&tag=%E4%B8%AD&flag=&flag#"
+    expected = "../a//b?tag=é%2F&tag=中&flag=&flag#"
+    assert (
+        package.url_humanize(
+            value,
+            collapse_slashes=False,
+            keep_empty_components=True,
+            filter_params=True,
+            param_allowlist=["tag", "flag"],
+        )
+        == expected
+    )
+
+
 @pytest.mark.parametrize(
     "value",
     [

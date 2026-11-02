@@ -45,6 +45,7 @@ Query keys and values now retain escapes for all reserved characters. For exampl
 
 ### Fixed
 
+- Validate readable query changes together in `url_humanize()`, avoiding repeated whole-URL normalization for each decoded key and value when the combined candidate round-trips. Keep independent decoding as a fallback when it does not, preserving existing output.
 - Normalize ASCII port numbers using string operations, avoiding integer-conversion errors on heavily padded numbers and long digit strings.
 - Resolve dot segments against empty path segments correctly, including for WebSocket URLs. Keep path references from being reinterpreted as hostnames when dot removal exposes leading `//`.
 - Keep explicit relative references stable across repeated normalization and humanization, including references with Unicode, empty components and query filtering.

@@ -134,6 +134,21 @@ def _humanize_query(
     url: URL, normalized: str, *, normalize: Callable[[str], str | None]
 ) -> URL:
     parts = url.query.split("&")
+    candidate_parts = []
+    for param in parts:
+        key, separator, value = param.partition("=")
+        candidate_parts.append(
+            _format_query_param(
+                _humanize_query_text(key), separator, _humanize_query_text(value)
+            )
+        )
+    candidate = _replace_if_round_trips(
+        url, normalized, normalize=normalize, query="&".join(candidate_parts)
+    )
+    if candidate is not url or candidate_parts == parts:
+        return candidate
+
+    # One rejected decoding must not block other readable keys or values.
     for index, param in enumerate(parts):
         key, separator, value = param.partition("=")
 
