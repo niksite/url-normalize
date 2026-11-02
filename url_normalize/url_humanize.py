@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 from urllib.parse import unquote
 
 import idna
@@ -171,6 +171,42 @@ def _humanize_query(
         )
 
     return url
+
+
+@overload
+def url_humanize(
+    url: str,
+    *,
+    default_scheme: str = DEFAULT_SCHEME,
+    default_domain: str | None = None,
+    filter_params: bool = False,
+    param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
+    sort_query: bool = False,
+    collapse_slashes: bool = True,
+    remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
+    strip_fragment: bool = False,
+) -> str: ...
+
+
+@overload
+def url_humanize(
+    url: None,
+    *,
+    default_scheme: str = DEFAULT_SCHEME,
+    default_domain: str | None = None,
+    filter_params: bool = False,
+    param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
+    sort_query: bool = False,
+    collapse_slashes: bool = True,
+    remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
+    strip_fragment: bool = False,
+) -> None: ...
 
 
 def url_humanize(  # noqa: PLR0913

@@ -76,6 +76,18 @@ Normalization applies consistent spelling rules; it does not establish whether t
 
 Both functions accept a URL as `str` or `None` and return `str` or `None`. An empty string and `None` are returned unchanged. Malformed input can raise `ValueError`, including `UnicodeError` for invalid hostnames.
 
+Return types follow the input type: a `str` input gives a `str` result, `None` gives `None`, and a value typed as `str | None` gives `str | None`. Type checkers can therefore use the string result directly:
+
+```python
+from url_normalize import url_normalize
+
+result: str = url_normalize("HTTP://Example.COM:80/a/../b")
+print(result.startswith("http://"))
+# Output: True
+```
+
+The same contract applies to `url_humanize()` and every keyword option. An empty string result is still a string, including when `strip_fragment=True` removes a fragment-only reference.
+
 The following options are keyword-only and apply to both functions:
 
 | Option | Default | Purpose |
@@ -482,7 +494,7 @@ uv run --locked --extra dev pre-commit run --all-files
 
 The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.15 on Linux, macOS, and Windows. Please include regression tests with bug fixes.
 
-Type checking uses ty for the package, targeting the minimum Python version from `requires-python` and all platforms. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
+Type checking uses ty for the package and the public API consumer examples in `tests/typing`, targeting the minimum Python version from `requires-python` and all platforms. Those examples use `typing.assert_type` to check string, `None`, optional and narrowed inputs through the package exports; they are static checks, separate from pytest. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
 Alongside exact-output tests, Hypothesis generates 200 HTTP(S) URL and option combinations per property to check normalization idempotence, humanization round trips, and empty-component policy. Another 200 explicit relative references check stable output, slash options, and the absence of invented schemes or authorities. Generation is deterministic for a given Python version, Hypothesis version, and test definition. Add any minimized failures as explicit regression tests.
 

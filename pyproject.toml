@@ -61,7 +61,7 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.ty.src]
-include = ["url_normalize"]
+include = ["url_normalize", "tests/typing"]
 
 [tool.ty.environment]
 python-platform = "all"

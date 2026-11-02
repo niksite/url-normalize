@@ -8,6 +8,8 @@ https://opensource.org/licenses/MIT
 
 from __future__ import annotations
 
+from typing import overload
+
 from .generic_url_cleanup import generic_url_cleanup
 from .normalize_fragment import normalize_fragment
 from .normalize_host import normalize_host
@@ -19,6 +21,42 @@ from .normalize_userinfo import normalize_userinfo
 from .provide_url_domain import provide_url_domain
 from .provide_url_scheme import provide_url_scheme
 from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
+
+
+@overload
+def url_normalize(
+    url: str,
+    *,
+    default_scheme: str = DEFAULT_SCHEME,
+    default_domain: str | None = None,
+    filter_params: bool = False,
+    param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
+    sort_query: bool = False,
+    collapse_slashes: bool = True,
+    remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
+    strip_fragment: bool = False,
+) -> str: ...
+
+
+@overload
+def url_normalize(
+    url: None,
+    *,
+    default_scheme: str = DEFAULT_SCHEME,
+    default_domain: str | None = None,
+    filter_params: bool = False,
+    param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
+    sort_query: bool = False,
+    collapse_slashes: bool = True,
+    remove_trailing_slash: bool = False,
+    keep_empty_components: bool = False,
+    strip_fragment: bool = False,
+) -> None: ...
 
 
 def url_normalize(  # noqa: PLR0913
