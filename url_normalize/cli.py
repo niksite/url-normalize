@@ -103,6 +103,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--strip-fragment",
+        action="store_true",
+        help=(
+            "Remove the entire fragment and its # delimiter, even with "
+            "--keep-empty-components. Disabled by default."
+        ),
+    )
+    parser.add_argument(
         "-H",
         "--humanize",
         action="store_true",
@@ -132,6 +140,7 @@ def main() -> None:
             collapse_slashes=args.collapse_slashes,
             remove_trailing_slash=args.remove_trailing_slash,
             keep_empty_components=args.keep_empty_components,
+            strip_fragment=args.strip_fragment,
         )
     except Exception as e:  # noqa: BLE001
         print(f"Error normalizing URL: {e}", file=sys.stderr)  # noqa: T201

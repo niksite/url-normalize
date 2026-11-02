@@ -94,6 +94,8 @@ def test_cli_help() -> None:
     assert "exact, case-sensitive tracker names" in help_text
     assert "--sort-query" in help_text
     assert "keeping repeated values in their original order" in help_text
+    assert "--strip-fragment" in help_text
+    assert "Remove the entire fragment and its # delimiter" in help_text
     assert "charset" not in result.stdout
     assert not result.stderr
 
@@ -510,6 +512,26 @@ def test_cli_sort_query(invoke_cli, mode, expected):
     value = "https://example.com/?z=1&a=café&utm_source=email&a=first"
     assert (
         invoke_cli(*mode, "--sort-query", "--remove-tracking-params", value).strip()
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        ((), "https://example.com/caf%C3%A9?"),  # codespell:ignore caf
+        (("--humanize",), "https://example.com/café?"),
+    ],
+)
+def test_cli_strip_fragment(invoke_cli, mode, expected):
+    """Remove the fragment while keeping the requested empty query in both modes."""
+    assert (
+        invoke_cli(
+            *mode,
+            "--strip-fragment",
+            "--keep-empty-components",
+            "https://example.com/café?#/route?x=1",
+        ).strip()
         == expected
     )
 

@@ -34,6 +34,7 @@ def url_normalize(  # noqa: PLR0913
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
+    strip_fragment: bool = False,
 ) -> str | None:
     """URI normalization routine.
 
@@ -81,6 +82,9 @@ def url_normalize(  # noqa: PLR0913
         keep_empty_components : bool : optional
             Preserve query and fragment delimiters when their content is empty,
             including a query emptied by parameter filtering (False by default)
+        strip_fragment : bool : optional
+            Remove the entire fragment and its delimiter (False by default),
+            overriding keep_empty_components for the fragment only
 
     Returns:
         str | None : a normalized url
@@ -114,8 +118,12 @@ def url_normalize(  # noqa: PLR0913
             sort_query=sort_query,
         ),
         query_present=keep_empty_components and url_elements.query_present,
-        fragment=normalize_fragment(url_elements.fragment),
-        fragment_present=keep_empty_components and url_elements.fragment_present,
+        fragment="" if strip_fragment else normalize_fragment(url_elements.fragment),
+        fragment_present=(
+            not strip_fragment
+            and keep_empty_components
+            and url_elements.fragment_present
+        ),
     )
     url_elements = url_elements._replace(
         port=normalize_port(url_elements.port, url_elements.scheme),

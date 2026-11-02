@@ -186,6 +186,7 @@ def url_humanize(  # noqa: PLR0913
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
+    strip_fragment: bool = False,
 ) -> str | None:
     """Return a human-readable URL representation when it is safe.
 
@@ -212,6 +213,9 @@ def url_humanize(  # noqa: PLR0913
     Set sort_query=True to sort by normalized, percent-encoded keys after
     filtering, preserving equal-key order and value separators. Disabled by
     default; displayed names retain the same order as normalized names.
+    Set strip_fragment=True to remove the entire fragment and its delimiter
+    before display decoding. Disabled by default; overrides keep_empty_components
+    for the fragment only.
     """
     normalized = url_normalize(
         url,
@@ -225,6 +229,7 @@ def url_humanize(  # noqa: PLR0913
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
         keep_empty_components=keep_empty_components,
+        strip_fragment=strip_fragment,
     )
     if not normalized:
         return normalized

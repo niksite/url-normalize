@@ -62,7 +62,7 @@ url-normalize "HTTP://Example.COM:80/a/../b"
 | Preserve fragment routes | `https://example.com/#!/users/42` | `https://example.com/#!/users/42` |
 | Preserve text-highlight syntax | `https://example.com/#:~:text=hello%20world` | `https://example.com/#:~:text=hello%20world` |
 
-In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized, including hashbang routes (`#!/route`) and text directives (`#:~:text=hello`).
+In query parameters, `+`, `%2B`, and `%20` remain distinct. Parameter filtering is disabled by default. Fragments are preserved and normalized by default, including hashbang routes (`#!/route`) and text directives (`#:~:text=hello`). Use `strip_fragment=True` to remove the entire fragment explicitly.
 
 Fragments keep literal RFC 3986 fragment punctuation and existing ASCII escapes, with uppercase escape hex. This deliberately includes escaped letters, hyphens and tildes: fragment syntax can be interpreted before percent-decoding. For example, `#:%7E:text=hello` stays encoded instead of becoming an active text directive. Unicode text uses UTF-8 and NFC normalization as usual. Hashbang fragments are no longer converted into `_escaped_fragment_` query parameters.
 
@@ -90,6 +90,7 @@ The following options are keyword-only and apply to both functions:
 | `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
+| `strip_fragment` | `False` | Remove the entire fragment and its `#` delimiter, overriding `keep_empty_components` for the fragment only. |
 
 Unicode URL characters always use UTF-8 percent encoding.
 
@@ -162,6 +163,30 @@ Path operations run in order: resolve dot segments, collapse slash runs unless d
 Collapsing retains a single trailing slash. Enable `remove_trailing_slash` to remove it as well; `/a//b///` then becomes `/a/b`. With `collapse_slashes=False`, trailing-slash removal preserves internal slash runs, producing `/a//b`. The root remains `/`, including when the input path consists entirely of slashes.
 
 These path operations apply to HTTP, HTTPS, WS, WSS, FTP, file URLs and path references. Document-relative paths resolve internal dots while retaining leading `../` segments that need a base URL. Other schemes keep their existing path handling. When collapsing is disabled, a root-relative path that would start with `//` retains a `/.` prefix to avoid being interpreted as a hostname; for example, `/a/..//b` becomes `/.//b`.
+
+### Fragment removal
+
+Set `strip_fragment=True` in either Python API, or use `--strip-fragment` in the CLI, to build URLs without document positions. For example, a crawler can use the same fetch key for links to different sections of one article. Fragments are handled separately from retrieval under [RFC 3986 section 3.5](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.5).
+
+```python
+from url_normalize import url_normalize
+
+url = "https://example.com/article?id=1#intro"
+print(url_normalize(url))
+# Output: https://example.com/article?id=1#intro
+
+print(url_normalize(url, strip_fragment=True))
+# Output: https://example.com/article?id=1
+
+print(url_normalize("https://example.com/article?id=1#details", strip_fragment=True))
+# Output: https://example.com/article?id=1
+```
+
+Removal is disabled by default. Enabling it removes anchors, fragment routes such as `#!/cart`, and text highlights such as `#:~:text=hello`. Keep the default when those destinations matter to your application. The option removes the whole fragment; it does not move fragment content into the query.
+
+Percent-encoded hashes remain part of their original components: `https://example.com/a%23b?x=%23keep#section` becomes `https://example.com/a%23b?x=%23keep`. Existing query parameters, including `_escaped_fragment_`, follow the ordinary query rules. Path cleanup, filtering and sorting remain independently configurable.
+
+`strip_fragment=True` removes even an empty `#` when `keep_empty_components=True`. Empty query preservation still applies: with both options, `https://example.com/page?#section` becomes `https://example.com/page?`. A fragment-only reference such as `#section` becomes an empty reference (`""`); `?#section` becomes `"?"` when empty components are kept, or `""` otherwise. Relative paths keep their existing relative form.
 
 ### Query escapes
 
@@ -426,6 +451,10 @@ url-normalize --no-collapse-slashes --remove-trailing-slash "https://example.com
 # Retain explicitly empty query and fragment components.
 url-normalize --keep-empty-components "https://example.com/?#"
 # Output: https://example.com/?#
+
+# Remove an anchor, route or text highlight from the URL.
+url-normalize --strip-fragment "https://example.com/article?id=1#intro"
+# Output: https://example.com/article?id=1
 
 # Display a readable URL.
 url-normalize -H "https://xn--bcher-kva.de/r%C3%A9sum%C3%A9"
