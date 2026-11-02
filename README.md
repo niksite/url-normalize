@@ -85,6 +85,7 @@ The following options are keyword-only and apply to both functions:
 | `filter_params` | `False` | Enable built-in domain filtering when no custom allowlist is supplied. |
 | `param_allowlist` | `None` | Keep one name, a list of names, or names from a dictionary mapping domains to either form. Supplying a rule enables filtering, including an empty collection. |
 | `param_denylist` | `None` | Remove names using the same rule forms as the allowlist, without an extra flag. Denied names override allowed names; an empty collection removes nothing. |
+| `remove_tracking_params` | `False` | Remove a built-in set of exact, case-sensitive tracking parameter names in addition to any custom filtering. |
 | `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
@@ -246,6 +247,43 @@ print(result)
 
 When both rules apply, a parameter must be allowed and must not be denied. For example, `param_allowlist=["id", "tag"]` with `param_denylist="tag"` retains only `id`. Removal preserves the order, duplicates and value separators of the remaining parameters; ordinary URL normalization still applies. Removing the last parameter follows `keep_empty_components`, just like allowlist filtering. These rules also apply to `url_humanize()`.
 
+### Tracking parameter removal
+
+Set `remove_tracking_params=True` to remove known attribution parameters on any domain while retaining other query names. This works in both Python APIs and does not enable the built-in domain allowlist. It is disabled by default because removing attribution changes campaign measurement.
+
+```python
+from url_normalize import url_normalize
+
+url = "https://example.com/product?id=123&ttclid=abc&srsltid=xyz"
+print(url_normalize(url))
+# Output: https://example.com/product?id=123&ttclid=abc&srsltid=xyz
+
+print(url_normalize(url, remove_tracking_params=True))
+# Output: https://example.com/product?id=123
+
+print(
+    url_normalize(
+        "https://example.com/search?ref=main&source=books&utm_source=email",
+        remove_tracking_params=True,
+    )
+)
+# Output: https://example.com/search?ref=main&source=books
+```
+
+The preset removes these exact names, based on provider documentation:
+
+| Family | Parameter names | Sources |
+| --- | --- | --- |
+| UTM | `utm_id`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_source_platform`, `utm_term`, `utm_content`, `utm_creative_format`, `utm_marketing_tactic`, `utm_referrer` | [Google Analytics](https://support.google.com/analytics/answer/10917952), [Analytics schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema), [Yandex](https://yandex.com/support/metrica/en/general/source-tags) |
+| Google attribution | `gclid`, `dclid`, `gbraid`, `wbraid`, `gad_source`, `gad_campaignid`, `srsltid` | [Analytics identifiers](https://support.google.com/analytics/answer/16479993?hl=en), [Google Ads](https://support.google.com/google-ads/answer/10417364?hl=en), [Merchant Center](https://support.google.com/merchants/answer/15191080) |
+| Other click identifiers | `fbclid`, `msclkid`, `ttclid`, `twclid`, `yclid` | [Meta](https://github.com/facebook/capi-param-builder/blob/main/client_js/README.md), [Microsoft](https://learn.microsoft.com/en-us/advertising/guides/uet-conversion-api-integration), [TikTok](https://ads.tiktok.com/help/article/tiktok-click-id?lang=en), [X](https://business.x.com/en/help/campaign-measurement-and-analytics/conversion-tracking-for-websites), [Yandex](https://yandex.com/support/metrica/en/general/source-tags) |
+| Mailchimp | `mc_cid`, `mc_eid` | [Mailchimp](https://mailchimp.com/developer/marketing/concepts/e-commerce/) |
+| Matomo / Piwik | `mtm_campaign`, `mtm_keyword`, `mtm_source`, `mtm_medium`, `mtm_content`, `mtm_cid`, `mtm_group`, `mtm_placement`, `mtm_kwd`, `matomo_campaign`, `pk_campaign`, `piwik_campaign`, `pk_kwd`, `piwik_kwd`, `pk_keyword`, `matomo_kwd` | [Campaign parameters](https://matomo.org/faq/reports/advanced-how-to-manually-build-campaign-tracking-urls/), [Default parameters](https://matomo.org/faq/how-to/faq_120/), [Aliases](https://plugins.matomo.org/MarketingCampaignsReporting) |
+
+Matching uses normalized query keys: `%75tm_source` matches `utm_source`. Names remain case-sensitive, so `UTM_SOURCE` is retained. There are no prefix or wildcard rules: `utm_custom` and `gclid_extra` remain. Generic names such as `ref`, `source`, `keyword`, and `session_id` are retained because they can select content or identify a session. The preset only examines query keys; it does not remove matching words from paths, parameter values or fragment routes.
+
+The preset adds removals to `param_denylist` and takes precedence over `param_allowlist`. An empty custom denylist does not disable it. To retain a preset name, leave this option off and supply your own `param_denylist`. Retained parameters keep their order, duplicates and value separators, and an emptied query follows `keep_empty_components`.
+
 ### Default domain and scheme
 
 Use `default_domain` for paths starting with a single `/`. URLs starting with `//` already specify their host. This option does not resolve relative paths such as `../images/logo.png` against a page URL.
@@ -340,6 +378,10 @@ url-normalize -p page,id "example.com/?page=1&id=123&ref=test"
 # Remove selected parameters while retaining all other names.
 url-normalize --param-denylist utm_source,ref "example.com/?id=123&utm_source=newsletter&ref=email"
 # Output: https://example.com/?id=123
+
+# Remove the built-in tracker names while retaining other parameters.
+url-normalize --remove-tracking-params "https://example.com/product?id=123&ttclid=abc&srsltid=xyz"
+# Output: https://example.com/product?id=123
 
 # Supply a domain and scheme for an absolute path.
 url-normalize -d example.com -s http "/images/logo.png"

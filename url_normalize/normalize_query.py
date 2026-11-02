@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ._tracking import TRACKING_PARAMS
 from .param_allowlist import get_allowed_params
 from .param_filter import get_params
 from .tools import RESERVED_CHARACTERS, normalize_component
@@ -27,13 +28,14 @@ def process_query_param(param: str) -> str:
     return normalize_component(param, QUERY_PARAM_SAFE_CHARS, RESERVED_CHARACTERS)
 
 
-def normalize_query(
+def normalize_query(  # noqa: PLR0913
     query: str,
     *,  # Force keyword-only arguments
     host: str | None = None,
     filter_params: bool = False,
     param_allowlist: list | dict | str | None = None,
     param_denylist: list | dict | str | None = None,
+    remove_tracking_params: bool = False,
 ) -> str:
     """Normalize query while preserving parameter order.
 
@@ -47,6 +49,8 @@ def normalize_query(
             including an empty collection, regardless of filter_params.
         param_denylist: Optional name, list of names or domain map to remove.
             Applied without filter_params; denied names override allowed names.
+        remove_tracking_params: Remove the built-in set of exact tracker names
+            in addition to custom filtering (False by default).
 
     Returns:
         Normalized query string with original parameter order
@@ -66,6 +70,8 @@ def normalize_query(
     denied_params = {
         process_query_param(param) for param in get_params(host, param_denylist)
     }
+    if remove_tracking_params:
+        denied_params.update(TRACKING_PARAMS)
     processed = []
     for param in query.split("&"):
         if not param:

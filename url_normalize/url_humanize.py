@@ -181,6 +181,7 @@ def url_humanize(  # noqa: PLR0913
     filter_params: bool = False,
     param_allowlist: dict | list | str | None = None,
     param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -204,6 +205,9 @@ def url_humanize(  # noqa: PLR0913
     to select the built-in domain rules.
     The param_denylist option accepts the same rule forms and removes matching
     names without filter_params; denied names override allowed names.
+    Set remove_tracking_params=True to also remove the built-in set of exact,
+    case-sensitive tracker names, including allowed ones. Disabled by default;
+    it does not enable the built-in domain allowlist.
     """
     normalized = url_normalize(
         url,
@@ -212,6 +216,7 @@ def url_humanize(  # noqa: PLR0913
         filter_params=filter_params,
         param_allowlist=param_allowlist,
         param_denylist=param_denylist,
+        remove_tracking_params=remove_tracking_params,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
         keep_empty_components=keep_empty_components,

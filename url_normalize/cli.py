@@ -65,6 +65,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--remove-tracking-params",
+        action="store_true",
+        help=(
+            "Remove the built-in set of exact, case-sensitive tracker names "
+            "in addition to custom filtering. Disabled by default."
+        ),
+    )
+    parser.add_argument(
         "--collapse-slashes",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -111,6 +119,7 @@ def main() -> None:
             filter_params=args.filter_params,
             param_allowlist=allowlist,
             param_denylist=denylist,
+            remove_tracking_params=args.remove_tracking_params,
             collapse_slashes=args.collapse_slashes,
             remove_trailing_slash=args.remove_trailing_slash,
             keep_empty_components=args.keep_empty_components,

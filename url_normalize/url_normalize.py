@@ -29,6 +29,7 @@ def url_normalize(  # noqa: PLR0913
     filter_params: bool = False,
     param_allowlist: dict | list | str | None = None,
     param_denylist: dict | list | str | None = None,
+    remove_tracking_params: bool = False,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -63,6 +64,10 @@ def url_normalize(  # noqa: PLR0913
             Remove one name, a list of names, or names from a domain map.
             Applied without filter_params; denied names override allowed names.
             An empty collection removes nothing.
+        remove_tracking_params : bool : optional
+            Remove the built-in set of exact, case-sensitive tracker names
+            in addition to custom filtering (False by default). Does not enable
+            the built-in domain allowlist; removal overrides allowed names.
         collapse_slashes : bool : optional
             Collapse literal path slashes after resolving dot segments
             (True by default); set False to preserve repeated slashes
@@ -101,6 +106,7 @@ def url_normalize(  # noqa: PLR0913
             filter_params=filter_params,
             param_allowlist=param_allowlist,
             param_denylist=param_denylist,
+            remove_tracking_params=remove_tracking_params,
         ),
         query_present=keep_empty_components and url_elements.query_present,
         fragment=normalize_fragment(url_elements.fragment),

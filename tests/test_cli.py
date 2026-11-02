@@ -90,6 +90,8 @@ def test_cli_help() -> None:
     assert "An empty string selects the empty name." in help_text
     assert "--param-denylist" in help_text
     assert "Denied names override allowed names." in help_text
+    assert "--remove-tracking-params" in help_text
+    assert "exact, case-sensitive tracker names" in help_text
     assert "charset" not in result.stdout
     assert not result.stderr
 
@@ -459,6 +461,38 @@ def test_cli_denylist_can_remove_empty_name(invoke_cli):
     assert (
         invoke_cli("--param-denylist", "", "https://example.com/?=value&keep=1").strip()
         == "https://example.com/?keep=1"
+    )
+
+
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [
+        ((), "https://example.com/?keep=caf%C3%A9&ref=main"),  # codespell:ignore caf
+        (("--humanize",), "https://example.com/?keep=café&ref=main"),
+    ],
+)
+def test_cli_remove_tracking_params(invoke_cli, mode, expected):
+    """Remove the preset names without enabling the domain allowlist."""
+    value = (
+        "https://example.com/?keep=caf%C3%A9"  # codespell:ignore caf
+        "&ttclid=abc&ref=main&srsltid=xyz"
+    )
+    assert invoke_cli(*mode, "--remove-tracking-params", value).strip() == expected
+
+
+def test_cli_tracker_removal_combines_with_custom_rules(invoke_cli):
+    """Forward simultaneous preset, allowlist and denylist choices."""
+    value = "https://example.com/?id=1&utm_source=email&tag=red&drop=2"
+    assert (
+        invoke_cli(
+            "--remove-tracking-params",
+            "-p",
+            "id,tag,utm_source",
+            "--param-denylist",
+            "tag",
+            value,
+        ).strip()
+        == "https://example.com/?id=1"
     )
 
 

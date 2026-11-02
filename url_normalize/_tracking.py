@@ -1,0 +1,48 @@
+"""Exact query names for the opt-in tracking-parameter removal preset."""
+
+# Provider documentation and the full matching policy are linked in README.md.
+# Keep names explicit: generic names and broad prefixes can select URL content.
+TRACKING_PARAMS = frozenset(
+    {
+        "utm_id",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_source_platform",
+        "utm_term",
+        "utm_content",
+        "utm_creative_format",
+        "utm_marketing_tactic",
+        "utm_referrer",
+        "gclid",
+        "dclid",
+        "gbraid",
+        "wbraid",
+        "gad_source",
+        "gad_campaignid",
+        "srsltid",
+        "fbclid",
+        "msclkid",
+        "ttclid",
+        "twclid",
+        "yclid",
+        "mc_cid",
+        "mc_eid",
+        "mtm_campaign",
+        "mtm_keyword",
+        "mtm_source",
+        "mtm_medium",
+        "mtm_content",
+        "mtm_cid",
+        "mtm_group",
+        "mtm_placement",
+        "mtm_kwd",
+        "matomo_campaign",
+        "pk_campaign",
+        "piwik_campaign",
+        "pk_kwd",
+        "piwik_kwd",
+        "pk_keyword",
+        "matomo_kwd",
+    }
+)

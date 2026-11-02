@@ -35,6 +35,7 @@ Supplying any custom allowlist other than `None` now enables filtering in both A
 
 ### Added
 
+- Add opt-in `remove_tracking_params=True` to both Python APIs and `--remove-tracking-params` to the CLI. Remove 40 documented, exact, case-sensitive attribution parameter names on any domain, including `ttclid` and `srsltid`. Preserve generic names such as `ref` and `session_id`, remaining query syntax and fragment routes. Combine with custom allow/deny rules, with removal taking precedence; default behavior is unchanged.
 - Add `param_denylist` to both Python APIs and `--param-denylist` to the CLI. Remove specified query names without an extra enable flag, preserving all other parameters. Accept the same single-name, list and domain-map forms as the allowlist, with the same case-sensitive normalization. Denied names override allowed names when both rules apply; an empty denylist or an unmatched domain removes nothing.
 - Accept a single-name string in `param_allowlist`, including domain-specific rules, in both Python APIs.
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
