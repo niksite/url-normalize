@@ -114,6 +114,15 @@ def test_cli_preserves_empty_host_labels(humanize, invoke_cli):
     assert output == f"https://{host}/{path}\n"
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_compresses_ipv6_literals(humanize, invoke_cli):
+    """Print canonical IPv6 text while retaining zone case in both output modes."""
+    options = ["--humanize"] if humanize else []
+    output = invoke_cli(*options, "https://[FE80:0:0:0:0:0:0:ABCD%25EthA]:443/%C3%A9")
+    path = "é" if humanize else "%C3%A9"
+    assert output == f"https://[fe80::abcd%25EthA]/{path}\n"
+
+
 @pytest.mark.parametrize("reconfigure_attribute", ["missing", "non-callable"])
 def test_cli_replacement_streams(reconfigure_attribute, monkeypatch):
     """Support output streams without a callable reconfigure method."""

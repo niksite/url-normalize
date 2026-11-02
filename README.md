@@ -108,6 +108,18 @@ This hostname policy also applies to `default_domain` and custom `param_allowlis
 
 Preservation does not establish DNS validity. The generic registered-name syntax in [RFC 3986 section 3.2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2) is broader than DNS hostname syntax. Applications that require DNS-valid hostnames should validate them separately. Empty hosts in local file URLs and path references remain supported.
 
+### IPv6 addresses
+
+Equivalent bracketed IPv6 addresses use a consistent spelling: lowercase hexadecimal, no leading zeroes in groups, and `::` for the longest run of at least two zero groups (the first run wins a tie). These rules follow [RFC 5952 section 4](https://www.rfc-editor.org/rfc/rfc5952.html#section-4).
+
+| Input | Result |
+| --- | --- |
+| `https://[2001:0DB8:0:0:0:0:0:1]/` | `https://[2001:db8::1]/` |
+| `https://[FE80:0:0:0:0:0:0:ABCD%25EthA]/` | `https://[fe80::abcd%25EthA]/` |
+| `https://[::FFFF:C000:280]/` | `https://[::ffff:192.0.2.128]/` |
+
+Zone identifiers, including their case and percent-encoding spelling, are preserved. IPv4-mapped IPv6 addresses use `::ffff:` followed by dotted decimal; other IPv6 addresses use hexadecimal groups. IPvFuture literals retain their existing case normalization. These rules apply to both APIs, the CLI, `default_domain`, and allowlist keys. Expanded and compressed allowlist keys now match the same address; when entries conflict, the canonical key takes precedence.
+
 ### Port normalization
 
 ASCII decimal ports lose leading zeroes, and scheme defaults are removed: `http://example.com:0080/` becomes `http://example.com/`, while `https://example.com:0080/` becomes `https://example.com:80/`. An empty port and its colon are removed too. Numeric normalization uses string operations, including for heavily padded numbers.

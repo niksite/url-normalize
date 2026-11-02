@@ -87,6 +87,54 @@ def test_public_api_normalizes_long_padded_port(transform):
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
+        # Inspired by w3lib 2.5.0 TestCanonicalizeUrl.test_normalize_ipv6_host:
+        # https://github.com/scrapy/w3lib/blob/v2.5.0/tests/test_url.py
+        (
+            "http://User:PaSS@[2001:0DB8:0:0:0:0:0:1]:0081/path?b=2&a=1#end",
+            "http://User:PaSS@[2001:db8::1]:81/path?b=2&a=1#end",
+        ),
+        ("wss://[2001:0DB8:0:0:0:0:0:1]:0443/socket", "wss://[2001:db8::1]/socket"),
+        (
+            "custom://[2001:db8::1:1:1:1:1]/path",
+            "custom://[2001:db8:0:1:1:1:1:1]/path",
+        ),
+        (
+            "https://[::FFFF:C000:280]:8443/path",
+            "https://[::ffff:192.0.2.128]:8443/path",
+        ),
+    ],
+)
+def test_public_api_canonicalizes_ipv6_literals(transform, value, expected):
+    """Normalize equivalent IP spellings without changing other URL components."""
+    assert transform(value) == expected
+    assert transform(expected) == expected
+    assert url_normalize(url_humanize(value)) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_compresses_ipv6_with_zone_and_preservation_options(transform):
+    """Keep the zone identifier, Unicode and selected path/component policies."""
+    value = "https://[FE80:0:0:0:0:0:0:ABCD%25EthA]:443/a//%C3%A9?#"
+    options = {"collapse_slashes": False, "keep_empty_components": True}
+    path = "é" if transform is url_humanize else "%C3%A9"
+    expected = f"https://[fe80::abcd%25EthA]/a//{path}?#"
+    assert transform(value, **options) == expected
+    assert transform(expected, **options) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_compresses_ipv6_default_domain(transform):
+    """Apply the same address spelling to an injected default authority."""
+    assert (
+        transform("/path", default_domain="[2001:0DB8:0:0:0:0:0:1]:443")
+        == "https://[2001:db8::1]/path"
+    )
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
         ("WS://Example.COM", "ws://example.com/"),
         ("WSS://Example.COM", "wss://example.com/"),
         ("ws://example.com:080?b=2&a=1", "ws://example.com/?b=2&a=1"),

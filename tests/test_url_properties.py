@@ -55,6 +55,8 @@ def http_urls(draw):
                 "bücher..example",
                 "example.com..",
                 "[2001:DB8::1]",
+                "[2001:0DB8:0:0:0:0:0:1]",
+                "[::FFFF:C000:280]",
                 "[fe80::1%25Eth0]",
             ]
         )

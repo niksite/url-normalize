@@ -264,6 +264,39 @@ def test_custom_allowlist_normalizes_bracketed_keys(key):
     )
 
 
+@pytest.mark.parametrize("reverse", [False, True])
+def test_custom_allowlist_matches_equivalent_ipv6_spellings(reverse):
+    """Match expanded and compressed IPv6 addresses on either side of filtering."""
+    host, key = "[2001:0DB8:0:0:0:0:0:1]", "[2001:db8::1]"
+    if reverse:
+        host, key = key, host
+    allowlist = {key: ["q"]}
+    assert (
+        url_normalize(
+            f"https://{host}/?q=1&drop=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == "https://[2001:db8::1]/?q=1"
+    )
+    assert allowlist == {key: ["q"]}
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_custom_allowlist_prefers_canonical_ipv6_key(reverse):
+    """Keep the canonical rule authoritative when IPv6 spellings become aliases."""
+    entries = [("[2001:0DB8:0:0:0:0:0:1]", ["q"]), ("[2001:db8::1]", ["keep"])]
+    allowlist = dict(reversed(entries) if reverse else entries)
+    assert (
+        url_normalize(
+            "https://[2001:0DB8:0:0:0:0:0:1]/?q=1&keep=2",
+            filter_params=True,
+            param_allowlist=allowlist,
+        )
+        == "https://[2001:db8::1]/?keep=2"
+    )
+
+
 @pytest.mark.parametrize("allowed", [[], ["q"]])
 @pytest.mark.parametrize("reverse", [False, True])
 def test_custom_allowlist_canonical_key_takes_precedence(allowed, reverse):

@@ -94,7 +94,7 @@ def test_normalize_host_preserves_empty_labels_in_utf8_bytes():
         ("пример.рф", "xn--e1afmkfd.xn--p1ai"),
         ("EXAMPLE.COM", "example.com"),
         ("under_score.example", "under_score.example"),
-        ("[2001:DB8::1]", "[2001:db8::1]"),
+        ("[2001:0DB8:0:0:0:0:0:1]", "[2001:db8::1]"),
     ],
 )
 def test_normalize_host_accepts_text_and_utf8_bytes(host, expected):
@@ -105,8 +105,32 @@ def test_normalize_host_accepts_text_and_utf8_bytes(host, expected):
 
 @pytest.mark.parametrize("zone", ["%25ethA", "%ethA", "%25Interface.10", "%25ETH0"])
 def test_normalize_host_preserves_ipv6_zone_case(zone):
-    """Lowercase the IPv6 address without changing its interface identifier."""
-    host = f"[FE80::ABCD{zone}]"
+    """Compress the IPv6 address without changing its interface identifier."""
+    host = f"[FE80:0:0:0:0:0:0:ABCD{zone}]"
     expected = f"[fe80::abcd{zone}]"
     assert normalize_host(host) == expected
     assert normalize_host(host.encode("utf-8")) == expected
+
+
+@pytest.mark.parametrize(
+    ("host", "expected"),
+    [
+        ("[2001:0DB8:0000:0000:0000:0000:0000:0001]", "[2001:db8::1]"),
+        ("[2001:db8::0:1]", "[2001:db8::1]"),
+        ("[2001:db8:0:1:1:1:1:1]", "[2001:db8:0:1:1:1:1:1]"),
+        ("[2001:db8::1:1:1:1:1]", "[2001:db8:0:1:1:1:1:1]"),
+        ("[2001:0:0:1:0:0:0:1]", "[2001:0:0:1::1]"),
+        ("[2001:db8:0:0:1:0:0:1]", "[2001:db8::1:0:0:1]"),
+        ("[0:0:0:0:0:0:0:0]", "[::]"),
+        ("[0:0:0:0:0:0:0:1]", "[::1]"),
+        ("[::FFFF:C000:280]", "[::ffff:192.0.2.128]"),
+        ("[0:0:0:0:0:ffff:192.0.2.128]", "[::ffff:192.0.2.128]"),
+        ("[::ffff:0:0]", "[::ffff:0.0.0.0]"),
+        ("[2001:db8::192.0.2.128]", "[2001:db8::c000:280]"),
+        ("[v1.FE80::A]", "[v1.fe80::a]"),
+    ],
+)
+def test_normalize_host_canonicalizes_ipv6_literals(host, expected):
+    """Apply RFC 5952 compression and mapped notation, retaining IPvFuture text."""
+    assert normalize_host(host) == expected
+    assert normalize_host(expected) == expected

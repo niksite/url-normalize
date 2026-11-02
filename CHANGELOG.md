@@ -23,6 +23,8 @@ Hostname normalization now preserves leading dots, empty interior labels, repeat
 
 Nonempty parsed ports now require ASCII decimal digits. Both APIs raise `ValueError: Port must contain only ASCII digits` for alphabetic, signed, Unicode or percent-encoded port text. For example, `http://example.com:abc/` now raises instead of being preserved, and `http://example.com:８０/` raises instead of becoming `http://example.com/`. The same check applies to custom-scheme authorities and `default_domain`; colons in paths and opaque payloads are unaffected. The CLI exits with status 1 and a diagnostic on stderr. Callers processing arbitrary input should handle `ValueError`. Reprocess original URLs if prior normalization converted or removed Unicode port digits. Empty ports remain accepted and are removed. Numeric range validation is unchanged: `:65536` is still accepted.
 
+IPv6 host spellings now converge: `https://[2001:0DB8:0:0:0:0:0:1]/` becomes `https://[2001:db8::1]/`, and `https://[::FFFF:C000:280]/` becomes `https://[::ffff:192.0.2.128]/`. Zone identifiers retain their exact spelling and case. The same normalization applies to `default_domain` and allowlist keys; expanded and compressed spellings now match, and canonical keys take precedence over aliases. Re-normalize stored IPv6 URL keys and review allowlists with duplicate address spellings.
+
 ### Added
 
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
@@ -36,6 +38,7 @@ Nonempty parsed ports now require ASCII decimal digits. Both APIs raise `ValueEr
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
 - **BREAKING:** Preserve empty hostname labels instead of silently deleting them. Keep repeated trailing dots and dot-only hosts, while continuing to remove a single trailing dot from other hosts. Map Unicode IDNA separators consistently.
 - **BREAKING:** Reject nonempty ports containing characters outside ASCII decimal digits with a clear `ValueError`, consistently across both APIs and the CLI.
+- **BREAKING:** Canonicalize bracketed IPv6 hosts with zero compression and a consistent dotted-decimal suffix for IPv4-mapped addresses, while preserving zone identifiers. Apply the same spelling to default domains and query allowlist keys.
 
 ### Fixed
 
