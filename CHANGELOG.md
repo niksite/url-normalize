@@ -21,6 +21,8 @@ There is no legacy hashbang conversion flag. Applications that need the old craw
 
 Hostname normalization now preserves leading dots, empty interior labels, repeated trailing dots, and dot-only hosts. For example, `https://a..example.com/` stays unchanged instead of silently becoming `https://a.example.com/`; `https://example.com../` also stays unchanged. A single trailing dot is still removed from an otherwise nonempty host, while `https://./` retains the DNS root dot. Unicode IDNA separators are mapped to ASCII dots without merging label boundaries. The same policy applies to `default_domain` and custom allowlist keys, so `.example.com` no longer selects an entry for `example.com`. Normalization does not validate DNS hostnames. Reprocess original URLs and review allowlist keys; previously discarded dots cannot be recovered from stored normalized output.
 
+Nonempty parsed ports now require ASCII decimal digits. Both APIs raise `ValueError: Port must contain only ASCII digits` for alphabetic, signed, Unicode or percent-encoded port text. For example, `http://example.com:abc/` now raises instead of being preserved, and `http://example.com:８０/` raises instead of becoming `http://example.com/`. The same check applies to custom-scheme authorities and `default_domain`; colons in paths and opaque payloads are unaffected. The CLI exits with status 1 and a diagnostic on stderr. Callers processing arbitrary input should handle `ValueError`. Reprocess original URLs if prior normalization converted or removed Unicode port digits. Empty ports remain accepted and are removed. Numeric range validation is unchanged: `:65536` is still accepted.
+
 ### Added
 
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
@@ -33,9 +35,11 @@ Hostname normalization now preserves leading dots, empty interior labels, repeat
 - **BREAKING:** Preserve explicit document-relative, query-only and fragment-only references instead of inventing a scheme and authority. Resolve internal relative dots while retaining unresolved parents and honoring path cleanup options.
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.
 - **BREAKING:** Preserve empty hostname labels instead of silently deleting them. Keep repeated trailing dots and dot-only hosts, while continuing to remove a single trailing dot from other hosts. Map Unicode IDNA separators consistently.
+- **BREAKING:** Reject nonempty ports containing characters outside ASCII decimal digits with a clear `ValueError`, consistently across both APIs and the CLI.
 
 ### Fixed
 
+- Normalize ASCII port numbers using string operations, avoiding integer-conversion errors on heavily padded numbers and long digit strings.
 - Resolve dot segments against empty path segments correctly, including for WebSocket URLs. Keep path references from being reinterpreted as hostnames when dot removal exposes leading `//`.
 - Keep explicit relative references stable across repeated normalization and humanization, including references with Unicode, empty components and query filtering.
 - Support CLI output streams whose `reconfigure` attribute is not callable.

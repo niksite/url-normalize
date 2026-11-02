@@ -108,6 +108,16 @@ This hostname policy also applies to `default_domain` and custom `param_allowlis
 
 Preservation does not establish DNS validity. The generic registered-name syntax in [RFC 3986 section 3.2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2) is broader than DNS hostname syntax. Applications that require DNS-valid hostnames should validate them separately. Empty hosts in local file URLs and path references remain supported.
 
+### Port normalization
+
+ASCII decimal ports lose leading zeroes, and scheme defaults are removed: `http://example.com:0080/` becomes `http://example.com/`, while `https://example.com:0080/` becomes `https://example.com:80/`. An empty port and its colon are removed too. Numeric normalization uses string operations, including for heavily padded numbers.
+
+Nonempty parsed ports must contain only ASCII digits (`0–9`), following [RFC 3986 section 3.2.3](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.3). Other port text raises `ValueError: Port must contain only ASCII digits`. For example, `http://example.com:abc/`, `http://example.com:８０/`, `http://example.com:²/`, and `http://example.com:-1/` are rejected. Percent-encoded digits are rejected too; Unicode digits are not converted to ASCII port numbers.
+
+The check applies to ports in URL authorities, including custom schemes and `default_domain`. Colons elsewhere, such as `mailto:user:abc@example.com` and `./example.com:abc/path`, retain their existing behavior. Both Python APIs use the same rule. The CLI exits with status 1, writes a diagnostic to stderr and prints no URL when port syntax is invalid.
+
+Normalization does not check the transport's port range: `https://example.com:065536/` becomes `https://example.com:65536/`. Range validation remains the caller's responsibility.
+
 ### Path slashes and dot segments
 
 Repeated path slashes collapse by default, including trailing runs. Use `collapse_slashes=False` to preserve empty path segments when they matter to your application:

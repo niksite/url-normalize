@@ -3,7 +3,6 @@
 import subprocess
 import sys
 from io import StringIO
-from unittest.mock import patch
 
 import pytest
 
@@ -135,19 +134,23 @@ def test_cli_replacement_streams(reconfigure_attribute, monkeypatch):
     assert not stderr.getvalue()
 
 
-def test_cli_error_handling(capsys, monkeypatch):
-    """Test CLI error handling when URL normalization fails."""
-    with patch("url_normalize.cli.url_normalize") as mock_normalize:
-        mock_normalize.side_effect = Exception("Simulated error")
-        monkeypatch.setattr("sys.argv", ["url-normalize", "http://example.com"])
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_error_handling(humanize, capsys, monkeypatch):
+    """Report a real malformed port with status 1 and no partial URL output."""
+    options = ["--humanize"] if humanize else []
+    monkeypatch.setattr(
+        sys, "argv", ["url-normalize", *options, "https://example.com:²/%C3%A9"]
+    )
 
-        with pytest.raises(SystemExit) as excinfo:
-            main()
+    with pytest.raises(SystemExit) as excinfo:
+        main()
 
-        assert excinfo.value.code == 1
-        captured = capsys.readouterr()
-        assert "Error normalizing URL: Simulated error" in captured.err
-        assert not captured.out
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.err == (
+        "Error normalizing URL: Port must contain only ASCII digits\n"
+    )
+    assert not captured.out
 
 
 def test_cli_basic_normalization() -> None:

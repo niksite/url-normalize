@@ -29,12 +29,58 @@ def test_public_api_rejects_removed_charset_argument(transform):
         ("https://example.com:80/socket", "https://example.com:80/socket"),
         ("ws://example.com:443/socket", "ws://example.com:443/socket"),
         ("wss://example.com:80/socket", "wss://example.com:80/socket"),
+        ("https://example.com:065536/", "https://example.com:65536/"),
     ],
 )
 def test_public_api_normalizes_scheme_specific_ports(transform, value, expected):
     """Normalize ports without changing credentials or unrelated components."""
     assert transform(value) == expected
     assert transform(expected) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    "value",
+    [
+        "http://example.com:abc/",
+        "http://EXAMPLE.COM:\uff18\uff10/",
+        "http://[::1]:²/",
+        "https://User:PaSS@EXAMPLE.COM:٠٤٤٣/path?b=2&a=1#end",
+        "//example.com:%38%30/path",
+        "custom://example.com:-1/path",
+    ],
+)
+def test_public_api_rejects_invalid_port_syntax(transform, value):
+    """Reject malformed ports in explicit and inferred URL authorities."""
+    with pytest.raises(ValueError, match=r"^Port must contain only ASCII digits$"):
+        transform(value)
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_rejects_invalid_default_domain_port(transform):
+    """Apply the same port syntax check to an injected default authority."""
+    with pytest.raises(ValueError, match=r"^Port must contain only ASCII digits$"):
+        transform("/path", default_domain="example.com:abc")
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    "value", ["mailto:user:abc@example.com", "./example.com:abc/path"]
+)
+def test_public_api_preserves_colons_outside_authorities(transform, value):
+    """Keep opaque payloads and explicit relative paths outside port validation."""
+    assert transform(value) == value
+    assert transform(transform(value)) == value
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_normalizes_long_padded_port(transform):
+    """Remove a heavily padded default port while retaining Unicode and policies."""
+    value = "http://[::1]:" + "0" * 5000 + "80/%C3%A9?#"
+    path = "é" if transform is url_humanize else "%C3%A9"
+    expected = f"http://[::1]/{path}?#"
+    assert transform(value, keep_empty_components=True) == expected
+    assert transform(expected, keep_empty_components=True) == expected
 
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
