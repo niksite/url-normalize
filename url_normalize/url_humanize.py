@@ -180,6 +180,7 @@ def url_humanize(  # noqa: PLR0913
     default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -201,6 +202,8 @@ def url_humanize(  # noqa: PLR0913
     Supplying param_allowlist enables filtering, even for an empty collection
     or when filter_params=False. Use filter_params=True without a custom rule
     to select the built-in domain rules.
+    The param_denylist option accepts the same rule forms and removes matching
+    names without filter_params; denied names override allowed names.
     """
     normalized = url_normalize(
         url,
@@ -208,6 +211,7 @@ def url_humanize(  # noqa: PLR0913
         default_domain=default_domain,
         filter_params=filter_params,
         param_allowlist=param_allowlist,
+        param_denylist=param_denylist,
         collapse_slashes=collapse_slashes,
         remove_trailing_slash=remove_trailing_slash,
         keep_empty_components=keep_empty_components,

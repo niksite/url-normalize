@@ -88,6 +88,8 @@ def test_cli_help() -> None:
     assert "Unknown domains have an empty default allowlist." in help_text
     assert "enables filtering without -f." in help_text
     assert "An empty string selects the empty name." in help_text
+    assert "--param-denylist" in help_text
+    assert "Denied names override allowed names." in help_text
     assert "charset" not in result.stdout
     assert not result.stderr
 
@@ -432,6 +434,32 @@ def test_cli_empty_name_allowlist_enables_filtering(invoke_cli, mode):
     output = invoke_cli(*mode, "-p", "", url)
 
     assert output.strip() == expected
+
+
+@pytest.mark.parametrize("mode", [(), ("--humanize",)])
+def test_cli_denylist_enables_removal(invoke_cli, mode):
+    """Remove selected names without requiring -f or deleting unknown names."""
+    value = "https://example.com/?id=1&utm_source=x&ref=y&flag&empty="
+    assert invoke_cli(*mode, "--param-denylist", "utm_source,ref", value).strip() == (
+        "https://example.com/?id=1&flag&empty="
+    )
+
+
+def test_cli_denylist_wins_allowlist_overlap(invoke_cli):
+    """Apply removal after explicit selection through the CLI as in the API."""
+    value = "https://example.com/?id=1&tag=red&drop=2"
+    assert (
+        invoke_cli("-p", "id,tag", "--param-denylist", "tag", value).strip()
+        == "https://example.com/?id=1"
+    )
+
+
+def test_cli_denylist_can_remove_empty_name(invoke_cli):
+    """Keep an explicit empty CLI string distinct from an absent rule."""
+    assert (
+        invoke_cli("--param-denylist", "", "https://example.com/?=value&keep=1").strip()
+        == "https://example.com/?keep=1"
+    )
 
 
 def test_cli_no_url() -> None:

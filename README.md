@@ -84,6 +84,7 @@ The following options are keyword-only and apply to both functions:
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Enable built-in domain filtering when no custom allowlist is supplied. |
 | `param_allowlist` | `None` | Keep one name, a list of names, or names from a dictionary mapping domains to either form. Supplying a rule enables filtering, including an empty collection. |
+| `param_denylist` | `None` | Remove names using the same rule forms as the allowlist, without an extra flag. Denied names override allowed names; an empty collection removes nothing. |
 | `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
@@ -223,6 +224,28 @@ A string is one complete name: `"id"` means the same as `["id"]`, and `{"example
 
 Allowed names use the same normalization as query keys, including Unicode and spaces. Reserved escapes remain distinct: `param_allowlist=["a/b"]` matches `a/b=1`, while `param_allowlist=["a%2fb"]` matches `a%2Fb=1`. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
 
+To remove selected names while keeping all other parameters, supply `param_denylist`. It accepts the same single-name, list and domain-map forms and uses the same case-sensitive name matching. It does not enable the built-in allowlist. An empty denylist or a domain map without a matching rule removes nothing. Names are literal: `"utm_*"` is not a wildcard.
+
+```python
+result = url_normalize(
+    "https://example.com/products?id=123&utm_source=newsletter&variant=blue",
+    param_denylist="utm_source",
+)
+print(result)
+# Output: https://example.com/products?id=123&variant=blue
+
+# Narrow the built-in Google rule without copying its allowed names.
+result = url_normalize(
+    "https://google.com/search?q=hello&ie=UTF-8&utm_source=newsletter",
+    filter_params=True,
+    param_denylist="ie",
+)
+print(result)
+# Output: https://google.com/search?q=hello
+```
+
+When both rules apply, a parameter must be allowed and must not be denied. For example, `param_allowlist=["id", "tag"]` with `param_denylist="tag"` retains only `id`. Removal preserves the order, duplicates and value separators of the remaining parameters; ordinary URL normalization still applies. Removing the last parameter follows `keep_empty_components`, just like allowlist filtering. These rules also apply to `url_humanize()`.
+
 ### Default domain and scheme
 
 Use `default_domain` for paths starting with a single `/`. URLs starting with `//` already specify their host. This option does not resolve relative paths such as `../images/logo.png` against a page URL.
@@ -313,6 +336,10 @@ The CLI accepts one URL per invocation and prints the result to standard output.
 # Keep selected query parameters.
 url-normalize -p page,id "example.com/?page=1&id=123&ref=test"
 # Output: https://example.com/?page=1&id=123
+
+# Remove selected parameters while retaining all other names.
+url-normalize --param-denylist utm_source,ref "example.com/?id=123&utm_source=newsletter&ref=email"
+# Output: https://example.com/?id=123
 
 # Supply a domain and scheme for an absolute path.
 url-normalize -d example.com -s http "/images/logo.png"

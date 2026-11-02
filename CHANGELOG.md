@@ -35,6 +35,7 @@ Supplying any custom allowlist other than `None` now enables filtering in both A
 
 ### Added
 
+- Add `param_denylist` to both Python APIs and `--param-denylist` to the CLI. Remove specified query names without an extra enable flag, preserving all other parameters. Accept the same single-name, list and domain-map forms as the allowlist, with the same case-sensitive normalization. Denied names override allowed names when both rules apply; an empty denylist or an unmatched domain removes nothing.
 - Accept a single-name string in `param_allowlist`, including domain-specific rules, in both Python APIs.
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
 - Add `remove_trailing_slash=False` to both Python APIs and `--remove-trailing-slash` to the CLI. When enabled, it removes the entire trailing run of literal path slashes after dot resolution and optional collapsing, while keeping the root `/`. It shares the scheme scope of `collapse_slashes` and leaves encoded separators intact.

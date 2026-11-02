@@ -56,6 +56,15 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--param-denylist",
+        type=str,
+        help=(
+            "Remove these comma-separated query parameter names without -f. "
+            "Denied names override allowed names. "
+            "An empty string selects the empty name."
+        ),
+    )
+    parser.add_argument(
         "--collapse-slashes",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -89,6 +98,9 @@ def main() -> None:
     allowlist = (
         args.param_allowlist.split(",") if args.param_allowlist is not None else None
     )
+    denylist = (
+        args.param_denylist.split(",") if args.param_denylist is not None else None
+    )
     transform_url = url_humanize if args.humanize else url_normalize
 
     try:
@@ -98,6 +110,7 @@ def main() -> None:
             default_domain=args.default_domain,
             filter_params=args.filter_params,
             param_allowlist=allowlist,
+            param_denylist=denylist,
             collapse_slashes=args.collapse_slashes,
             remove_trailing_slash=args.remove_trailing_slash,
             keep_empty_components=args.keep_empty_components,

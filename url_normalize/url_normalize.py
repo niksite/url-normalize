@@ -28,6 +28,7 @@ def url_normalize(  # noqa: PLR0913
     default_domain: str | None = None,
     filter_params: bool = False,
     param_allowlist: dict | list | str | None = None,
+    param_denylist: dict | list | str | None = None,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -58,6 +59,10 @@ def url_normalize(  # noqa: PLR0913
             Override with one name, a list of names, or a domain map whose
             values are single names or lists. Any value other than None enables
             filtering, including an empty collection, regardless of filter_params.
+        param_denylist : dict | list | str | None : optional
+            Remove one name, a list of names, or names from a domain map.
+            Applied without filter_params; denied names override allowed names.
+            An empty collection removes nothing.
         collapse_slashes : bool : optional
             Collapse literal path slashes after resolving dot segments
             (True by default); set False to preserve repeated slashes
@@ -95,6 +100,7 @@ def url_normalize(  # noqa: PLR0913
             host=url_elements.host,
             filter_params=filter_params,
             param_allowlist=param_allowlist,
+            param_denylist=param_denylist,
         ),
         query_present=keep_empty_components and url_elements.query_present,
         fragment=normalize_fragment(url_elements.fragment),
