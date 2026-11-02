@@ -35,6 +35,7 @@ Supplying any custom allowlist other than `None` now enables filtering in both A
 
 ### Added
 
+- Accept reusable sequences and sets of parameter names, including tuples and frozensets, in both custom filters. Precisely type domain mappings and their values. Preserve existing string/list rules, matching, activation and query order; type checkers now reject non-string names and malformed domain values. One-shot iterators are outside the supported API.
 - Add precise return-type overloads for both Python APIs: string inputs produce `str`, `None` produces `None`, and optional inputs produce `str | None`. Typed callers can use known string results without redundant `None` checks or casts. URL output and runtime behavior are unchanged. Check public consumer examples with ty alongside the package.
 - Add opt-in `strip_fragment=True` to both Python APIs and `--strip-fragment` to the CLI. Remove the entire fragment and its delimiter, including anchors, routes and text highlights. Override empty-fragment preservation while retaining the selected empty-query policy; keep encoded hashes in other components. Fragment-only references become empty references. Fragments remain preserved by default.
 - Add opt-in `sort_query=True` to both Python APIs and `--sort-query` to the CLI. Sort retained query fields by normalized, percent-encoded key, preserving equal-key order, duplicates and each field's value separator. Compose with allowlist, denylist and tracker removal. Query order is unchanged by default; humanized output follows the normalized key order.

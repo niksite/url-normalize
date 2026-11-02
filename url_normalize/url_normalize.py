@@ -18,6 +18,7 @@ from .normalize_port import normalize_port
 from .normalize_query import normalize_query
 from .normalize_scheme import DEFAULT_SCHEME, normalize_scheme
 from .normalize_userinfo import normalize_userinfo
+from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
 from .provide_url_domain import provide_url_domain
 from .provide_url_scheme import provide_url_scheme
 from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
@@ -30,8 +31,8 @@ def url_normalize(
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
@@ -48,8 +49,8 @@ def url_normalize(
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
@@ -65,8 +66,8 @@ def url_normalize(  # noqa: PLR0913
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
@@ -96,12 +97,13 @@ def url_normalize(  # noqa: PLR0913
         filter_params : bool : optional
             Enable built-in allowlist filtering when no custom rule is supplied
             (False by default)
-        param_allowlist : dict | list | str | None : optional
-            Override with one name, a list of names, or a domain map whose
-            values are single names or lists. Any value other than None enables
-            filtering, including an empty collection, regardless of filter_params.
-        param_denylist : dict | list | str | None : optional
-            Remove one name, a list of names, or names from a domain map.
+        param_allowlist : optional
+            Override with one name, a sequence or set of names, or a domain map whose
+            values are single names, sequences or sets. Any value other than None
+            enables filtering, including an empty collection, regardless of
+            filter_params.
+        param_denylist : optional
+            Remove one name, a sequence or set of names, or names from a domain map.
             Applied without filter_params; denied names override allowed names.
             An empty collection removes nothing.
         remove_tracking_params : bool : optional

@@ -95,7 +95,7 @@ The following options are keyword-only and apply to both functions:
 | `default_scheme` | `"https"` | Scheme to add to bare hosts and network-path references such as `//example.com/`. Accepts uppercase, surrounding whitespace and one optional trailing colon. |
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Enable built-in domain filtering when no custom allowlist is supplied. |
-| `param_allowlist` | `None` | Keep one name, a list of names, or names from a dictionary mapping domains to either form. Supplying a rule enables filtering, including an empty collection. |
+| `param_allowlist` | `None` | Keep one name, a sequence or set of names, or names from a domain mapping. Supplying a rule enables filtering, including an empty collection. |
 | `param_denylist` | `None` | Remove names using the same rule forms as the allowlist, without an extra flag. Denied names override allowed names; an empty collection removes nothing. |
 | `remove_tracking_params` | `False` | Remove a built-in set of exact, case-sensitive tracking parameter names in addition to any custom filtering. |
 | `sort_query` | `False` | Sort by normalized, percent-encoded query key after filtering. Preserve the order of repeated values and each field's value separator. |
@@ -259,11 +259,25 @@ print(result)
 # Output: https://example.com/?r%C3%A9sum%C3%A9=1
 ```
 
-A string is one complete name: `"id"` means the same as `["id"]`, and `{"example.com": "id"}` means the same as `{"example.com": ["id"]}`. Strings are not split on commas; use `["page", "id"]` for two names, while `"page,id"` selects the literal name `page,id`. An empty string selects the empty parameter name (`?=value`); an empty list allows no names. Domain dictionaries may mix strings and lists. The CLI retains its comma-separated `--param-allowlist` format, enables filtering without `-f`, and treats `-p ""` as selecting the empty parameter name.
+A string is one complete name: `"id"` means the same as `["id"]`, and `{"example.com": "id"}` means the same as `{"example.com": ["id"]}`. Strings are not split on commas; use `["page", "id"]` for two names, while `"page,id"` selects the literal name `page,id`. An empty string selects the empty parameter name (`?=value`); an empty list allows no names. Domain mappings may mix strings, sequences and sets. The CLI retains its comma-separated `--param-allowlist` format, enables filtering without `-f`, and treats `-p ""` as selecting the empty parameter name.
+
+Both filters accept lists, tuples, sets and frozensets of strings, or mappings from domain strings to those forms (including read-only mappings). Rules are reusable and are not mutated. Their order does not change query order. Generators and other one-shot iterators are not supported; materialize them first, for example with `tuple(names)`.
+
+```python
+allowed = ("id", "page")
+blocked = frozenset({"ref"})
+url = "https://example.com/?page=2&id=123&ref=email"
+
+print(url_normalize(url, param_allowlist=allowed))
+# Output: https://example.com/?page=2&id=123
+
+print(url_normalize(url, param_denylist=blocked))
+# Output: https://example.com/?page=2&id=123
+```
 
 Allowed names use the same normalization as query keys, including Unicode and spaces. Reserved escapes remain distinct: `param_allowlist=["a/b"]` matches `a/b=1`, while `param_allowlist=["a%2fb"]` matches `a%2Fb=1`. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
 
-To remove selected names while keeping all other parameters, supply `param_denylist`. It accepts the same single-name, list and domain-map forms and uses the same case-sensitive name matching. It does not enable the built-in allowlist. An empty denylist or a domain map without a matching rule removes nothing. Names are literal: `"utm_*"` is not a wildcard.
+To remove selected names while keeping all other parameters, supply `param_denylist`. It accepts the same single-name, sequence, set and domain-map forms and uses the same case-sensitive name matching. It does not enable the built-in allowlist. An empty denylist or a domain map without a matching rule removes nothing. Names are literal: `"utm_*"` is not a wildcard.
 
 ```python
 result = url_normalize(

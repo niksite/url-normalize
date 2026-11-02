@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from .param_filter import get_params
+from .param_filter import _ParamRules, get_params
 
 DEFAULT_ALLOWLIST = {
     "google.com": ["q", "ie"],
@@ -15,7 +15,7 @@ DEFAULT_ALLOWLIST = {
 
 def get_allowed_params(
     host: str | None = None,
-    allowlist: dict | list | str | None = None,
+    allowlist: _ParamRules | None = None,
 ) -> set[str]:
     """Get allowed parameters for a given domain.
 
@@ -23,9 +23,9 @@ def get_allowed_params(
         host: Domain name to check (e.g. 'google.com')
         allowlist: Optional override for default allowlist
             A string is one complete parameter name, including commas or an
-            empty name. A list provides multiple parameter names.
-            If provided as a dictionary, it should map domain names to
-            single names or lists of allowed parameters.
+            empty name. A sequence or set provides multiple parameter names.
+            If provided as a mapping, it should map domain names to
+            single names, sequences or sets of allowed parameters.
             If None, the default allowlist will be used.
 
     Returns:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ._tracking import TRACKING_PARAMS
 from .param_allowlist import get_allowed_params
-from .param_filter import get_params
+from .param_filter import _ParamRules, get_params
 from .tools import RESERVED_CHARACTERS, normalize_component
 
 QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
@@ -33,8 +33,8 @@ def normalize_query(  # noqa: PLR0913
     *,  # Force keyword-only arguments
     host: str | None = None,
     filter_params: bool = False,
-    param_allowlist: list | dict | str | None = None,
-    param_denylist: list | dict | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
 ) -> str:
@@ -45,10 +45,10 @@ def normalize_query(  # noqa: PLR0913
         host: Domain for allowlist checks
         filter_params: Enable built-in allowlist filtering when no custom rule
             is supplied
-        param_allowlist: Optional name, list of names or domain map overriding
+        param_allowlist: Optional name, sequence, set or domain map overriding
             the default allowlist. Any value other than None enables filtering,
             including an empty collection, regardless of filter_params.
-        param_denylist: Optional name, list of names or domain map to remove.
+        param_denylist: Optional name, sequence or set of names or domain map to remove.
             Applied without filter_params; denied names override allowed names.
         remove_tracking_params: Remove the built-in set of exact tracker names
             in addition to custom filtering (False by default).

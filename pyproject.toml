@@ -63,6 +63,9 @@ indent-style = "space"
 [tool.ty.src]
 include = ["url_normalize", "tests/typing"]
 
+[tool.ty.rules]
+unused-ignore-comment = "error"
+
 [tool.ty.environment]
 python-platform = "all"
 

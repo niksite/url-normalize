@@ -12,6 +12,7 @@ import idna
 
 from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
 from .normalize_scheme import DEFAULT_SCHEME
+from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
 from .tools import RESERVED_CHARACTERS, URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
 
@@ -180,8 +181,8 @@ def url_humanize(
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
@@ -198,8 +199,8 @@ def url_humanize(
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
@@ -215,8 +216,8 @@ def url_humanize(  # noqa: PLR0913
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | str | None = None,
-    param_denylist: dict | list | str | None = None,
+    param_allowlist: _ParamRules | None = None,
+    param_denylist: _ParamRules | None = None,
     remove_tracking_params: bool = False,
     sort_query: bool = False,
     collapse_slashes: bool = True,
