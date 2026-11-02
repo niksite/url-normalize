@@ -48,7 +48,7 @@ def test_normalize_query_preserves_form_plus_meaning(query, expected):
 def test_normalize_query_preserves_empty_value_separator(query, filter_params):
     """Keep explicit empty values distinct from parameters without a value."""
     actual = normalize_query(
-        query, filter_params=filter_params, param_allowlist=["flag", ""]
+        query, param_allowlist=["flag", ""] if filter_params else None
     )
     assert actual == query
     if query == "flag=":

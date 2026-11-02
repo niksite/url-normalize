@@ -57,6 +57,83 @@ def test_custom_list_allowlist():
     )
 
 
+@pytest.mark.parametrize("api", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    "allowlist", ["id", {"example.com": "id"}, {"EXAMPLE.COM.": "id"}]
+)
+def test_single_name_allowlist_keeps_the_whole_name(api, allowlist):
+    """Do not split a multi-character allowed name into individual characters."""
+    # Single-name support also exists in w3lib 2.5.0's test_url_query_cleaner:
+    # https://github.com/scrapy/w3lib/blob/v2.5.0/tests/test_url.py
+    assert (
+        api(
+            "https://example.com/?id=123&i=456&d=789&id=987&drop=1",
+            param_allowlist=allowlist,
+        )
+        == "https://example.com/?id=123&id=987"
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "query", "expected"),
+    [
+        ("", "=empty&drop=1", "=empty"),
+        ("page,id", "page,id=literal&page=1&id=2", "page,id=literal"),
+        ("café", "caf%C3%A9=1&drop=2", "caf%C3%A9=1"),  # codespell:ignore caf
+        ("a%2fb", "a%2Fb=1&a/b=2", "a%2Fb=1"),
+    ],
+)
+def test_single_name_allowlist_preserves_name_boundaries(name, query, expected):
+    """Use existing key normalization without inventing comma or empty-name rules."""
+    assert (
+        url_normalize(f"https://example.com/?{query}", param_allowlist=name)
+        == f"https://example.com/?{expected}"
+    )
+
+
+@pytest.mark.parametrize("api", [url_normalize, url_humanize])
+def test_single_name_allowlist_on_relative_reference(api):
+    """Apply a global name without requiring an authority or losing path policies."""
+    assert (
+        api(
+            "../a//b?id=1&drop=2#",
+            param_allowlist="id",
+            collapse_slashes=False,
+            keep_empty_components=True,
+        )
+        == "../a//b?id=1#"
+    )
+
+
+@pytest.mark.parametrize("api", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("options", "expected_query"),
+    [
+        ({"param_allowlist": ["id"]}, "?id=1"),
+        ({"param_allowlist": {"google.com": ["id"]}}, "?id=1"),
+        ({"param_allowlist": ["id"], "filter_params": False}, "?id=1"),
+        ({"param_allowlist": []}, ""),
+        ({"param_allowlist": {}}, ""),
+        ({"param_allowlist": {"other.example": ["id"]}}, ""),
+        ({"param_allowlist": None}, "?id=1&q=hello&drop=2"),
+        ({"param_allowlist": None, "filter_params": True}, "?q=hello"),
+    ],
+)
+def test_explicit_allowlist_enables_filtering(api, options, expected_query):
+    """Apply supplied rules, including empty ones, instead of built-in defaults."""
+    value = "https://google.com/?id=1&q=hello&drop=2"
+    assert api(value, **options) == f"https://google.com/{expected_query}"
+
+
+def test_domain_allowlist_can_mix_single_names_and_lists():
+    """Accept both rule forms without changing a caller-owned dictionary."""
+    rules = {"one.example": "id", "two.example": ["q"]}
+    assert get_allowed_params("one.example", rules) == {"id"}
+    assert get_allowed_params("two.example", rules) == {"q"}
+    assert get_allowed_params("other.example", rules) == set()
+    assert rules == {"one.example": "id", "two.example": ["q"]}
+
+
 @pytest.mark.parametrize("separator", [".", "\u3002", "\uff0e", "\uff61"])
 def test_custom_allowlist_matches_trailing_idna_separator(separator):
     """Match custom domain keys with any IDNA trailing label separator."""

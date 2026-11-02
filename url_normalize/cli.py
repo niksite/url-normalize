@@ -36,7 +36,7 @@ def main() -> None:
         "--filter-params",
         action="store_true",
         help=(
-            "Keep only allowlisted query parameters. "
+            "Filter query parameters using built-in rules unless overridden by -p. "
             "Unknown domains have an empty default allowlist."
         ),
     )
@@ -50,7 +50,10 @@ def main() -> None:
         "-p",
         "--param-allowlist",
         type=str,
-        help="Comma-separated list of query parameters to allow (e.g., 'q,id').",
+        help=(
+            "Keep these comma-separated query parameter names (e.g., 'q,id'); "
+            "enables filtering without -f. An empty string selects the empty name."
+        ),
     )
     parser.add_argument(
         "--collapse-slashes",
@@ -83,7 +86,9 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    allowlist = args.param_allowlist.split(",") if args.param_allowlist else None
+    allowlist = (
+        args.param_allowlist.split(",") if args.param_allowlist is not None else None
+    )
     transform_url = url_humanize if args.humanize else url_normalize
 
     try:

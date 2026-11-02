@@ -27,7 +27,7 @@ def url_normalize(  # noqa: PLR0913
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | None = None,
+    param_allowlist: dict | list | str | None = None,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -52,9 +52,12 @@ def url_normalize(  # noqa: PLR0913
         default_domain : str | None : optional
             Default domain to use for absolute paths (starting with '/')
         filter_params : bool : optional
-            Whether to filter non-allowlisted parameters (False by default)
-        param_allowlist : dict | list | None : optional
-            Override for the parameter allowlist
+            Enable built-in allowlist filtering when no custom rule is supplied
+            (False by default)
+        param_allowlist : dict | list | str | None : optional
+            Override with one name, a list of names, or a domain map whose
+            values are single names or lists. Any value other than None enables
+            filtering, including an empty collection, regardless of filter_params.
         collapse_slashes : bool : optional
             Collapse literal path slashes after resolving dot segments
             (True by default); set False to preserve repeated slashes

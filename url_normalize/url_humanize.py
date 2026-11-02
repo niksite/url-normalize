@@ -179,7 +179,7 @@ def url_humanize(  # noqa: PLR0913
     default_scheme: str = DEFAULT_SCHEME,
     default_domain: str | None = None,
     filter_params: bool = False,
-    param_allowlist: dict | list | None = None,
+    param_allowlist: dict | list | str | None = None,
     collapse_slashes: bool = True,
     remove_trailing_slash: bool = False,
     keep_empty_components: bool = False,
@@ -198,6 +198,9 @@ def url_humanize(  # noqa: PLR0913
     and empty-component policies are also used for round-trip checks.
     The default_scheme option uses the same cleanup and validation as
     url_normalize(), including errors for invalid options on nonempty input.
+    Supplying param_allowlist enables filtering, even for an empty collection
+    or when filter_params=False. Use filter_params=True without a custom rule
+    to select the built-in domain rules.
     """
     normalized = url_normalize(
         url,

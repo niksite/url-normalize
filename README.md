@@ -82,8 +82,8 @@ The following options are keyword-only and apply to both functions:
 | --- | --- | --- |
 | `default_scheme` | `"https"` | Scheme to add to bare hosts and network-path references such as `//example.com/`. Accepts uppercase, surrounding whitespace and one optional trailing colon. |
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
-| `filter_params` | `False` | Retain only allowlisted query parameters. |
-| `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
+| `filter_params` | `False` | Enable built-in domain filtering when no custom allowlist is supplied. |
+| `param_allowlist` | `None` | Keep one name, a list of names, or names from a dictionary mapping domains to either form. Supplying a rule enables filtering, including an empty collection. |
 | `collapse_slashes` | `True` | Collapse repeated literal path slashes after resolving dot segments, for the schemes described below. Set `False` to preserve repeated slashes. |
 | `remove_trailing_slash` | `False` | Remove the entire trailing run of literal path slashes, keeping `/` for the root. Uses the same scheme scope as `collapse_slashes`. |
 | `keep_empty_components` | `False` | Keep query (`?`) and fragment (`#`) delimiters when their content is empty, including a query emptied by parameter filtering. |
@@ -176,7 +176,9 @@ Parameter order, duplicates, and the distinction between `flag` and `flag=` are 
 
 ### Query parameter filtering
 
-With `filter_params=True`, only explicitly allowed parameters remain. Built-in rules cover Google, Bing, Baidu, and YouTube; see the [domain rules](url_normalize/param_allowlist.py) for their parameter names.
+Supplying `param_allowlist` keeps only the allowed parameters; no extra flag is needed. Use `filter_params=True` without a custom allowlist to select the built-in domain rules, which cover Google, Bing, Baidu, and YouTube; see the [domain rules](url_normalize/param_allowlist.py) for their parameter names.
+
+`None` means no custom rule. An empty list or dictionary enables filtering and removes all query parameters. An explicit rule takes precedence even if `filter_params=False`; to turn filtering off, omit the rule or pass `param_allowlist=None` with `filter_params=False`.
 
 Filtering that removes every parameter also removes the query delimiter by default. With `keep_empty_components=True`, the delimiter remains even when filtering empties the query. For example, filtering `https://example.com/?drop=1#` with no matching allowed name produces `https://example.com/` by default or `https://example.com/?#` with this option.
 
@@ -192,10 +194,17 @@ result = url_normalize(
 print(result)
 # Output: https://www.google.com/search?q=test
 
+# Keep one parameter name on any domain.
+result = url_normalize(
+    "example.com/?id=123&i=456&d=789",
+    param_allowlist="id",
+)
+print(result)
+# Output: https://example.com/?id=123
+
 # Apply a list of allowed names to any domain.
 result = url_normalize(
     "example.com/?page=1&id=123&ref=test",
-    filter_params=True,
     param_allowlist=["page", "id"],
 )
 print(result)
@@ -204,12 +213,13 @@ print(result)
 # Use domain-specific rules, including Unicode parameter names.
 result = url_normalize(
     "https://example.com/?r%C3%A9sum%C3%A9=1&drop=2",
-    filter_params=True,
-    param_allowlist={"example.com": ["résumé"]},
+    param_allowlist={"example.com": "résumé"},
 )
 print(result)
 # Output: https://example.com/?r%C3%A9sum%C3%A9=1
 ```
+
+A string is one complete name: `"id"` means the same as `["id"]`, and `{"example.com": "id"}` means the same as `{"example.com": ["id"]}`. Strings are not split on commas; use `["page", "id"]` for two names, while `"page,id"` selects the literal name `page,id`. An empty string selects the empty parameter name (`?=value`); an empty list allows no names. Domain dictionaries may mix strings and lists. The CLI retains its comma-separated `--param-allowlist` format, enables filtering without `-f`, and treats `-p ""` as selecting the empty parameter name.
 
 Allowed names use the same normalization as query keys, including Unicode and spaces. Reserved escapes remain distinct: `param_allowlist=["a/b"]` matches `a/b=1`, while `param_allowlist=["a%2fb"]` matches `a%2Fb=1`. Domain rules match normalized hostnames and ignore a leading `www.` and the port. Rules do not automatically apply to other subdomains.
 
@@ -301,7 +311,7 @@ The CLI accepts one URL per invocation and prints the result to standard output.
 
 ```sh
 # Keep selected query parameters.
-url-normalize -f -p page,id "example.com/?page=1&id=123&ref=test"
+url-normalize -p page,id "example.com/?page=1&id=123&ref=test"
 # Output: https://example.com/?page=1&id=123
 
 # Supply a domain and scheme for an absolute path.

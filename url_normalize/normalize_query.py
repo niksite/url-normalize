@@ -31,15 +31,18 @@ def normalize_query(
     *,  # Force keyword-only arguments
     host: str | None = None,
     filter_params: bool = False,
-    param_allowlist: list | dict | None = None,
+    param_allowlist: list | dict | str | None = None,
 ) -> str:
     """Normalize query while preserving parameter order.
 
     Params:
         query: URL query string (e.g. 'param1=val1&param2')
         host: Domain for allowlist checks
-        filter_params: If True, removes non-allowlisted parameters
-        param_allowlist: Optional override for default allowlist
+        filter_params: Enable built-in allowlist filtering when no custom rule
+            is supplied
+        param_allowlist: Optional name, list of names or domain map overriding
+            the default allowlist. Any value other than None enables filtering,
+            including an empty collection, regardless of filter_params.
 
     Returns:
         Normalized query string with original parameter order
@@ -53,7 +56,7 @@ def normalize_query(
             process_query_param(param)
             for param in get_allowed_params(host, param_allowlist)
         }
-        if filter_params
+        if filter_params or param_allowlist is not None
         else None
     )
     processed = []

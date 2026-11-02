@@ -22,26 +22,32 @@ def _normalize_domain(host: str) -> str:
     return normalize_host(host).removeprefix("www.")
 
 
+def _parameter_names(names: str | list[str]) -> set[str]:
+    """Treat a string as one parameter name rather than a sequence of characters."""
+    return {names} if isinstance(names, str) else set(names)
+
+
 def get_allowed_params(
     host: str | None = None,
-    allowlist: dict | list | None = None,
+    allowlist: dict | list | str | None = None,
 ) -> set[str]:
     """Get allowed parameters for a given domain.
 
     Params:
         host: Domain name to check (e.g. 'google.com')
         allowlist: Optional override for default allowlist
-            If provided as a list, it will be used as is.
+            A string is one complete parameter name, including commas or an
+            empty name. A list provides multiple parameter names.
             If provided as a dictionary, it should map domain names to
-            lists of allowed parameters.
+            single names or lists of allowed parameters.
             If None, the default allowlist will be used.
 
     Returns:
         Set of allowed parameter names for the domain
 
     """
-    if isinstance(allowlist, list):
-        return set(allowlist)
+    if isinstance(allowlist, str | list):
+        return _parameter_names(allowlist)
 
     if not host:
         return set()
@@ -54,12 +60,12 @@ def get_allowed_params(
 
     # Preserve exact canonical-key precedence, including an empty allowlist.
     if domain in allowlist:
-        return set(allowlist[domain])
+        return _parameter_names(allowlist[domain])
     for key, params in allowlist.items():
         try:
             key_domain = _normalize_domain(key)
         except UnicodeError:
             continue
         if key_domain == domain:
-            return set(params)
+            return _parameter_names(params)
     return set()

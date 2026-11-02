@@ -84,8 +84,10 @@ def test_cli_help() -> None:
     result = run_cli_subprocess("--help")
     assert result.returncode == 0
     help_text = " ".join(result.stdout.split())
-    assert "Keep only allowlisted query parameters." in help_text
+    assert "Filter query parameters using built-in rules" in help_text
     assert "Unknown domains have an empty default allowlist." in help_text
+    assert "enables filtering without -f." in help_text
+    assert "An empty string selects the empty name." in help_text
     assert "charset" not in result.stdout
     assert not result.stderr
 
@@ -393,7 +395,7 @@ def test_cli_param_allowlist(invoke_cli):
     """Test parameter allowlist via CLI."""
     url = "http://example.com?remove=me&keep=this&remove_too=true"
     expected = "http://example.com/?keep=this"
-    # Use filter_params to enable filtering, then allowlist to keep specific ones
+    # Keep accepting the explicit filtering flag alongside a custom rule.
 
     output = invoke_cli("-f", "-p", "keep", url)
 
@@ -405,18 +407,29 @@ def test_cli_param_allowlist_multiple(invoke_cli):
     url = "http://example.com?remove=me&keep=this&keep_too=yes&remove_too=true"
     expected = "http://example.com/?keep=this&keep_too=yes"
 
-    output = invoke_cli("-f", "-p", "keep,keep_too", url)
+    output = invoke_cli("-p", "keep,keep_too", url)
 
     assert output.strip() == expected
 
 
-def test_cli_param_allowlist_without_filtering(invoke_cli):
-    """Test allowlist has no effect if filtering is not enabled."""
+@pytest.mark.parametrize("mode", [(), ("--humanize",)])
+def test_cli_param_allowlist_enables_filtering(invoke_cli, mode):
+    """Apply a custom rule without requiring the separate filtering flag."""
     url = "http://example.com?remove=me&keep=this&remove_too=true"
-    expected = "http://example.com/?remove=me&keep=this&remove_too=true"
-    # Not using -f, so allowlist should be ignored
+    expected = "http://example.com/?keep=this"
 
-    output = invoke_cli("-p", "keep", url)
+    output = invoke_cli(*mode, "--param-allowlist", "keep", url)
+
+    assert output.strip() == expected
+
+
+@pytest.mark.parametrize("mode", [(), ("--humanize",)])
+def test_cli_empty_name_allowlist_enables_filtering(invoke_cli, mode):
+    """Distinguish an explicit empty parameter name from an omitted option."""
+    url = "https://google.com/?=value&q=hello&drop=1"
+    expected = "https://google.com/?=value"
+
+    output = invoke_cli(*mode, "-p", "", url)
 
     assert output.strip() == expected
 

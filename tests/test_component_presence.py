@@ -127,7 +127,6 @@ def test_query_filtering_uses_empty_component_policy(
     """Keep or drop an emptied query according to the selected delimiter policy."""
     base = "https://example.com/"
     options = {
-        "filter_params": True,
         "param_allowlist": ["keep"],
         "keep_empty_components": keep_empty_components,
     }

@@ -29,8 +29,13 @@ Query keys and values now retain escapes for all reserved characters. For exampl
 
 The `default_scheme` option now accepts case differences, surrounding whitespace and one optional trailing colon, so `default_scheme=" HTTPS: "` behaves like `"https"`. Malformed strings such as `"https://"` raise `ValueError` instead of producing malformed URLs; non-string values raise `TypeError`. Validation applies to nonempty inputs even if the default is unused. Empty input and `None` keep their pass-through behavior. Check configuration and CLI `--default-scheme` values before upgrading; use `https` or `https:` rather than `https://`.
 
+Allowlist rules now accept a single parameter name as a string, globally or per domain. For example, `param_allowlist="id"` and `param_allowlist={"example.com": "id"}` both select the complete name `id`. Previously a string-valued domain rule silently selected the individual characters `i` and `d`; callers intending that behavior must use `["i", "d"]` explicitly. API strings containing commas remain one name; use a list for multiple names. The CLI keeps its comma-separated format.
+
+Supplying any custom allowlist other than `None` now enables filtering in both APIs and the CLI, even if `filter_params=False` or `-f` is omitted. An empty list or dictionary removes all query parameters; an empty string selects the empty parameter name, including with CLI `-p ""`. To disable filtering, omit the custom rule or pass `param_allowlist=None` with `filter_params=False`. Use `filter_params=True` or CLI `-f` without a custom rule to select the built-in domain rules.
+
 ### Added
 
+- Accept a single-name string in `param_allowlist`, including domain-specific rules, in both Python APIs.
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
 - Add `remove_trailing_slash=False` to both Python APIs and `--remove-trailing-slash` to the CLI. When enabled, it removes the entire trailing run of literal path slashes after dot resolution and optional collapsing, while keeping the root `/`. It shares the scheme scope of `collapse_slashes` and leaves encoded separators intact.
 - Add the keyword-only `collapse_slashes=True` option to `url_normalize()` and `url_humanize()`, plus `--collapse-slashes` and `--no-collapse-slashes` in the CLI. Collapsing is enabled by default for HTTP(S), WS(S), FTP, file URLs and path references; set the option to `False` to preserve repeated slashes. Encoded separators remain intact.
@@ -45,6 +50,8 @@ The `default_scheme` option now accepts case differences, surrounding whitespace
 - **BREAKING:** Canonicalize bracketed IPv6 hosts with zero compression and a consistent dotted-decimal suffix for IPv4-mapped addresses, while preserving zone identifiers. Apply the same spelling to default domains and query allowlist keys.
 - **BREAKING:** Preserve reserved-character escapes in query keys and values, including during humanization and allowlist matching. Keep literal punctuation distinct from its escaped form.
 - **BREAKING:** Validate `default_scheme` for nonempty inputs in both APIs and the CLI. Accept surrounding whitespace and one optional colon, normalize case, and report malformed values with clear type/value errors.
+- **BREAKING:** Interpret string-valued domain allowlists as one complete name instead of a set of characters, preventing accidental removal of the intended parameter and retention of unrelated one-letter names.
+- **BREAKING:** Enable query filtering whenever an explicit allowlist is supplied, including empty collections and CLI rules provided without `-f`. Keep `filter_params` for enabling built-in rules when no custom rule is provided.
 
 ### Fixed
 
