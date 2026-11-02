@@ -80,7 +80,7 @@ The following options are keyword-only and apply to both functions:
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `default_scheme` | `"https"` | Scheme to add to bare hosts and network-path references such as `//example.com/`. |
+| `default_scheme` | `"https"` | Scheme to add to bare hosts and network-path references such as `//example.com/`. Accepts uppercase, surrounding whitespace and one optional trailing colon. |
 | `default_domain` | `None` | Domain to add to an absolute path such as `/images/logo.png`. |
 | `filter_params` | `False` | Retain only allowlisted query parameters. |
 | `param_allowlist` | `None` | Override built-in rules with a list of names or a dictionary mapping domains to lists. Requires `filter_params=True`. |
@@ -226,6 +226,15 @@ result = url_normalize(
 print(result)
 # Output: http://example.com/images/logo.png
 ```
+
+`default_scheme` accepts a scheme name such as `https`, `HTTP`, or `git+ssh`, optionally followed by one colon. Surrounding whitespace is removed and the name is lowercased. Names follow [RFC 3986 section 3.1](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.1).
+
+```python
+print(url_normalize("example.com/path", default_scheme=" HTTPS: "))
+# Output: https://example.com/path
+```
+
+Malformed values such as `https://`, `https::`, or an empty scheme raise `ValueError`; non-string values raise `TypeError`. For nonempty URL input this check also applies when the default is unused, including URLs that already have a scheme and relative references. Empty input and `None` retain their existing pass-through behavior. The CLI applies the same rules and reports configuration errors with exit status 1.
 
 ### Relative references
 

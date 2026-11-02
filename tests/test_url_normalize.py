@@ -16,6 +16,52 @@ def test_public_api_rejects_removed_charset_argument(transform):
 
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
 @pytest.mark.parametrize(
+    "value", ["example.com/path", "https://example.com/path", "../path"]
+)
+def test_public_api_rejects_invalid_default_scheme_even_when_unused(transform, value):
+    """Report a configuration error consistently for any nonempty URL."""
+    with pytest.raises(ValueError, match=r"^default_scheme must be a scheme name"):
+        transform(value, default_scheme="https://")
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    ("value", "options", "expected"),
+    [
+        (
+            "/path?flag=#",
+            {
+                "default_scheme": " HTTP: ",
+                "default_domain": "example.com:80",
+                "keep_empty_components": True,
+            },
+            "http://example.com/path?flag=#",
+        ),
+        (
+            "example.com/path",
+            {"default_scheme": "git+ssh.v1:"},
+            "git+ssh.v1://example.com/path",
+        ),
+    ],
+)
+def test_public_api_accepts_normalized_default_scheme(
+    transform, value, options, expected
+):
+    """Use the normalized default with injected authorities and custom schemes."""
+    result = transform(value, **options)
+    assert result == expected
+    assert transform(result, **options) == result
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize("value", ["", None])
+def test_public_api_empty_input_skips_default_scheme_validation(transform, value):
+    """Preserve the existing empty-input pass-through without consulting options."""
+    assert transform(value, default_scheme="https://") == value
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
     ("value", "expected"),
     [
         (

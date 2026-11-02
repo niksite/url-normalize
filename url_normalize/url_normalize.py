@@ -47,7 +47,8 @@ def url_normalize(  # noqa: PLR0913
 
     Params:
         url : str | None : URL to normalize
-        default_scheme : str : scheme for bare hosts and network-path references
+        default_scheme : str : scheme for bare hosts and network-path references;
+            accepts surrounding whitespace and an optional trailing colon
         default_domain : str | None : optional
             Default domain to use for absolute paths (starting with '/')
         filter_params : bool : optional
@@ -66,6 +67,12 @@ def url_normalize(  # noqa: PLR0913
 
     Returns:
         str | None : a normalized url
+
+    Raises:
+        TypeError: If default_scheme is not a string for a nonempty input.
+        ValueError: If default_scheme has invalid syntax for a nonempty input,
+            even if the URL already has a scheme. URL parsing can also raise
+            ValueError for malformed input.
 
     """
     if url is not None:

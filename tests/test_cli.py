@@ -321,6 +321,34 @@ def test_cli_default_scheme(invoke_cli):
     assert output.strip() == expected
 
 
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_reports_invalid_default_scheme(humanize, capsys, monkeypatch):
+    """Fail a malformed scheme option with a clear diagnostic and no URL output."""
+    options = ["--humanize"] if humanize else []
+    monkeypatch.setattr(
+        sys, "argv", ["url-normalize", *options, "-s", "https://", "example.com/path"]
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        main()
+    assert excinfo.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.err == (
+        "Error normalizing URL: default_scheme must be a scheme name "
+        "such as 'https' or 'https:'\n"
+    )
+    assert not captured.out
+
+
+@pytest.mark.parametrize("humanize", [False, True])
+def test_cli_accepts_default_scheme_with_colon(humanize, invoke_cli):
+    """Share default-scheme cleanup with both API modes."""
+    options = ["--humanize"] if humanize else []
+    assert (
+        invoke_cli(*options, "-s", " HTTP: ", "example.com:80/path")
+        == "http://example.com/path\n"
+    )
+
+
 def test_cli_custom_default_scheme(invoke_cli):
     """Test custom default scheme via CLI."""
     url = "//example.com"

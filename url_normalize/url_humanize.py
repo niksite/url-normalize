@@ -196,6 +196,8 @@ def url_humanize(  # noqa: PLR0913
     enabled. Path slashes collapse by default;
     set collapse_slashes=False to preserve repeated slashes. The selected path
     and empty-component policies are also used for round-trip checks.
+    The default_scheme option uses the same cleanup and validation as
+    url_normalize(), including errors for invalid options on nonempty input.
     """
     normalized = url_normalize(
         url,

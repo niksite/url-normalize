@@ -27,6 +27,8 @@ IPv6 host spellings now converge: `https://[2001:0DB8:0:0:0:0:0:1]/` becomes `ht
 
 Query keys and values now retain escapes for all reserved characters. For example, `https://example.com/?q=a%2fb` becomes `https://example.com/?q=a%2Fb` instead of `https://example.com/?q=a/b`. Literal punctuation remains literal. `url_humanize()` also keeps these escapes, including `%3D` in values, while decoding safe Unicode around them. Allowlisted names follow the same policy: `a/b` and `a%2Fb` no longer match each other. Review custom allowlists and rebuild stored keys from original URLs; old output cannot reveal which reserved characters were originally escaped.
 
+The `default_scheme` option now accepts case differences, surrounding whitespace and one optional trailing colon, so `default_scheme=" HTTPS: "` behaves like `"https"`. Malformed strings such as `"https://"` raise `ValueError` instead of producing malformed URLs; non-string values raise `TypeError`. Validation applies to nonempty inputs even if the default is unused. Empty input and `None` keep their pass-through behavior. Check configuration and CLI `--default-scheme` values before upgrading; use `https` or `https:` rather than `https://`.
+
 ### Added
 
 - Add `keep_empty_components=False` to both Python APIs and `--keep-empty-components` to the CLI. Empty query and fragment delimiters are removed by default as before; enabling the option preserves them, including a query delimiter left empty by parameter filtering. Empty query fields are still removed.
@@ -42,6 +44,7 @@ Query keys and values now retain escapes for all reserved characters. For exampl
 - **BREAKING:** Reject nonempty ports containing characters outside ASCII decimal digits with a clear `ValueError`, consistently across both APIs and the CLI.
 - **BREAKING:** Canonicalize bracketed IPv6 hosts with zero compression and a consistent dotted-decimal suffix for IPv4-mapped addresses, while preserving zone identifiers. Apply the same spelling to default domains and query allowlist keys.
 - **BREAKING:** Preserve reserved-character escapes in query keys and values, including during humanization and allowlist matching. Keep literal punctuation distinct from its escaped form.
+- **BREAKING:** Validate `default_scheme` for nonempty inputs in both APIs and the CLI. Accept surrounding whitespace and one optional colon, normalize case, and report malformed values with clear type/value errors.
 
 ### Fixed
 

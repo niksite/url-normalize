@@ -29,7 +29,7 @@ def main() -> None:
         "-s",
         "--default-scheme",
         default="https",
-        help="The default scheme to use if missing. Default: https",
+        help="Default scheme if missing, e.g. https or https:. Default: https",
     )
     parser.add_argument(
         "-f",
