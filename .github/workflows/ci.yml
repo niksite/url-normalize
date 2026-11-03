@@ -22,8 +22,6 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      wheel-distribution: ${{ steps.wheel-distribution.outputs.path }}
     steps:
       - uses: actions/checkout@v7
         with: {fetch-depth: 0}  # deep clone for setuptools-scm
@@ -34,9 +32,6 @@ jobs:
         run: uv run --locked --extra dev pre-commit run --all-files
       - name: Build package distribution files
         run: uv build
-      - name: Record the path of wheel distribution
-        id: wheel-distribution
-        run: echo "path=$(ls dist/*.whl)" >> $GITHUB_OUTPUT
       - name: Store the distribution files for use in other stages
         uses: actions/upload-artifact@v7
         with:
@@ -66,9 +61,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v10.3.3
-      - name: Retrieve pre-built distribution files
-        uses: actions/download-artifact@v8
-        with: {name: python-distribution-files, path: dist/}
       - name: Run tests
         env:
           UV_PYTHON: ${{ steps.python.outputs.python-path }}
@@ -81,6 +73,45 @@ jobs:
           flag-name: ${{ matrix.platform }} - py${{ matrix.python }}
           parallel: true
 
+  distribution:
+    needs: prepare
+    strategy:
+      matrix:
+        include:
+          # Check installed CLI launchers on each OS at the Python minimum.
+          - platform: ubuntu-latest
+            python: "3.11"
+            kind: wheel
+            type-check: true
+          - platform: macos-latest
+            python: "3.11"
+            kind: wheel
+            type-check: false
+          - platform: windows-latest
+            python: "3.11"
+            kind: wheel
+            type-check: false
+          # Also rebuild and install the source archive on the newest Python.
+          - platform: ubuntu-latest
+            python: "3.15"
+            kind: sdist
+            type-check: false
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Retrieve pre-built distribution files
+        uses: actions/download-artifact@v8
+        with: {name: python-distribution-files, path: dist/}
+      - name: Check installed distribution
+        env:
+          DISTRIBUTION_KIND: ${{ matrix.kind }}
+          CHECK_TYPES: ${{ matrix.type-check }}
+        run: python tests/packaging/check_distribution.py
+
   finalize:
     needs: test
     runs-on: ubuntu-latest
@@ -92,7 +123,7 @@ jobs:
           parallel-finished: true
 
   publish:
-    needs: finalize
+    needs: [finalize, distribution]
     if: ${{ github.event_name == 'push' && contains(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     permissions:
