@@ -10,7 +10,7 @@ on:
   workflow_dispatch:  # Allow manually triggering the workflow
   schedule:
     # Run roughly every 15 days at 00:00 UTC
-    # (useful to check if updates on dependencies break the package)
+    # Also check freshly resolved runtime dependencies.
     - cron: '0 0 1,16 * *'
 
 concurrency:
@@ -72,6 +72,30 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           flag-name: ${{ matrix.platform }} - py${{ matrix.python }}
           parallel: true
+
+  dependencies:
+    needs: prepare
+    if: github.event_name == 'schedule'
+    name: Fresh runtime dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        id: python
+        with:
+          python-version: "3.15"
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Install locked test tools
+        env:
+          UV_PYTHON: ${{ steps.python.outputs.python-path }}
+        run: uv sync --locked --extra dev
+      - name: Install newest compatible runtime dependencies
+        run: |
+          uv pip install --python .venv/bin/python --upgrade -r pyproject.toml
+          uv pip freeze --python .venv/bin/python
+      - name: Run tests with selected dependencies
+        # uv run would sync back to the lockfile, undoing the selected versions.
+        run: .venv/bin/python -m pytest
 
   distribution:
     needs: prepare

@@ -535,6 +535,10 @@ disabling query sorting. It does not establish that every input or combination
 works, so please include exact-output regression tests with bug fixes. CI tests
 Python 3.11 through 3.15 on Linux, macOS, and Windows.
 
+The twice-monthly scheduled runs also test the newest compatible runtime
+dependencies on Linux with Python 3.15. This checks dependency releases beyond
+`uv.lock`, while regular matrix tests use the locked versions.
+
 Pytest also runs every `python` code block in this README independently and checks
 its printed output against the `# Output: ` comments. Include imports in each
 block and keep those comments accurate. Shell commands and prose tables are not
