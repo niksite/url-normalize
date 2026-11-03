@@ -264,6 +264,8 @@ A string is one complete name: `"id"` means the same as `["id"]`, and `{"example
 Both filters accept lists, tuples, sets and frozensets of strings, or mappings from domain strings to those forms (including read-only mappings). Rules are reusable and are not mutated. Their order does not change query order. Generators and other one-shot iterators are not supported; materialize them first, for example with `tuple(names)`.
 
 ```python
+from url_normalize import url_normalize
+
 allowed = ("id", "page")
 blocked = frozenset({"ref"})
 url = "https://example.com/?page=2&id=123&ref=email"
@@ -280,6 +282,8 @@ Allowed names use the same normalization as query keys, including Unicode and sp
 To remove selected names while keeping all other parameters, supply `param_denylist`. It accepts the same single-name, sequence, set and domain-map forms and uses the same case-sensitive name matching. It does not enable the built-in allowlist. An empty denylist or a domain map without a matching rule removes nothing. Names are literal: `"utm_*"` is not a wildcard.
 
 ```python
+from url_normalize import url_normalize
+
 result = url_normalize(
     "https://example.com/products?id=123&utm_source=newsletter&variant=blue",
     param_denylist="utm_source",
@@ -372,6 +376,8 @@ print(result)
 `default_scheme` accepts a scheme name such as `https`, `HTTP`, or `git+ssh`, optionally followed by one colon. Surrounding whitespace is removed and the name is lowercased. Names follow [RFC 3986 section 3.1](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.1).
 
 ```python
+from url_normalize import url_normalize
+
 print(url_normalize("example.com/path", default_scheme=" HTTPS: "))
 # Output: https://example.com/path
 ```
@@ -442,6 +448,8 @@ or password. This leaves a single literal `@` separating credentials from the
 host. Safe Unicode around those escapes can still become readable:
 
 ```python
+from url_normalize import url_humanize
+
 print(url_humanize("https://alice%40example.net:secret@example.com/resource"))
 # Output: https://alice%40example.net:secret@example.com/resource
 
@@ -526,6 +534,11 @@ that tests take both outcomes of measured decisions, such as enabling and
 disabling query sorting. It does not establish that every input or combination
 works, so please include exact-output regression tests with bug fixes. CI tests
 Python 3.11 through 3.15 on Linux, macOS, and Windows.
+
+Pytest also runs every `python` code block in this README independently and checks
+its printed output against the `# Output: ` comments. Include imports in each
+block and keep those comments accurate. Shell commands and prose tables are not
+executed by this check.
 
 Type checking uses ty for the package and the public API consumer examples in `tests/typing`, targeting the minimum Python version from `requires-python` and all platforms. Those examples use `typing.assert_type` to check string, `None`, optional and narrowed inputs through the package exports; they are static checks, separate from pytest. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 
