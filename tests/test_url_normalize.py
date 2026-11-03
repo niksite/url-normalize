@@ -7,6 +7,25 @@ import pytest
 from url_normalize import url_humanize, url_normalize
 
 
+@pytest.mark.parametrize(
+    ("suffix", "normalized_suffix"),
+    [
+        ("/a&", "/a&"),
+        ("/a ", "/a%20"),
+        ("/?q=why?", "/?q=why?"),
+        ("/?q=x ", "/?q=x%20"),
+        ("/#part&", "/#part&"),
+        ("/#part?", "/#part?"),
+        ("/#part ", "/#part%20"),
+    ],
+)
+def test_public_api_preserves_trailing_component_data(suffix, normalized_suffix):
+    """Preserve trailing punctuation and whitespace belonging to components."""
+    assert url_normalize(f"https://example.com{suffix}") == (
+        f"https://example.com{normalized_suffix}"
+    )
+
+
 @pytest.mark.parametrize("transform", [url_normalize, url_humanize])
 def test_public_api_rejects_removed_charset_argument(transform):
     """Reject the removed option instead of silently ignoring an encoding request."""

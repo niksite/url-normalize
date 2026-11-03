@@ -11,7 +11,6 @@ from __future__ import annotations
 from typing import overload
 
 from ._url import cleanup_url_input, deconstruct_url, reconstruct_url
-from .generic_url_cleanup import generic_url_cleanup
 from .normalize_fragment import normalize_fragment
 from .normalize_host import normalize_host
 from .normalize_path import normalize_path
@@ -142,7 +141,6 @@ def url_normalize(  # noqa: PLR0913
         return url
     url = provide_url_domain(url, default_domain)
     url = provide_url_scheme(url, default_scheme)
-    url = generic_url_cleanup(url)
     url_elements = deconstruct_url(url)
     url_elements = url_elements._replace(host=normalize_host(url_elements.host))
     url_elements = url_elements._replace(

@@ -142,7 +142,16 @@ def test_query_filtering_uses_empty_component_policy(
 @pytest.mark.parametrize("keep_empty_components", [False, True])
 @pytest.mark.parametrize(
     ("suffix", "cleaned", "kept"),
-    [("?&&", "", "?"), ("?&&#", "", "?#"), ("?&a&&b&#", "?a&b", "?a&b#")],
+    [
+        ("?&&", "", "?"),
+        ("?&&#", "", "?#"),
+        ("?&a&&b&#", "?a&b", "?a&b#"),
+        (
+            "?&&flag&empty=&q=a%26b&#part&&?",
+            "?flag&empty=&q=a%26b#part&&?",
+            "?flag&empty=&q=a%26b#part&&?",
+        ),
+    ],
 )
 def test_empty_field_cleanup_uses_component_policy(
     transform, suffix, cleaned, kept, keep_empty_components
