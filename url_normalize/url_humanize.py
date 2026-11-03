@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import unicodedata
 from functools import partial
 from typing import TYPE_CHECKING, overload
 from urllib.parse import unquote
 
 import idna
 
-from ._encoding import RESERVED_ESCAPE_RE
+from ._encoding import RESERVED_ESCAPE_RE, has_display_controls
 from ._url import URL, deconstruct_url, reconstruct_url
 from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
 from .normalize_scheme import DEFAULT_SCHEME
@@ -31,11 +30,6 @@ if TYPE_CHECKING:
 
 
 UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
-# Bidi_Control: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
-# Join_Control characters are separate.
-BIDI_CONTROL_CHARACTERS = frozenset(
-    "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
-)
 
 
 def _humanize_host(host: str) -> str:
@@ -73,11 +67,7 @@ def _safe_unquote(value: str) -> str:
     if (
         UNICODE_REPLACEMENT_CHARACTER in decoded
         or "\\" in decoded
-        or any(
-            unicodedata.category(character) in {"Cc", "Zl", "Zp"}
-            or character in BIDI_CONTROL_CHARACTERS
-            for character in decoded
-        )
+        or has_display_controls(decoded)
     ):
         return value
     return decoded
@@ -227,7 +217,8 @@ def url_humanize(  # noqa: PLR0913
     components only when the result normalizes back to that same URL, so decoding
     is intentionally conservative around reserved URL characters and malformed
     percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
-    separators remain escaped for display. Userinfo and query reserved-character
+    separators remain escaped for display; literal host display controls raise
+    UnicodeError (a ValueError subclass). Userinfo and query reserved-character
     escapes and fragment ASCII escapes remain encoded to preserve embedded syntax.
     Empty query and fragment delimiters are dropped unless keep_empty_components is
     enabled. Path slashes collapse by default;

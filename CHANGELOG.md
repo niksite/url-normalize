@@ -20,6 +20,7 @@ See the [README](README.md#python-api) for detailed behavior, examples and [CLI 
 - **BREAKING:** Preserve hashbang fragments (`#!/route`) instead of converting them to `_escaped_fragment_` query parameters. Keep literal fragment syntax and existing ASCII escapes intact. Callers needing legacy hashbang conversion must implement it explicitly.
 - **BREAKING:** Preserve leading and empty hostname labels, repeated trailing dots and dot-only hosts. A single trailing dot is still removed from other hosts.
 - **BREAKING:** Canonicalize IPv6 addresses using zero compression and dotted-decimal IPv4-mapped suffixes. Preserve zone identifiers. The same spelling applies to default domains and filter domain keys.
+- **BREAKING:** Reject literal display controls in parsed hosts, including IPv6 zone identifiers, with `UnicodeError` (a `ValueError` subclass). CLI errors omit the unsafe hostname.
 - **BREAKING:** Preserve reserved-character escapes in query names and values, including during humanization and filter matching: `a/b` and `a%2Fb` remain distinct.
 - **BREAKING:** Reject nonempty ports containing anything except ASCII digits with `ValueError`; the CLI exits with status 1. Numeric port ranges remain unchecked.
 - **BREAKING:** Validate `default_scheme` for nonempty inputs, even when unused. Accept whitespace, case differences and one trailing colon; malformed strings raise `ValueError`, and non-string values raise `TypeError`.

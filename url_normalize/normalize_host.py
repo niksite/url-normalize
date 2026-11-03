@@ -6,7 +6,7 @@ from ipaddress import AddressValueError, IPv6Address
 
 import idna
 
-from ._encoding import force_unicode
+from ._encoding import force_unicode, has_display_controls
 
 IDNA_DOT_TRANSLATION = str.maketrans("\u3002\uff0e\uff61", "...")
 
@@ -39,10 +39,16 @@ def normalize_host(host: str | bytes) -> str:
     Returns:
         string : normalized host data.
 
+    Raises:
+        UnicodeError: The host contains display controls or invalid IDNA text.
+
     """
     host = force_unicode(host)
     if not host:
         return host
+    if has_display_controls(host):
+        msg = "Host must not contain display controls"
+        raise UnicodeError(msg)
     if host.startswith("[") and host.endswith("]"):
         return _normalize_ip_literal(host)
     # Map equivalent IDNA separators without merging label boundaries.

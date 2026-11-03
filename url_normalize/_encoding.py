@@ -12,6 +12,20 @@ RESERVED_ESCAPE_RE = re.compile(
     "(" + "|".join(f"%{ord(character):02X}" for character in RESERVED_CHARACTERS) + ")",
     re.IGNORECASE,
 )
+# Bidi_Control: https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+# Join_Control characters are separate.
+BIDI_CONTROL_CHARACTERS = frozenset(
+    "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+)
+
+
+def has_display_controls(value: str) -> bool:
+    """Identify terminal controls, bidi controls and Unicode line separators."""
+    return any(
+        unicodedata.category(character) in {"Cc", "Zl", "Zp"}
+        or character in BIDI_CONTROL_CHARACTERS
+        for character in value
+    )
 
 
 def force_unicode(string: str | bytes) -> str:

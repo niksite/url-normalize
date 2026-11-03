@@ -7,6 +7,38 @@ import pytest
 from url_normalize import url_humanize, url_normalize
 
 
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+@pytest.mark.parametrize(
+    "host",
+    [
+        "example\x1bc.com",
+        "example\x85.com",
+        "[fe80::1%eth0\x1b[2J\x1b[Hspoofed]",
+        "[fe80::1%eth0\u202espoofed]",
+        "[fe80::1%eth0\u2028spoofed]",
+        "[fe80::1%eth0\u2029spoofed]",
+    ],
+)
+def test_public_api_rejects_host_display_controls(transform, host):
+    """Reject literal host controls without including them in the diagnostic."""
+    with pytest.raises(ValueError, match=r"^Host must not contain display controls$"):
+        transform(f"https://{host}/")
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_rejects_default_domain_display_controls(transform):
+    """Apply host display protection to an injected authority too."""
+    with pytest.raises(ValueError, match=r"^Host must not contain display controls$"):
+        transform("/path", default_domain="example\x1bc.com")
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_public_api_preserves_readable_ipv6_zone_text(transform):
+    """Retain ordinary RTL text and join controls in case-sensitive zones."""
+    value = "https://[fe80::1%EthA-שלום-می\u200cروم]/"
+    assert transform(value) == value
+
+
 @pytest.mark.parametrize(
     ("suffix", "normalized_suffix"),
     [

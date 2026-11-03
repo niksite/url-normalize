@@ -391,13 +391,14 @@ def test_custom_allowlist_canonical_key_takes_precedence(allowed, reverse):
     )
 
 
-def test_custom_allowlist_ignores_unrelated_invalid_domain():
+@pytest.mark.parametrize("invalid_domain", ["a" * 64 + ".example", "bad\x1bc.example"])
+def test_custom_allowlist_ignores_unrelated_invalid_domain(invalid_domain):
     """Keep a malformed unrelated key from breaking a valid domain lookup."""
     assert (
         url_normalize(
             "https://пример.рф/?q=1",
             filter_params=True,
-            param_allowlist={"a" * 64 + ".example": [], "пример.рф": ["q"]},
+            param_allowlist={invalid_domain: [], "пример.рф": ["q"]},
         )
         == "https://xn--e1afmkfd.xn--p1ai/?q=1"
     )

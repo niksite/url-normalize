@@ -41,6 +41,18 @@ def run_cli_subprocess(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 @pytest.mark.parametrize("humanize", [False, True])
+def test_cli_rejects_host_display_controls(humanize):
+    """Capture terminal controls as input without emitting them on either stream."""
+    options = ["--humanize"] if humanize else []
+    result = run_cli_subprocess(*options, "https://[fe80::1%eth0\x1b[2J\x1b[Hspoofed]/")
+    assert result.returncode == 1
+    assert not result.stdout
+    assert result.stderr == (
+        "Error normalizing URL: Host must not contain display controls\n"
+    )
+
+
+@pytest.mark.parametrize("humanize", [False, True])
 @pytest.mark.parametrize("prefix", ["../", "./", "?q=", "#"])
 def test_cli_preserves_relative_references(humanize, prefix, invoke_cli):
     """Print relative text without adding a scheme, domain or root path."""

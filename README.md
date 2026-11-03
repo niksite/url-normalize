@@ -124,6 +124,8 @@ This hostname policy also applies to `default_domain` and custom `param_allowlis
 
 Preservation does not establish DNS validity. The generic registered-name syntax in [RFC 3986 section 3.2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2) is broader than DNS hostname syntax. Applications that require DNS-valid hostnames should validate them separately. Empty hosts in local file URLs and path references remain supported.
 
+Literal control characters, bidi controls and Unicode line/paragraph separators remaining in a parsed host, including an IPv6 zone identifier, raise `UnicodeError` (a `ValueError` subclass). The CLI exits with status 1 and a diagnostic that does not repeat the hostname. Existing input cleanup still removes tabs, carriage returns and newlines before parsing.
+
 ### IPv6 addresses
 
 Equivalent bracketed IPv6 addresses use a consistent spelling: lowercase hexadecimal, no leading zeroes in groups, and `::` for the longest run of at least two zero groups (the first run wins a tie). These rules follow [RFC 5952 section 4](https://www.rfc-editor.org/rfc/rfc5952.html#section-4).

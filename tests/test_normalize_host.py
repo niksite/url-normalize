@@ -5,6 +5,12 @@ import pytest
 from url_normalize.normalize_host import normalize_host
 
 
+def test_normalize_host_rejects_display_controls_in_utf8_bytes():
+    """Check display controls after decoding a byte hostname."""
+    with pytest.raises(UnicodeError, match=r"^Host must not contain display controls$"):
+        normalize_host("[fe80::1%eth0\u202e]".encode())
+
+
 @pytest.mark.parametrize(
     ("host", "expected"),
     [
