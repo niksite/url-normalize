@@ -521,7 +521,11 @@ uv run --locked --extra dev python -m pytest
 uv run --locked --extra dev pre-commit run --all-files
 ```
 
-The test suite requires 100% statement coverage. CI tests Python 3.11 through 3.15 on Linux, macOS, and Windows. Please include regression tests with bug fixes.
+The test suite requires 100% statement and branch coverage. Branch coverage checks
+that tests take both outcomes of measured decisions, such as enabling and
+disabling query sorting. It does not establish that every input or combination
+works, so please include exact-output regression tests with bug fixes. CI tests
+Python 3.11 through 3.15 on Linux, macOS, and Windows.
 
 Type checking uses ty for the package and the public API consumer examples in `tests/typing`, targeting the minimum Python version from `requires-python` and all platforms. Those examples use `typing.assert_type` to check string, `None`, optional and narrowed inputs through the package exports; they are static checks, separate from pytest. The pre-commit hook uses the version and dependencies in `uv.lock`. To run type checking alone, use `uv run --locked --extra dev ty check`.
 

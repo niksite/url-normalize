@@ -82,3 +82,6 @@ addopts = [
   "-v",
 ]
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
+
+[tool.coverage.run]
+branch = true
