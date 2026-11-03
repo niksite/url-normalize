@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .tools import RESERVED_CHARACTERS, normalize_component
+from .tools import normalize_component
 
 
 def normalize_userinfo(userinfo: str) -> str:
@@ -18,9 +18,4 @@ def normalize_userinfo(userinfo: str) -> str:
     if userinfo in ["@", ":@"]:
         return ""
     separator = "@" if userinfo.endswith("@") else ""
-    return (
-        normalize_component(
-            userinfo.removesuffix("@"), "!$&'()*+,;=:", RESERVED_CHARACTERS
-        )
-        + separator
-    )
+    return normalize_component(userinfo.removesuffix("@"), "!$&'()*+,;=:") + separator

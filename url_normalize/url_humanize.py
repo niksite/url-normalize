@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import unicodedata
 from functools import partial
 from typing import TYPE_CHECKING, overload
@@ -13,7 +12,7 @@ import idna
 from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
 from .normalize_scheme import DEFAULT_SCHEME
 from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
-from .tools import RESERVED_CHARACTERS, URL, deconstruct_url, reconstruct_url
+from .tools import RESERVED_ESCAPE_RE, URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
 
 if TYPE_CHECKING:
@@ -35,10 +34,6 @@ UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
 # Join_Control characters are separate.
 BIDI_CONTROL_CHARACTERS = frozenset(
     "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
-)
-RESERVED_ESCAPE_RE = re.compile(
-    "(" + "|".join(f"%{ord(character):02X}" for character in RESERVED_CHARACTERS) + ")",
-    re.IGNORECASE,
 )
 
 

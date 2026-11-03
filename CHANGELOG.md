@@ -62,6 +62,7 @@ Supplying any custom allowlist other than `None` now enables filtering in both A
 
 ### Fixed
 
+- Reuse the reserved-escape matcher across normalization and humanization instead of rebuilding its pattern for every component and query field. This reduces repeated work without changing URL output or public options.
 - Keep reserved credential escapes in `url_humanize()` and CLI `--humanize`, while decoding safe Unicode around them. For example, `https://alice%40example.net:secret@example.com/resource` now retains `%40`; previously it became a second literal `@`, producing a display URL rejected by libcurl. Encoded colons, slashes and brackets also stay encoded. Normalized API output is unchanged.
 - Validate readable query changes together in `url_humanize()`, avoiding repeated whole-URL normalization for each decoded key and value when the combined candidate round-trips. Keep independent decoding as a fallback when it does not, preserving existing output.
 - Normalize ASCII port numbers using string operations, avoiding integer-conversion errors on heavily padded numbers and long digit strings.

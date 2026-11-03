@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from ._schemes import EMPTY_PATH_SCHEMES, PATH_NORMALIZATION_SCHEMES
-from .tools import RESERVED_CHARACTERS, normalize_component
+from .tools import normalize_component
 
 
 def _remove_dot_segments(path: str) -> str:
@@ -74,7 +74,7 @@ def normalize_path(
     # Only perform percent-encoding where it is essential.
     # Always use uppercase A-through-F characters when percent-encoding.
     # All portions of the URI must be utf-8 encoded NFC from Unicode strings
-    path = normalize_component(path, "~:/[]@!$&'()*+,;=", RESERVED_CHARACTERS)
+    path = normalize_component(path, "~:/[]@!$&'()*+,;=")
     if scheme in PATH_NORMALIZATION_SCHEMES:
         if not scheme and path and not path.startswith("/") and path != "-":
             path = _remove_relative_dot_segments(path)

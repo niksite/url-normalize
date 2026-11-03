@@ -10,6 +10,10 @@ from urllib.parse import unquote as unquote_orig
 from urllib.parse import urlsplit, urlunsplit
 
 RESERVED_CHARACTERS = ":/?#[]@!$&'()*+,;="
+RESERVED_ESCAPE_RE = re.compile(
+    "(" + "|".join(f"%{ord(character):02X}" for character in RESERVED_CHARACTERS) + ")",
+    re.IGNORECASE,
+)
 
 
 def cleanup_url_input(url: str) -> str:
@@ -135,11 +139,9 @@ def quote(string: str, safe: str = "/") -> str:
     return quote_orig(string, safe, errors="surrogateescape")
 
 
-def normalize_component(string: str, safe: str, preserve: str) -> str:
-    """Normalize escapes and Unicode without decoding protected delimiters."""
-    protected = "|".join(f"%{ord(character):02X}" for character in preserve)
-    parts = re.split(f"({protected})", string, flags=re.IGNORECASE)
+def normalize_component(string: str, safe: str) -> str:
+    """Normalize escapes and Unicode without decoding reserved delimiters."""
     return "".join(
         part.upper() if index % 2 else quote(unquote(part), safe)
-        for index, part in enumerate(parts)
+        for index, part in enumerate(RESERVED_ESCAPE_RE.split(string))
     )

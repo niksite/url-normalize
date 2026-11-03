@@ -5,7 +5,7 @@ from __future__ import annotations
 from ._tracking import TRACKING_PARAMS
 from .param_allowlist import get_allowed_params
 from .param_filter import _ParamRules, get_params
-from .tools import RESERVED_CHARACTERS, normalize_component
+from .tools import normalize_component
 
 QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 
@@ -25,7 +25,7 @@ def process_query_param(param: str) -> str:
     """
     if not param:
         return ""
-    return normalize_component(param, QUERY_PARAM_SAFE_CHARS, RESERVED_CHARACTERS)
+    return normalize_component(param, QUERY_PARAM_SAFE_CHARS)
 
 
 def normalize_query(  # noqa: PLR0913
