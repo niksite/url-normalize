@@ -9,10 +9,11 @@ from urllib.parse import unquote
 
 import idna
 
+from ._encoding import RESERVED_ESCAPE_RE
+from ._url import URL, deconstruct_url, reconstruct_url
 from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
 from .normalize_scheme import DEFAULT_SCHEME
 from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
-from .tools import RESERVED_ESCAPE_RE, URL, deconstruct_url, reconstruct_url
 from .url_normalize import url_normalize
 
 if TYPE_CHECKING:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from url_normalize.tools import URL, reconstruct_url
+from url_normalize._url import URL, reconstruct_url
 
 
 @pytest.mark.parametrize(

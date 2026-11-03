@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .tools import normalize_component
+from ._encoding import normalize_component
 
 
 def normalize_userinfo(userinfo: str) -> str:

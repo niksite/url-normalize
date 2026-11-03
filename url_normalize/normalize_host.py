@@ -6,7 +6,7 @@ from ipaddress import AddressValueError, IPv6Address
 
 import idna
 
-from .tools import force_unicode
+from ._encoding import force_unicode
 
 IDNA_DOT_TRANSLATION = str.maketrans("\u3002\uff0e\uff61", "...")
 

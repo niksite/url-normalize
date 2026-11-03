@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from .tools import quote, unquote
+from ._encoding import quote, unquote
 
 # Fragments can embed syntax parsed before percent-decoding, including
 # unreserved ASCII characters (e.g. "-", "~" and the letters in "text=").

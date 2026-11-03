@@ -1,8 +1,8 @@
-"""Tools module tests."""
+"""Encoding helper tests."""
 
 from __future__ import annotations
 
-from url_normalize.tools import force_unicode
+from url_normalize._encoding import force_unicode
 
 
 def test_force_unicode_with_bytes() -> None:

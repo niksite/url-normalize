@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
+from ._encoding import normalize_component
 from ._schemes import EMPTY_PATH_SCHEMES, PATH_NORMALIZATION_SCHEMES
-from .tools import normalize_component
 
 
 def _remove_dot_segments(path: str) -> str:

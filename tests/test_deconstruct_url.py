@@ -3,7 +3,7 @@
 import pytest
 
 from url_normalize import url_normalize
-from url_normalize.tools import URL, deconstruct_url
+from url_normalize._url import URL, deconstruct_url
 
 
 @pytest.mark.parametrize(

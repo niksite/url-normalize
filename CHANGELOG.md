@@ -49,6 +49,7 @@ Supplying any custom allowlist other than `None` now enables filtering in both A
 
 ### Changed
 
+- Split internal URL parsing and encoding helpers into `_url.py` and `_encoding.py`. Direct imports from the undocumented `url_normalize.tools` module must be updated; the public `url_normalize` and `url_humanize` APIs and their output are unchanged.
 - **BREAKING:** Resolve dot segments before collapsing repeated path slashes, retaining empty segments during dot resolution.
 - **BREAKING:** Preserve explicit document-relative, query-only and fragment-only references instead of inventing a scheme and authority. Resolve internal relative dots while retaining unresolved parents and honoring path cleanup options.
 - **BREAKING:** Preserve fragment routes and text directives, stop converting hashbang fragments into query parameters, and retain ASCII fragment escapes in both Python APIs and the CLI.

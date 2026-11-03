@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from ._encoding import normalize_component
 from ._tracking import TRACKING_PARAMS
 from .param_allowlist import get_allowed_params
 from .param_filter import _ParamRules, get_params
-from .tools import normalize_component
 
 QUERY_PARAM_SAFE_CHARS = "~:/?[]@!$'()*+,;"
 

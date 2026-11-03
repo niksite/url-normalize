@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import overload
 
+from ._url import cleanup_url_input, deconstruct_url, reconstruct_url
 from .generic_url_cleanup import generic_url_cleanup
 from .normalize_fragment import normalize_fragment
 from .normalize_host import normalize_host
@@ -21,7 +22,6 @@ from .normalize_userinfo import normalize_userinfo
 from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
 from .provide_url_domain import provide_url_domain
 from .provide_url_scheme import provide_url_scheme
-from .tools import cleanup_url_input, deconstruct_url, reconstruct_url
 
 
 @overload
