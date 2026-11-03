@@ -225,9 +225,19 @@ def test_url_humanize_skips_failed_round_trip() -> None:
     assert package.url_humanize(value) == value
 
 
-@pytest.mark.parametrize("userinfo", ["user%5B", "user%5D", "user:%5B", "user:%5D"])
-def test_url_humanize_rejects_candidates_that_raise(userinfo):
-    """Retain valid escaped credentials when decoding makes parsing fail."""
+@pytest.mark.parametrize(
+    "userinfo",
+    [
+        "user%5B",
+        "user%5D",
+        "user:%5B",
+        "user:%5D",
+        "us%EF%BC%A0er",
+        "user:p%EF%BC%9Ass",
+    ],
+)
+def test_url_humanize_keeps_escaped_authority_syntax(userinfo):
+    """Keep bracket escapes and reject Unicode decodes that break authority parsing."""
     value = f"https://{userinfo}@example.com/"
     assert package.url_humanize(value) == value
     assert package.url_normalize(package.url_humanize(value)) == value

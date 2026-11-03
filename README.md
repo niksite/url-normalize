@@ -437,6 +437,21 @@ print(readable)
 assert url_normalize(readable) == normalized
 ```
 
+Credentials retain reserved escapes, including `%40` for an `@` inside a username
+or password. This leaves a single literal `@` separating credentials from the
+host. Safe Unicode around those escapes can still become readable:
+
+```python
+print(url_humanize("https://alice%40example.net:secret@example.com/resource"))
+# Output: https://alice%40example.net:secret@example.com/resource
+
+print(url_humanize("https://us%C3%A9r%40example.net:p%C3%A4ss@example.com/"))
+# Output: https://usér%40example.net:päss@example.com/
+```
+
+Existing encoded colons, slashes and brackets in credentials remain encoded too.
+The CLI's `--humanize` mode follows the same policy.
+
 ## Command-line usage
 
 The CLI accepts one URL per invocation and prints the result to standard output. Quote URLs containing shell characters such as `&`.

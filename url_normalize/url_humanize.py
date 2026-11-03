@@ -36,7 +36,7 @@ UNICODE_REPLACEMENT_CHARACTER = "\ufffd"
 BIDI_CONTROL_CHARACTERS = frozenset(
     "\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
 )
-QUERY_RESERVED_ESCAPE_RE = re.compile(
+RESERVED_ESCAPE_RE = re.compile(
     "(" + "|".join(f"%{ord(character):02X}" for character in RESERVED_CHARACTERS) + ")",
     re.IGNORECASE,
 )
@@ -99,11 +99,11 @@ def _format_query_param(key: str, separator: str, value: str) -> str:
     return f"{key}{separator}{value}" if separator else key
 
 
-def _humanize_query_text(value: str) -> str:
-    """Decode readable text around reserved escapes without exposing query syntax."""
+def _humanize_reserved_text(value: str) -> str:
+    """Decode readable text around escapes that must remain literal data."""
     return "".join(
         part if index % 2 else _safe_unquote(part)
-        for index, part in enumerate(QUERY_RESERVED_ESCAPE_RE.split(value))
+        for index, part in enumerate(RESERVED_ESCAPE_RE.split(value))
     )
 
 
@@ -140,7 +140,7 @@ def _humanize_query(
         key, separator, value = param.partition("=")
         candidate_parts.append(
             _format_query_param(
-                _humanize_query_text(key), separator, _humanize_query_text(value)
+                _humanize_reserved_text(key), separator, _humanize_reserved_text(value)
             )
         )
     candidate = _replace_if_round_trips(
@@ -158,7 +158,7 @@ def _humanize_query(
             normalized,
             parts,
             index,
-            _format_query_param(_humanize_query_text(key), separator, value),
+            _format_query_param(_humanize_reserved_text(key), separator, value),
             normalize=normalize,
         )
         key, separator, value = parts[index].partition("=")  # noqa: PLR1736
@@ -167,7 +167,7 @@ def _humanize_query(
             normalized,
             parts,
             index,
-            _format_query_param(key, separator, _humanize_query_text(value)),
+            _format_query_param(key, separator, _humanize_reserved_text(value)),
             normalize=normalize,
         )
 
@@ -231,9 +231,9 @@ def url_humanize(  # noqa: PLR0913
     components only when the result normalizes back to that same URL, so decoding
     is intentionally conservative around reserved URL characters and malformed
     percent-encoded bytes. Bidirectional controls and Unicode line/paragraph
-    separators remain escaped for display. Query reserved-character escapes and
-    fragment ASCII escapes remain encoded to preserve embedded syntax. Empty
-    query and fragment delimiters are dropped unless keep_empty_components is
+    separators remain escaped for display. Userinfo and query reserved-character
+    escapes and fragment ASCII escapes remain encoded to preserve embedded syntax.
+    Empty query and fragment delimiters are dropped unless keep_empty_components is
     enabled. Path slashes collapse by default;
     set collapse_slashes=False to preserve repeated slashes. The selected path
     and empty-component policies are also used for round-trip checks.
@@ -286,13 +286,16 @@ def url_humanize(  # noqa: PLR0913
         host=_humanize_host(url_elements.host),
     )
 
-    for component in ("userinfo", "path"):
+    for component, humanize in (
+        ("userinfo", _humanize_reserved_text),
+        ("path", _safe_unquote),
+    ):
         value = getattr(url_elements, component)
         url_elements = _replace_if_round_trips(
             url_elements,
             normalized,
             normalize=normalize_candidate,
-            **{component: _safe_unquote(value)},
+            **{component: humanize(value)},
         )
     url_elements = _replace_if_round_trips(
         url_elements,

@@ -619,3 +619,11 @@ def test_cli_default_domain_no_effect_on_relative_paths(invoke_cli):
     output = invoke_cli("-d", "example.com", url)
 
     assert output.strip() == expected
+
+
+def test_humanize_credentials_in_cli(invoke_cli):
+    """Expose the same readable credential spelling through the humanization flag."""
+    value = "https://us%C3%A9r%40example.net:p%C3%A4ss@example.com/"
+    assert invoke_cli("--humanize", value) == (
+        "https://usér%40example.net:päss@example.com/\n"
+    )
