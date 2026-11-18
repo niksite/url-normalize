@@ -19,6 +19,7 @@ from url_normalize._url import URL, deconstruct_url
                 query="",
                 scheme="http",
                 userinfo="",
+                authority_present=True,
             ),
         ),
         (
@@ -31,6 +32,7 @@ from url_normalize._url import URL, deconstruct_url
                 query="param=val",
                 scheme="http",
                 userinfo="user@",
+                authority_present=True,
                 query_present=True,
                 fragment_present=True,
             ),
@@ -100,6 +102,7 @@ def test_deconstruct_url_separates_bracketed_host_and_port(
         "fragment",
         query_present=True,
         fragment_present=True,
+        authority_present=True,
     )
     assert url_normalize(url) == f"http://{normalized_authority}/path?q=1#fragment"
 

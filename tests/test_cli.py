@@ -639,3 +639,12 @@ def test_humanize_credentials_in_cli(invoke_cli):
     assert invoke_cli("--humanize", value) == (
         "https://usér%40example.net:päss@example.com/\n"
     )
+
+
+@pytest.mark.parametrize("option", [[], ["--humanize"]])
+def test_cli_parser_error_omits_authority(option):
+    """Keep userinfo out of diagnostics on URL parsing failures."""
+    result = run_cli_subprocess(*option, "https://user:example-password@[::")
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr == "Error normalizing URL: Invalid URL authority\n"

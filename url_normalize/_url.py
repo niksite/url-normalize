@@ -4,7 +4,35 @@ from __future__ import annotations
 
 import re
 from typing import NamedTuple
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import SplitResult, urlsplit, urlunsplit
+
+# Limit zone handling to a bracketed host in the authority, after any userinfo.
+_SCOPED_HOST = re.compile(
+    r"(?:[A-Za-z][A-Za-z0-9+.-]*:)?//(?P<authority>(?:[^/?#]*@)?"
+    r"\[[A-Fa-f0-9:.]+%)(?P<zone>[^][/?#@]+)\]"
+)
+
+
+def _split_url(url: str) -> SplitResult:
+    """Validate URL syntax without asking ipaddress to decode zone escapes."""
+    scoped = _SCOPED_HOST.match(url) if "%" in url and "[" in url else None
+    parser_input = url
+    if scoped:
+        # ipaddress permits a single scope separator. Mask only further %HH
+        # markers inside the zone, keeping all other parser checks and offsets.
+        start, end = scoped.span("zone")
+        zone = re.sub(r"%(?=[0-9A-Fa-f]{2})", "_", scoped["zone"])
+        parser_input = url[:start] + zone + url[end:]
+    try:
+        parts = urlsplit(parser_input)
+    except ValueError:
+        # Parser messages may contain the complete authority, including credentials.
+        msg = "Invalid URL authority"
+        raise ValueError(msg) from None
+    if scoped:
+        start = scoped.start("authority")
+        parts = parts._replace(netloc=url[start : start + len(parts.netloc)])
+    return parts
 
 
 def cleanup_url_input(url: str) -> str:
@@ -19,7 +47,7 @@ class URL(NamedTuple):
 
     A named tuple containing the parsed components of a URL:
     scheme, userinfo, host, port, path, query, and fragment.
-    Presence flags distinguish absent queries/fragments from empty ones.
+    Flags record the presence of the authority, query and fragment delimiters.
     """
 
     scheme: str
@@ -31,6 +59,7 @@ class URL(NamedTuple):
     fragment: str
     query_present: bool = False
     fragment_present: bool = False
+    authority_present: bool = False
 
 
 def deconstruct_url(url: str) -> URL:
@@ -43,7 +72,7 @@ def deconstruct_url(url: str) -> URL:
         URL
 
     """
-    scheme, auth, path, query, fragment = urlsplit(url)
+    scheme, auth, path, query, fragment = _split_url(url)
     before_fragment, fragment_separator, _ = url.partition("#")
     userinfo, separator, host_port = auth.rstrip().rpartition("@")
     userinfo += separator
@@ -63,6 +92,7 @@ def deconstruct_url(url: str) -> URL:
         userinfo=userinfo or "",
         query_present="?" in before_fragment,
         fragment_present=bool(fragment_separator),
+        authority_present=url.startswith("//", len(scheme) + 1 if scheme else 0),
     )
 
 
@@ -79,7 +109,11 @@ def reconstruct_url(url: URL) -> str:
     auth = (url.userinfo or "") + url.host
     if url.port:
         auth += ":" + url.port
-    result = urlunsplit((url.scheme, auth, url.path, "", ""))
+    if url.authority_present and not auth:
+        scheme_prefix = f"{url.scheme}:" if url.scheme else ""
+        result = f"{scheme_prefix}//{url.path}"
+    else:
+        result = urlunsplit((url.scheme, auth, url.path, "", ""))
     if url.query or url.query_present:
         result += "?" + url.query
     if url.fragment or url.fragment_present:

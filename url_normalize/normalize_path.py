@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 
 from ._encoding import normalize_component
-from ._schemes import EMPTY_PATH_SCHEMES, PATH_NORMALIZATION_SCHEMES
+from ._schemes import (
+    EMPTY_PATH_SCHEMES,
+    PATH_NORMALIZATION_SCHEMES,
+    looks_like_host_port,
+)
 
 
 def _remove_dot_segments(path: str) -> str:
@@ -75,6 +79,9 @@ def normalize_path(
     # Always use uppercase A-through-F characters when percent-encoding.
     # All portions of the URI must be utf-8 encoded NFC from Unicode strings
     path = normalize_component(path, "~:/[]@!$&'()*+,;=")
+    if looks_like_host_port(scheme, path):
+        # Retain an escaped digit to keep an opaque URI distinct from host:port.
+        path = f"%{ord(path[0]):02X}{path[1:]}"
     if scheme in PATH_NORMALIZATION_SCHEMES:
         if not scheme and path and not path.startswith("/") and path != "-":
             path = _remove_relative_dot_segments(path)

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import re
+from contextlib import suppress
+from encodings.idna import nameprep
 from ipaddress import AddressValueError, IPv6Address
+from urllib.parse import unquote
 
 import idna
 
@@ -24,6 +28,63 @@ def _normalize_ip_literal(host: str) -> str:
         # Choose mixed notation explicitly for consistent Python-version output.
         address = f"::ffff:{mapped}" if mapped is not None else str(ipv6)
     return f"[{address}{separator}{zone}]"
+
+
+def _encode_reg_name(host: str) -> str:
+    """Encode a registered name, preserving the legacy whole-host fallback."""
+    parts = host.translate(IDNA_DOT_TRANSLATION).split(".")
+    try:
+        encoded = [
+            idna.encode(part, uts46=True).decode("ascii") if part else ""
+            for part in parts
+        ]
+    except idna.IDNAError:
+        # Keep the legacy IDNA fallback without discarding empty labels.
+        parts = host.lower().translate(IDNA_DOT_TRANSLATION).split(".")
+        encoded = [
+            part.encode("idna").decode("ascii") if part else "" for part in parts
+        ]
+
+    return ".".join(encoded)
+
+
+def _decode_host_escapes(host: str) -> str | None:
+    """Decode one layer only when it produces a safe ASCII registered name."""
+    try:
+        decoded = unquote(host, errors="strict")
+        encoded = _encode_reg_name(decoded)
+    except UnicodeError:
+        return None
+    if has_display_controls(decoded) or not re.fullmatch(r"[A-Za-z0-9._~-]+", encoded):
+        return None
+    return encoded
+
+
+def _encode_escaped_reg_name(host: str) -> str:
+    """Recognize host escapes before converting international labels to Punycode."""
+    spelling = host
+    if not host.isascii():
+        # Keep percent signs during UTS #46 mapping. Hosts outside that profile
+        # still go through the existing legacy IDNA fallback.
+        with suppress(idna.IDNAError):
+            spelling = idna.uts46_remap(host, std3_rules=False)
+    if "%" in spelling:
+        decoded = _decode_host_escapes(spelling)
+        if decoded is not None:
+            return decoded
+
+    encoded = _encode_reg_name(host)
+    # Legacy nameprep can also join an escape. Decode the Unicode spelling
+    # before Punycode so its non-ASCII character positions remain correct.
+    if "%" in encoded and encoded != spelling:
+        labels = host.lower().translate(IDNA_DOT_TRANSLATION).split(".")
+        legacy = ".".join(nameprep(label) for label in labels)
+        if legacy != encoded:
+            decoded = _decode_host_escapes(legacy)
+            if decoded is not None:
+                return decoded
+        return _decode_host_escapes(encoded) or encoded
+    return encoded
 
 
 def normalize_host(host: str | bytes) -> str:
@@ -51,22 +112,7 @@ def normalize_host(host: str | bytes) -> str:
         raise UnicodeError(msg)
     if host.startswith("[") and host.endswith("]"):
         return _normalize_ip_literal(host)
-    # Map equivalent IDNA separators without merging label boundaries.
-    host = host.lower().translate(IDNA_DOT_TRANSLATION)
-
-    parts = host.split(".")
-    try:
-        encoded = [
-            idna.encode(part, uts46=True).decode("ascii") if part else ""
-            for part in parts
-        ]
-    except idna.IDNAError:
-        # Keep the legacy IDNA fallback without discarding empty labels.
-        encoded = [
-            part.encode("idna").decode("ascii") if part else "" for part in parts
-        ]
-
-    host = ".".join(encoded)
+    host = _encode_escaped_reg_name(host)
     # Preserve repeated trailing dots and the DNS root itself as fixed points.
     if len(host) > 1 and host.endswith(".") and not host.endswith(".."):
         return host[:-1]

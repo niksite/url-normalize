@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-11-18
+
 ### Upgrade notes
 
 Normalized URLs can change in 4.0.0. Rebuild persisted cache keys and deduplication identifiers from original URLs; information discarded by earlier versions cannot always be recovered. Review custom allowlists because hostname and escaped-parameter matching also change.
@@ -23,7 +25,7 @@ See the [README](README.md#python-api) for detailed behavior, examples and [CLI 
 - **BREAKING:** Reject literal display controls in parsed hosts, including IPv6 zone identifiers, with `UnicodeError` (a `ValueError` subclass). CLI errors omit the unsafe hostname.
 - **BREAKING:** Preserve reserved-character escapes in query names and values, including during humanization and filter matching: `a/b` and `a%2Fb` remain distinct.
 - **BREAKING:** Reject nonempty ports containing anything except ASCII digits with `ValueError`; the CLI exits with status 1. Numeric port ranges remain unchecked.
-- **BREAKING:** Validate `default_scheme` for nonempty inputs, even when unused. Accept whitespace, case differences and one trailing colon; malformed strings raise `ValueError`, and non-string values raise `TypeError`.
+- **BREAKING:** Validate `default_scheme` for inputs that remain nonempty after cleanup, even when unused. Accept whitespace, case differences and one trailing colon; malformed strings raise `ValueError`, and non-string values raise `TypeError`.
 - **BREAKING:** A custom allowlist now enables filtering without `filter_params=True` or CLI `-f`. Empty lists/maps remove all query parameters. To disable filtering, omit the rule or use `param_allowlist=None` with `filter_params=False`.
 - **BREAKING:** Treat string allowlist rules, including domain-specific rules, as one complete name: `"id"` selects `id`. Use a collection for multiple names; the CLI retains its comma-separated syntax.
 
@@ -43,6 +45,10 @@ Custom filters also accept reusable sequences, sets and domain mappings. Return 
 
 ### Fixed
 
+- Preserve explicit empty authorities in custom URLs such as `unix:///tmp/service.sock` and retain custom schemes when an opaque path begins with an escaped port number.
+- Use the original label case for IDNA processing and recognize percent-encoded DNS names in URL hosts and domain rules. Domain rules ignore one leading `www.` consistently.
+- Preserve percent escapes inside IPv6 zone identifiers and omit the authority from URL parsing errors.
+- Bound the number of whole-URL checks when humanizing queries with a mix of readable and double-encoded fields.
 - Normalize empty WebSocket paths to `/`: `wss://example.com?room=1` becomes `wss://example.com/?room=1`.
 - Keep reserved credential escapes such as `%40` encoded in humanized URLs, avoiding an extra literal `@` in the authority.
 - Keep bidirectional controls and Unicode line/paragraph separators encoded in humanized output while retaining readable multilingual text.

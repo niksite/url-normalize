@@ -11,6 +11,7 @@ import idna
 from ._encoding import RESERVED_ESCAPE_RE, has_display_controls
 from ._url import URL, deconstruct_url, reconstruct_url
 from .normalize_fragment import FRAGMENT_ASCII_ESCAPE_RE
+from .normalize_query import process_query_param
 from .normalize_scheme import DEFAULT_SCHEME
 from .param_filter import _ParamRules  # noqa: TC001 - resolve runtime annotations
 from .url_normalize import url_normalize
@@ -81,10 +82,6 @@ def _humanize_fragment(fragment: str) -> str:
     )
 
 
-def _format_query_param(key: str, separator: str, value: str) -> str:
-    return f"{key}{separator}{value}" if separator else key
-
-
 def _humanize_reserved_text(value: str) -> str:
     """Decode readable text around escapes that must remain literal data."""
     return "".join(
@@ -93,71 +90,26 @@ def _humanize_reserved_text(value: str) -> str:
     )
 
 
-def _replace_query_part_if_round_trips(  # noqa: PLR0913
-    url: URL,
-    normalized: str,
-    parts: list[str],
-    index: int,
-    part: str,
-    *,
-    normalize: Callable[[str], str | None],
-) -> tuple[URL, list[str]]:
-    if part == parts[index]:
-        return url, parts
-    candidate_parts = [*parts]
-    candidate_parts[index] = part
-    candidate = _replace_if_round_trips(
-        url,
-        normalized,
-        normalize=normalize,
-        query="&".join(candidate_parts),
-    )
-    if candidate is not url:
-        return candidate, candidate_parts
-    return url, parts
+def _humanize_query_part(part: str) -> str:
+    """Keep each readable spelling only if it preserves the encoded field."""
+    readable = _humanize_reserved_text(part)
+    if readable != part and process_query_param(readable) != part:
+        return part
+    return readable
 
 
 def _humanize_query(
     url: URL, normalized: str, *, normalize: Callable[[str], str | None]
 ) -> URL:
-    parts = url.query.split("&")
-    candidate_parts = []
-    for param in parts:
-        key, separator, value = param.partition("=")
-        candidate_parts.append(
-            _format_query_param(
-                _humanize_reserved_text(key), separator, _humanize_reserved_text(value)
-            )
+    fields = []
+    for field in url.query.split("&"):
+        key, separator, value = field.partition("=")
+        fields.append(
+            f"{_humanize_query_part(key)}{separator}{_humanize_query_part(value)}"
         )
-    candidate = _replace_if_round_trips(
-        url, normalized, normalize=normalize, query="&".join(candidate_parts)
+    return _replace_if_round_trips(
+        url, normalized, normalize=normalize, query="&".join(fields)
     )
-    if candidate is not url or candidate_parts == parts:
-        return candidate
-
-    # One rejected decoding must not block other readable keys or values.
-    for index, param in enumerate(parts):
-        key, separator, value = param.partition("=")
-
-        url, parts = _replace_query_part_if_round_trips(
-            url,
-            normalized,
-            parts,
-            index,
-            _format_query_param(_humanize_reserved_text(key), separator, value),
-            normalize=normalize,
-        )
-        key, separator, value = parts[index].partition("=")  # noqa: PLR1736
-        url, parts = _replace_query_part_if_round_trips(
-            url,
-            normalized,
-            parts,
-            index,
-            _format_query_param(key, separator, _humanize_reserved_text(value)),
-            normalize=normalize,
-        )
-
-    return url
 
 
 @overload
@@ -225,7 +177,7 @@ def url_humanize(  # noqa: PLR0913
     set collapse_slashes=False to preserve repeated slashes. The selected path
     and empty-component policies are also used for round-trip checks.
     The default_scheme option uses the same cleanup and validation as
-    url_normalize(), including errors for invalid options on nonempty input.
+    url_normalize(). Validation runs when the cleaned URL is nonempty.
     Supplying param_allowlist enables filtering, even for an empty collection
     or when filter_params=False. Use filter_params=True without a custom rule
     to select the built-in domain rules.

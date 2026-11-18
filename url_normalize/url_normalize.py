@@ -129,9 +129,9 @@ def url_normalize(  # noqa: PLR0913
         str | None : a normalized url
 
     Raises:
-        TypeError: If default_scheme is not a string for a nonempty input.
-        ValueError: If default_scheme has invalid syntax for a nonempty input,
-            even if the URL already has a scheme. URL parsing can also raise
+        TypeError: If the cleaned URL is nonempty and default_scheme is not a string.
+        ValueError: If the cleaned URL is nonempty and default_scheme has invalid
+            syntax, even if the URL already has a scheme. URL parsing can also raise
             ValueError for malformed input.
 
     """

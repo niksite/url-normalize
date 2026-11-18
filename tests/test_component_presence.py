@@ -45,6 +45,12 @@ def test_public_api_empty_component_policy(
     [
         "ws://[::1]/",
         "file:///tmp/document",
+        "sqlite:///notes.db",
+        "sqlite:////tmp/notes.db",
+        "unix:///tmp/service.sock",
+        "unix:/tmp/service.sock",
+        "custom://",
+        "custom:",
         "mailto:user@example.com",
         "urn:example:document",
         "/path",

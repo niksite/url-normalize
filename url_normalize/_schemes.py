@@ -1,5 +1,7 @@
 """Scheme-specific normalization rules, kept independent of each other."""
 
+import re
+
 DEFAULT_PORT = {
     "ftp": "21",
     "gopher": "70",
@@ -22,3 +24,10 @@ PATH_NORMALIZATION_SCHEMES = frozenset(
     {"", "http", "https", "ftp", "file", "ws", "wss"}
 )
 EMPTY_PATH_SCHEMES = frozenset({"http", "https", "ftp", "file", "ws", "wss"})
+
+
+def looks_like_host_port(scheme: str, rest: str) -> bool:
+    """Identify a bare dotted host or localhost followed by a decimal port."""
+    return ("." in scheme or scheme.lower() == "localhost") and bool(
+        re.match(r"[0-9]+\s*(?:[/?#]|$)", rest)
+    )

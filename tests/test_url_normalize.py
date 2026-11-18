@@ -510,3 +510,123 @@ def test_reserved_query_escapes_compose_with_url_policies(api, prefix):
     value = f"{prefix}?q=a%2fb&q=c%3bd&flag=&flag#"
     expected = f"{prefix}?q=a%2Fb&q=c%3Bd&flag=&flag#"
     assert api(value, collapse_slashes=False, keep_empty_components=True) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_escaped_zone_preserves_spelling(transform):
+    """Validate the IPv6 address while retaining the complete zone and port."""
+    url = "https://u@[FE80:0:0::1%25Eth%2d%30]:080/path?x#f"
+    assert transform(url) == "https://u@[fe80::1%25Eth%2d%30]:80/path?x#f"
+
+
+@pytest.mark.parametrize("host", ["[ab::c::d%25Eth%2D0]", "[fe80::1%25Eth%xx]"])
+def test_invalid_scoped_authority(host):
+    """Keep validation for invalid addresses and malformed extra escapes."""
+    with pytest.raises(ValueError, match="Invalid URL authority"):
+        url_normalize(f"https://{host}/")
+
+
+@pytest.mark.parametrize("host", ["ΟΣ.gr", "ΟΣ\u3002gr", "ΟΣ\uff0egr", "ΟΣ\uff61gr"])
+def test_sigma_host_with_equivalent_separators(host):
+    """Use IDNA case mapping for every supported label separator."""
+    assert url_normalize(f"https://{host}/") == "https://xn--0xai.gr/"
+
+
+@pytest.mark.parametrize(
+    ("encoded", "canonical"),
+    [
+        ("%65xample.com", "example.com"),
+        ("b%C3%BCcher.de", "xn--bcher-kva.de"),
+        ("example%2Ecom", "example.com"),
+        ("my%5Fservice.example", "my_service.example"),
+        ("b%C3%BCcher._service.example", "xn--bcher-kva._service.example"),
+    ],
+)
+def test_escaped_host_matches_domain_rules(encoded, canonical):
+    """Use the same host spelling in URLs and in domain rules."""
+    expected = f"https://{canonical}/?page=2"
+    assert (
+        url_normalize(f"https://{encoded}/?page=2", param_allowlist={canonical: "page"})
+        == expected
+    )
+    assert url_normalize(expected, param_allowlist={encoded: "page"}) == expected
+    assert url_normalize(url_humanize(expected)) == expected
+
+
+@pytest.mark.parametrize(
+    ("host", "canonical"),
+    [
+        ("\uff0565xample.com", "example.com"),
+        ("%\uff16\uff15xample.com", "example.com"),
+        ("example%\u00ad2ecom", "example.com"),
+        ("ex%\u200c61mple.com", "example.com"),
+        ("ré%7\u200c3umé.fr", "xn--rsum-bpad.fr"),
+        ("b\uff05C3\uff05BCcher.de", "xn--bcher-kva.de"),
+        ("faß.\uff0565xample.de", "xn--fa-hia.example.de"),
+    ],
+)
+def test_mapped_host_escapes_reach_canonical_domain(host, canonical):
+    """Use one hostname for normalization, display, and domain-specific rules."""
+    url = f"https://{host}/?page=2&ref=1"
+    normalized = f"https://{canonical}/?page=2&ref=1"
+    filtered = f"https://{canonical}/?page=2"
+    assert url_normalize(url) == normalized
+    assert url_normalize(normalized) == normalized
+    assert url_normalize(url_humanize(url)) == normalized
+    assert url_normalize(url, param_denylist={host: "ref"}) == filtered
+    assert url_normalize(url, param_allowlist={canonical: "page"}) == filtered
+    assert url_normalize(normalized, param_allowlist={host: "page"}) == filtered
+
+
+@pytest.mark.parametrize(
+    ("host", "canonical"),
+    [
+        ("exa\uff052Fmple.com", "exa%2fmple.com"),
+        ("\uff052565xample.com", "%2565xample.com"),
+        ("\uff05FF.example", "%ff.example"),
+        ("ré\uff052Fumé.fr", "xn--r%2fum-bvaf.fr"),
+    ],
+)
+def test_mapped_host_escapes_preserve_opaque_spelling(host, canonical):
+    """Keep reserved, double-encoded and invalid escapes stable after mapping."""
+    normalized = f"https://{canonical}/"
+    assert url_normalize(f"https://{host}/") == normalized
+    assert url_normalize(normalized) == normalized
+
+
+@pytest.mark.parametrize(
+    "host", ["exa%2fmple.com", "%ff.example", "%2565xample.com", "%e2%80%ae.example"]
+)
+def test_host_escapes_retain_unsupported_bytes(host):
+    """Keep reserved and malformed host escapes out of structural syntax."""
+    url = f"https://{host}/"
+    assert url_normalize(url) == url
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_domain_rule_strips_exactly_one_www(transform):
+    """Require the same domain comparison for raw and canonical lookup keys."""
+    url = "https://www.www.example.com/?a=1&b=2"
+    rules = {"www.example.com": "a", "www.www.EXAMPLE.com:443": "b"}
+    assert transform(url, param_allowlist=rules) == url.replace("a=1&", "")
+    assert transform(url, param_denylist=rules) == url.replace("&b=2", "")
+
+
+@pytest.mark.parametrize("scheme", ["demo.scheme", "localhost"])
+@pytest.mark.parametrize(
+    ("raw", "escaped"), [("%32", "%32"), ("2%33", "%323"), ("%32%33", "%323")]
+)
+def test_numeric_opaque_path_retains_scheme(scheme, raw, escaped):
+    """Keep a numeric first segment from being reclassified as a hostname port."""
+    url = f"{scheme}:{raw}/home?#"
+    expected = f"{scheme}:{escaped}/home?#"
+    options = {"keep_empty_components": True}
+    assert url_normalize(url, **options) == expected
+    assert url_normalize(expected, **options) == expected
+    assert url_humanize(url, **options) == expected
+
+
+@pytest.mark.parametrize("transform", [url_normalize, url_humanize])
+def test_blank_inputs_skip_scheme_validation(transform):
+    """Treat inputs emptied by cleanup like the empty string."""
+    assert transform(" \t", default_scheme="https::") == ""

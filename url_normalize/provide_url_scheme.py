@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from ._schemes import AUTHORITY_SCHEMES
+from ._schemes import AUTHORITY_SCHEMES, looks_like_host_port
 from ._url import cleanup_url_input
 from .normalize_scheme import DEFAULT_SCHEME
 
@@ -45,10 +45,7 @@ def provide_url_scheme(url: str, default_scheme: str = DEFAULT_SCHEME) -> str:
     if not re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", url):
         return f"{default_scheme}://{url.lstrip('/')}"
     scheme_part, rest = url.split(":", 1)
-    # Dotted hosts and localhost followed by a numeric port are host inputs.
-    if ("." in scheme_part or scheme_part.lower() == "localhost") and re.match(
-        r"[0-9]+\s*(?:[/?#]|$)", rest
-    ):
+    if looks_like_host_port(scheme_part, rest):
         return f"{default_scheme}://{url}"
     if scheme_part.lower() not in AUTHORITY_SCHEMES:
         # handle cases like tel:, mailto:, etc.

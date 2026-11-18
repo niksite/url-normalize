@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from url_normalize._url import URL, reconstruct_url
+from url_normalize._url import URL, deconstruct_url, reconstruct_url
 
 
 @pytest.mark.parametrize(
@@ -70,3 +70,8 @@ def test_reconstruct_url_preserves_empty_components(
     )
 
     assert reconstruct_url(parts) == base + suffix
+
+
+def test_schemeless_empty_authority():
+    """Preserve the authority delimiter when reconstructing a network reference."""
+    assert reconstruct_url(deconstruct_url("///foo")) == "///foo"

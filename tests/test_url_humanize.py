@@ -78,12 +78,13 @@ def test_url_humanize_only_rechecks_changed_query_values():
 
 
 @pytest.mark.parametrize("param_count", [2, 100])
-def test_url_humanize_checks_readable_query_changes_together(param_count):
+@pytest.mark.parametrize("prefix", ["", "keep=%2541&"])
+def test_url_humanize_checks_readable_query_changes_together(param_count, prefix):
     """Bound whole-URL work as the number of decodable keys and values grows."""
-    value = "https://example.com/search?" + "&".join(
+    value = f"https://example.com/search?{prefix}" + "&".join(
         f"%C3%A9{i}=%E4%B8%AD" for i in range(param_count)
     )
-    expected = "https://example.com/search?" + "&".join(
+    expected = f"https://example.com/search?{prefix}" + "&".join(
         f"é{i}=中" for i in range(param_count)
     )
     max_normalizations = 2  # Initial normalization plus one combined round trip.

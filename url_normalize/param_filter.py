@@ -38,8 +38,9 @@ def get_params(host: str | None, rules: _ParamRules | None) -> set[str]:
 
     domain = _normalize_domain(host)
 
-    # Preserve exact canonical-key precedence, including an empty rule.
-    if domain in rules:
+    # A key still starting with www. is itself an alias for a different domain.
+    # Otherwise prefer an exact canonical key, even when its rule is empty.
+    if domain in rules and not domain.startswith("www."):
         return _parameter_names(rules[domain])
     for key, params in rules.items():
         try:

@@ -13,16 +13,18 @@ Requires **Python 3.11 or newer**. Normalization operates on URL text; it does n
 
 ## Installation
 
+These examples use url-normalize 4.0.0. If you store normalized URLs or use custom parameter filters, read the [4.0.0 upgrade notes](CHANGELOG.md#400---2026-11-18) before upgrading. The [3.1.0 usage guide](https://github.com/niksite/url-normalize/blob/v3.1.0/README.md) covers the previous release.
+
 Install the library and CLI:
 
 ```sh
-python -m pip install url-normalize
+python -m pip install "url-normalize>=4.0.0"
 ```
 
 Or install the CLI in its own environment with [uv](https://docs.astral.sh/uv/):
 
 ```sh
-uv tool install url-normalize
+uv tool install "url-normalize>=4.0.0"
 ```
 
 ## Quick start
@@ -204,7 +206,7 @@ Percent-encoded hashes remain part of their original components: `https://exampl
 
 ### Query escapes
 
-Percent-encoded reserved characters stay encoded in query keys and values, with uppercase hexadecimal digits. A literal `/`, `;`, or other query punctuation stays literal; its escaped form is kept distinct because applications can assign it a delimiter role ([RFC 3986 section 2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-2.2)). Unreserved escapes such as `%7E` become `~`.
+Percent-encoded reserved characters stay encoded in query keys and values, with uppercase hexadecimal digits. A literal `/` or `;` stays distinct from its escaped form because applications can assign it a delimiter role ([RFC 3986 section 2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-2.2)). The first `=` separates a key from its value. Additional equals signs in the value normalize to `%3D`, so `?q=a=b` and `?q=a%3Db` have the same spelling. Unreserved escapes such as `%7E` become `~`.
 
 | Input | `url_normalize()` | `url_humanize()` |
 | --- | --- | --- |
@@ -384,7 +386,7 @@ print(url_normalize("example.com/path", default_scheme=" HTTPS: "))
 # Output: https://example.com/path
 ```
 
-Malformed values such as `https://`, `https::`, or an empty scheme raise `ValueError`; non-string values raise `TypeError`. For nonempty URL input this check also applies when the default is unused, including URLs that already have a scheme and relative references. Empty input and `None` retain their existing pass-through behavior. The CLI applies the same rules and reports configuration errors with exit status 1.
+Malformed values such as `https://`, `https::`, or an empty scheme raise `ValueError`; non-string values raise `TypeError`. Validation applies to every URL that remains nonempty after input cleanup, including URLs that already have a scheme and relative references. A whitespace-only URL returns `""` and `None` returns `None` before scheme validation. The CLI applies the same rules and reports configuration errors with exit status 1.
 
 ### Relative references
 

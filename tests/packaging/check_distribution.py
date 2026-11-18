@@ -73,9 +73,14 @@ def main() -> None:
                 ignore=shutil.ignore_patterns("__pycache__"),
             )
             ty = scripts / ("ty.exe" if os.name == "nt" else "ty")
+            # Avoid inheriting a parent project's source include/exclude rules.
+            config = work / "ty.toml"
+            config.touch()
             run(
                 ty,
                 "check",
+                "--config-file",
+                config,
                 "--python",
                 environment,
                 "--python-version",
