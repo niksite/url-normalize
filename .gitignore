@@ -2,6 +2,7 @@ __pycache__
 .*
 !.coveragerc
 !.github
+!.mailmap
 !.pre-commit-config.yaml
 *.egg-info
 *.pyc
